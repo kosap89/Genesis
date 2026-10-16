@@ -23,7 +23,7 @@ def main():
     diff = tools.execute('self_improvement_diff', {})
     report = {'kind':'actual_source_snapshot_verification', 'live_ai':False,
               'workspace':str(workspace), 'snapshot':snapshot, 'tests':tests,
-              'unchanged_candidate':not any(diff[k] for k in ('added','modified','deleted')),
+              'unchanged_candidate':not any(diff[k] for k in ('added','changed','deleted')),
               'patch_artifact':diff.get('artifact')}
     output = SOURCE / 'test-results' / 'source-snapshot-verification.json'
     output.parent.mkdir(parents=True, exist_ok=True)

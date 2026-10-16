@@ -1,44 +1,39 @@
 # Genesis persistent project state
 
-Updated 2026-10-17, Europe/Helsinki. Resumed after two CEO-requested restarts.
+Updated 2026-10-17, Europe/Helsinki. Resumed from checkpoint `3294389`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Latest handoff: NEW CHAT requested
+## Latest verified completion: verification and local launch
 
-CEO wants a fresh chat to reset inconsistent inherited permissions. Main agent
-currently has full access and normal exec works. Existing subagents reported old
-Windows sandbox helper errors; do not reuse those agents in the next chat. All
-subagents have finished and no Genesis/test service is running. Source/data safe.
+Effective access verified as `kosap\ville`: ordinary shell execution and a temporary
+workspace file write/read/delete succeeded. Full filesystem access and network are
+enabled; approval policy is never. No subagents were started or reused.
 
-Verified commit `9d7ca1a` contains the 90-test core checkpoint. The latest handoff
-commit additionally preserves the following finished edits (full final verification
-still pending; this is not a claim they all passed the integrated suite):
+- `python -m unittest discover -s tests -v`: **95 tests, OK, one Windows
+  symlink privilege skip** (35.529 seconds).
+- `node --check web/app.js` and `node --check tests/browser-e2e.cjs`: **PASS**.
+- `npm.cmd run test:e2e`: **PASS** after fixing two test synchronization races.
+  Resume now awaits its HTTP response before checking blocked status and the exact
+  task/provider/model audit event. Credential rejection waits for the preceding
+  clear handler to finish before entering the next input. Assertions remain intact.
+  Production-browser checks cover persistence, literal XSS-safe memory, settings,
+  explicit rerouting, session credentials and mobile layout. Identified test-only
+  provider fixtures cover approval/denial, actual Python execution and ZIP download.
+- `python scripts/verify_snapshot.py --execute`: **PASS**, 95 discovered tests,
+  one symlink skip, return code 0, no timeout, unchanged candidate. Fixed the script
+  to use the actual diff contract's `changed` field rather than `modified`.
+  Evidence: ignored `test-results/source-snapshot-verification.json`; workspace
+  `data/verification/72e8b8061a2d4c89b61f56959585de0a`. Candidate suite took 35.674s.
+- Production launched with `python -m genesis --data-dir C:\Genesis\data --port 8787`
+  as hidden background PID **33432**. Verified listener **127.0.0.1:8787** only,
+  `/api/health` status **ok**, worker_alive **true**. Opened the actual Chrome
+  command center and observed **Connected to local server** and model setup required.
+  Launch state: 7 agents, 0 ventures, 0 tasks, $0 spent/reserved; no configured
+  providers. Existing data was preserved. Logs remain ignored under `test-results/`.
 
-- Partial provider usage has usage_complete metadata across all three adapters;
-  provider suite **16 tests PASS**, accounting suite **8 tests PASS**. Missing
-  either token total charges the configured ceiling; explicit complete zero is zero.
-- Local session-only credentials API and password UI are implemented. Key stays
-  only in process environment, never SQLite/logs/API responses/browser storage.
-  Optional configure_agents changes all default routes, never auto-runs objectives.
-- Explicit Resume with agent settings UI, responsive task actions and real ZIP UI
-  download tested in an earlier browser run. Credential-form browser tests added
-  but NOT YET RUN by parent. Both JS files pass node syntax checks.
-- Latest server suite **13 tests PASS**, including session key nonpersistence,
-  no key echo/audit leakage, clearing overrides/inherited-key behavior, input
-  validation and audited explicit resume route changes.
-- scripts/verify_snapshot.py --execute added to copy and test the actual checkout
-  through candidate tools (no AI). Not yet run. test-results excluded from snapshots.
-
-FIRST TASK IN NEW CHAT: verify effective runtime permissions and basic file/shell
-access. Then run `python -m unittest discover -s tests -v`,
-`npm.cmd run test:e2e`, and `python scripts/verify_snapshot.py --execute` in that
-order. Repair failures (especially new credential UI assertions), update this
-state with final results and commit verified work. Launch production service on
-127.0.0.1:8787, verify health and open browser. Do not restart implementation.
-
-No provider credentials exist and no paid model calls have been made. Live AI
-acceptance still requires CEO key input via the local UI and approved spending.
-The main agent should finish the verification/launch sequence before adding scope.
+No provider credentials exist in the launch environment and no paid model calls
+were made. Session-only key entry is available in Agents & controls. Live AI
+acceptance still requires a CEO-supplied key and approved spending.
 
 ## Implemented
 
@@ -55,7 +50,7 @@ Production has no mock AI provider; doubles exist only in identified test fixtur
 
 ## Latest verified checkpoint
 
-- Full `python -m unittest discover -s tests -v`: **90 tests, OK, one Windows
+- Full `python -m unittest discover -s tests -v`: **95 tests, OK, one Windows
   symlink privilege skip**. This includes real subprocesses and local HTTP.
 - Toolbox: 23 tests, including exact-byte Git patch application across LF/CRLF,
   missing EOF newline, additions/deletions and Unicode line separators. The saved
@@ -71,25 +66,21 @@ Production has no mock AI provider; doubles exist only in identified test fixtur
 - Atomic approval/task/audit persistence closes crash gaps. Legacy partial approvals
   recover; cancellation cannot leave new orphan approvals or dispatch new calls
   before their durable claim points. Shutdown keeps the data lease while worker lives.
-- Provider wire suite: 15 tests passed before partial-usage accounting follow-up.
-  No real provider account has been called.
-- Earlier extended browser E2E passed (credential blocking, real persistence/XSS,
-  draft preservation, settings/routing, mobile, approval/denial, actual tests and
-  downloads). Final rerun for new resume controls is in progress.
+- Provider wire suite: 16 tests; accounting suite: 8 tests; server suite: 13 tests,
+  all passed within the full suite. Missing either usage total charges the configured
+  ceiling; explicit complete zero settles zero. Session keys are not persisted or
+  echoed, and explicit route changes are audited. No live provider calls made.
+- Final extended browser E2E passed, including session credentials and resume controls.
 
 ## Exact next tasks
 
-1. Finish provider partial-usage completeness metadata and conservative engine
-   accounting, with regressions; do not treat an omitted output count as zero cost.
-2. Collect final browser/API verification for explicit resume-with-agent-settings.
-3. Rerun the relevant/final integrated checks for these last changes, commit verified
-   work and record the final counts here.
-4. Launch `python -m genesis` on loopback, verify health and open the actual browser
-   command center. The production service has not been launched at this checkpoint.
-5. Credentials are absent for all three providers. The next LIVE acceptance stage
-   requires a CEO-supplied key and approved spend. Use masked `.\start.ps1` or a
-   process environment variable; never ask for or store keys in chat/source/data.
-6. Execute the three founding objectives in ACCEPTANCE.md with real providers,
+1. Local verification and launch are complete. If the service has stopped, relaunch
+   `python -m genesis --data-dir C:\Genesis\data --port 8787`; preserve that directory.
+2. Credentials are absent for all three providers. The next LIVE acceptance stage
+   requires a CEO-supplied key via the session-only local UI and an explicit spending
+   authorization. Never ask for or store keys in chat/source/data. Review agent routes,
+   configured rates, budget and requested execution approvals before acceptance.
+3. Execute the three founding objectives in ACCEPTANCE.md with real providers,
    approvals and independent review, retaining actual evidence. Never count the
    infrastructure fixtures as live AI acceptance.
 

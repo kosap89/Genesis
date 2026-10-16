@@ -96,9 +96,15 @@ async function main(){
   await page.locator('#connection').filter({hasText:'Connected'}).waitFor();
   await page.locator('[data-view=operations]').click();
   await page.locator('#all-tasks .record-title').first().click();
-  await page.getByRole('button',{name:'Resume with agent settings',exact:true}).click();
-  s=await waitState(18871,x=>x.tasks[0]?.status==='blocked_credentials'&&x.tasks[0].provider===testAgent.provider&&x.tasks[0].model===testAgent.model);
-  assert(s.audit.some(e=>e.action==='task_route_changed'&&e.provider===testAgent.provider),'Explicit resume route switch must be audited');
+  // Await the mutation response before polling: an intermediate state may still
+  // show the old blocked status while the new route and audit are being written.
+  const [resumeResponse]=await Promise.all([
+    page.waitForResponse(r=>r.url().endsWith('/api/tasks/'+s.tasks[0].id+'/resume')&&r.request().method()==='POST'),
+    page.getByRole('button',{name:'Resume with agent settings',exact:true}).click(),
+  ]);
+  assert(resumeResponse.ok(),'Explicit resume request must succeed');
+  s=await waitState(18871,x=>x.tasks[0]?.status==='blocked_credentials'&&x.tasks[0].provider===testAgent.provider&&x.tasks[0].model===testAgent.model&&x.audit.some(e=>e.action==='task_route_changed'&&e.task_id===x.tasks[0].id&&e.provider===testAgent.provider&&e.model===testAgent.model));
+  assert(s.audit.some(e=>e.action==='task_route_changed'&&e.task_id===s.tasks[0].id&&e.provider===testAgent.provider&&e.model===testAgent.model),'Explicit resume route switch must be audited');
   assert.equal(s.settings.spent_usd,0,'Credential-blocked reroute must not charge usage');
   await page.locator('#task-dialog [data-close]').click();
   await page.locator('[data-view=settings]').click();
@@ -126,6 +132,9 @@ async function main(){
   assert.equal(await page.evaluate(()=>JSON.stringify([Object.entries(localStorage),Object.entries(sessionStorage)]).includes('browser-test-only-not-a-real-api-key')),false);
   await page.locator('#credentials-clear').click();
   s=await waitState(18871,x=>x.providers.every(p=>p.provider!=='gemini'||!p.configured));
+  // The clear handler also refreshes state and clears the input in finally.
+  // Finish that handler before entering the next key.
+  await page.waitForFunction(()=>!document.querySelector('#credentials-clear').disabled);
   assert.equal(s.settings.spent_usd,0);
   // A rejected request must clear the field as well.
   await page.locator('#credentials-key').fill('invalid whitespace key');

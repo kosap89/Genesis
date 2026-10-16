@@ -11,10 +11,11 @@ provider independence, controlled tools, and reviewable execution.
    isolated task workspaces, public web research, development/test tools.
 3. **Verified — CEO command center:** connected portfolio, objective submission,
    task history, agent configuration, approvals, memory, costs and artifacts.
-4. **Verified core; final integration in progress — expanded verification:** 90
-   unit/security/HTTP tests plus real candidate repair/patch/test evidence. Final
-   browser rerun and partial-usage accounting are being completed. Provider doubles
-   are tests only.
+4. **Verified — expanded verification and local launch:** 95 unit/security/HTTP
+   tests (one Windows symlink privilege skip), browser E2E, partial-usage accounting,
+   session credentials and real checkout candidate verification passed. Production
+   is launched on loopback with healthy worker and the browser command center open.
+   Provider doubles are tests only; no live AI acceptance is claimed.
 5. **Pending credentials — live acceptance:** run the three founding acceptance
    objectives using real provider credentials. Report actual artifacts and costs.
 6. **Next hardening:** OS-level process isolation, richer research sources,
