@@ -5,9 +5,11 @@ Preserve existing implementation and data; do not scaffold a replacement.
 
 ## Latest verified completion: verification and local launch
 
-Effective access verified as `kosap\ville`: ordinary shell execution and a temporary
-workspace file write/read/delete succeeded. Full filesystem access and network are
-enabled; approval policy is never. No subagents were started or reused.
+At launch, effective access was verified as `kosap\ville`: ordinary shell execution
+and a temporary workspace file write/read/delete succeeded. After a temporary
+workspace-write restriction, the CEO restored full filesystem access. Local Git
+configuration and authenticated GitHub push now succeed; approval policy remains
+never. No subagents were started or reused.
 
 - `python -m unittest discover -s tests -v`: **95 tests, OK, one Windows
   symlink privilege skip** (35.529 seconds).
@@ -85,6 +87,25 @@ Production has no mock AI provider; doubles exist only in identified test fixtur
    infrastructure fixtures as live AI acceptance.
 
 ## Git and operations
+
+GitHub publication completed (2026-10-17): CEO authorized safe project upload,
+signed in, and restored access after earlier connector/browser permission blocks.
+Repository **https://github.com/kosap89/Genesis** is **private**; connector verified
+ownership and push permission. Normal authenticated Git push succeeded, publishing
+the complete original history through verified implementation commit `dc92e2b`.
+Local `origin` points to `https://github.com/kosap89/Genesis.git`; `main` tracks
+`origin/main`. No source changes or provider calls were needed for publication.
+
+Reviewed 87 unique blobs in local HEAD history: no runtime/credential file paths or
+provider/GitHub/private-key patterns found; URL credential matches were only the
+explicit `https://user:pass@example.com` rejection fixture. `.env.example` has blank
+values. The 41 tracked files and all seven implementation/checkpoint commits were
+uploaded through normal Git push, preserving original hashes and bytes. Runtime
+data, logs, dependencies and verification output are excluded. The earlier browser
+upload staging directory remains ignored under `test-results/github-upload/` and
+was not uploaded. Publication changes only this operational record; the previously
+verified implementation is unchanged. Next engineering task remains live acceptance
+with CEO-provided credentials and explicit spending authorization, as listed above.
 
 Prior checkpoints: `8a88138` runtime, `e6a989c` browser app, `80dade3` first restart,
 `6ed5497` second restart. Later verified commits are available in `git log`.
