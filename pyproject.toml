@@ -1,0 +1,9 @@
+[project]
+name = "genesis-company-os"
+version = "0.1.0"
+description = "Local, provider-independent AI company operating system"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.unittest]
+start-directory = "tests"
