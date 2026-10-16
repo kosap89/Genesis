@@ -22,8 +22,9 @@ Submit to engineering, including the selected opportunity and concrete requireme
 
 Expect executable source files, meaningful tests, actual test output in tool
 history, a run guide and artifact downloads. Inspect files before approving host
-execution. QA can inspect a candidate by receiving the relevant source text/URLs;
-automatic cross-task workspace mounting is not implemented.
+execution. QA can list and import actual same-venture artifacts into a separate
+workspace for independent inspection and execution. Importing does not grant
+execution permissions; QA test execution has its own approval.
 
 ## 3. Self-improvement
 
@@ -32,7 +33,8 @@ Submit to engineering:
 > Audit an existing Genesis component, identify a meaningful improvement, implement and test it.
 
 Expect use of self_improvement_snapshot, candidate changes beneath the task
-workspace, real tests, and an auditable report describing the proposed change.
+workspace, real tests, a unified patch from self_improvement_diff, and an auditable
+report describing the proposed change.
 The running checkout must remain unchanged. A human reviews and applies a verified
 candidate; Genesis does not replace its own live execution code.
 

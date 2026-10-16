@@ -3,12 +3,14 @@ from __future__ import annotations
 
 import argparse
 import hmac
+import io
 import json
 import math
 import mimetypes
 import os
 import secrets
 import threading
+import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -16,6 +18,7 @@ from urllib.parse import unquote, urlsplit
 from .engine import Engine, ROLES
 from .store import now
 from .toolbox import _safe_path
+from .lease import DataLease
 
 MAX_BODY = 128 * 1024
 
@@ -93,6 +96,29 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, {'status':'ok', 'service':'genesis', 'worker_alive':bool(engine.thread and engine.thread.is_alive())})
             if path == '/api/state':
                 return self._json(200, {**engine.state(), 'csrf_token':self.server.csrf})
+            if path.startswith('/api/tasks/') and path.endswith('/bundle'):
+                task_id = path.split('/')[-2]
+                task = engine.store.get('tasks', task_id)
+                if not task:
+                    return self._json(404, {'error':'Task not found.'})
+                records = [a for a in engine.store.all('artifacts') if a['task_id'] == task_id]
+                buffer = io.BytesIO()
+                total = 0
+                with zipfile.ZipFile(buffer, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+                    for artifact in records:
+                        relative = artifact['path']
+                        if any(p.startswith('.genesis-') for p in Path(relative).parts):
+                            continue
+                        file = _safe_path(engine.workspace(task), relative)
+                        if not file.is_file():
+                            continue
+                        total += file.stat().st_size
+                        if total > 50 * 1024 * 1024:
+                            return self._json(413, {'error':'Task bundle exceeds 50 MB. Download individual artifacts.'})
+                        archive.writestr(relative, file.read_bytes())
+                raw = buffer.getvalue()
+                self._headers(200, 'application/zip', len(raw), 'genesis-' + task_id[:12] + '.zip')
+                return self.wfile.write(raw)
             if path.startswith('/api/tasks/'):
                 task_id = path.split('/')[-1]
                 task = engine.store.get('tasks', task_id)
@@ -224,16 +250,20 @@ def main():
     parser.add_argument('--data-dir', default=os.environ.get('GENESIS_DATA_DIR', 'data'))
     args = parser.parse_args()
     source = Path(__file__).resolve().parent.parent
-    engine = Engine(args.data_dir, source)
-    server = GenesisServer(('127.0.0.1', args.port), engine, source / 'web')
-    engine.start()
-    print(f'Genesis listening at http://127.0.0.1:{server.server_address[1]}', flush=True)
-    print('Local only. Credentials are read from environment. Ctrl+C stops the service.', flush=True)
     try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        engine.close()
-        server.server_close()
+        with DataLease(args.data_dir):
+            engine = Engine(args.data_dir, source)
+            server = GenesisServer(('127.0.0.1', args.port), engine, source / 'web')
+            engine.start()
+            print(f'Genesis listening at http://127.0.0.1:{server.server_address[1]}', flush=True)
+            print('Local only. Credentials are read from environment. Ctrl+C stops the service.', flush=True)
+            try:
+                server.serve_forever()
+            except KeyboardInterrupt:
+                pass
+            finally:
+                engine.close()
+                server.server_close()
+    except (RuntimeError, OSError) as exc:
+        parser.exit(1, str(exc) + '\n')
 

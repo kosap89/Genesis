@@ -117,6 +117,80 @@ class ToolboxTests(unittest.TestCase):
         self.assertEqual((self.source / 'main.py').read_text(encoding='utf-8'), 'original')
         self.assertFalse((self.tools.context.root / 'source' / '.env').exists())
 
+    def test_actual_candidate_diff_tracks_add_change_delete_and_persistent_baseline(self):
+        (self.source / 'changed.py').write_text('value = 1\n', encoding='utf-8')
+        (self.source / 'deleted.py').write_text('removed = True\n', encoding='utf-8')
+        (self.source / 'stable.py').write_text('stable = True\n', encoding='utf-8')
+        self.tools.execute('self_improvement_snapshot', {})
+        self.tools.execute('workspace_write', {'path': 'source/changed.py', 'content': 'value = 2\n'})
+        self.tools.execute('workspace_write', {'path': 'source/added.py', 'content': 'added = True\n'})
+        (self.tools.context.root / 'source' / 'deleted.py').unlink()
+        # A new toolbox instance must use the persisted original, even if live code evolved.
+        (self.source / 'changed.py').write_text('value = 99\n', encoding='utf-8')
+        reopened = Toolbox(self.tools.context)
+        result = reopened.execute('self_improvement_diff', {})
+        self.assertEqual(result['changed'], ['changed.py'])
+        self.assertEqual(result['added'], ['added.py'])
+        self.assertEqual(result['deleted'], ['deleted.py'])
+        self.assertEqual(result['live_source_changed'], ['changed.py'])
+        self.assertEqual(result['comparison'], 'original_snapshot_baseline')
+        self.assertIn('-value = 1\n+value = 2\n', result['patch'])
+        self.assertIn('--- /dev/null\n+++ b/added.py\n', result['patch'])
+        self.assertIn('--- a/deleted.py\n+++ /dev/null\n', result['patch'])
+        self.assertEqual((self.source / 'changed.py').read_text(encoding='utf-8'), 'value = 99\n')
+        self.assertTrue((self.source / 'deleted.py').exists())
+        self.assertEqual((self.tools.context.root / result['artifact']).read_bytes(), result['patch'].encode('utf-8'))
+        self.assertFalse(result['truncated'])
+
+    def test_diff_requires_snapshot_and_protects_baseline(self):
+        with self.assertRaises(ValueError):
+            self.tools.execute('self_improvement_diff', {})
+        (self.source / 'main.py').write_text('before\n', encoding='utf-8')
+        self.tools.execute('self_improvement_snapshot', {})
+        for path in ('.genesis-snapshot.json', '.genesis-baseline/main.py'):
+            with self.subTest(path=path), self.assertRaises(ValueError):
+                self.tools.execute('workspace_write', {'path': path, 'content': 'corrupt'})
+        entries = self.tools.execute('workspace_list', {})['entries']
+        self.assertFalse(any(entry['name'].startswith('.genesis-') for entry in entries))
+        # Approved Python has host access; integrity checks still detect changed original bytes.
+        (self.tools.context.root / '.genesis-baseline' / 'main.py').write_text('corrupt', encoding='utf-8')
+        with self.assertRaisesRegex(ValueError, 'integrity'):
+            self.tools.execute('self_improvement_diff', {})
+
+    def test_diff_omits_secrets_binary_and_oversized_patches_explicitly(self):
+        (self.source / 'large.txt').write_text('a' * 60000 + '\n', encoding='utf-8')
+        self.tools.execute('self_improvement_snapshot', {})
+        self.tools.execute('workspace_write', {'path': 'source/large.txt', 'content': 'b' * 60000 + '\n'})
+        self.tools.execute('workspace_write', {'path': 'source/.env', 'content': 'PRIVATE=secret-value'})
+        self.tools.execute('workspace_write', {'path': 'source/credentials.json', 'content': 'private-value'})
+        self.tools.execute('workspace_write', {'path': 'source/new.py', 'content': 'new = True\n'})
+        (self.tools.context.root / 'source' / 'binary.bin').write_bytes(b'\x00\xff')
+        result = self.tools.execute('self_improvement_diff', {})
+        self.assertEqual(result['binary'], ['binary.bin'])
+        self.assertIn('large.txt', result['omitted_patch_files'])
+        self.assertTrue(result['truncated'])
+        self.assertLessEqual(result['patch_bytes'], 100000)
+        self.assertIn('+++ b/new.py', result['patch'])
+        self.assertNotIn('credentials.json', result['added'])
+        self.assertNotIn('.env', result['added'])
+        self.assertNotIn('secret-value', result['patch'])
+
+    def test_diff_preserves_missing_final_newline_marker(self):
+        (self.source / 'text.txt').write_text('old', encoding='utf-8')
+        self.tools.execute('self_improvement_snapshot', {})
+        self.tools.execute('workspace_write', {'path': 'source/text.txt', 'content': 'new'})
+        result = self.tools.execute('self_improvement_diff', {})
+        self.assertIn('-old\n\\ No newline at end of file\n+new\n\\ No newline at end of file\n', result['patch'])
+
+    def test_oversized_candidate_is_not_misrepresented_as_deletion(self):
+        (self.source / 'large.txt').write_text('small\n', encoding='utf-8')
+        self.tools.execute('self_improvement_snapshot', {})
+        (self.tools.context.root / 'source' / 'large.txt').write_bytes(b'x' * 1000001)
+        result = self.tools.execute('self_improvement_diff', {})
+        self.assertEqual(result['deleted'], [])
+        self.assertEqual(result['skipped_candidate_files'], ['large.txt'])
+        self.assertEqual(result['patch'], '')
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -10,6 +10,9 @@ by the provider you configure.
 From this directory:
 
 ```powershell
+# Optional interactive launcher: asks for a hidden key, never saves it to disk.
+.\start.ps1
+# Or launch directly from a shell with an existing provider environment variable:
 # Configure ONE provider in this shell. Do not paste credentials into chat or Git.
 $env:GENESIS_OPENAI_API_KEY = '<your key>'
 # Alternatives: GENESIS_ANTHROPIC_API_KEY or GENESIS_GEMINI_API_KEY
@@ -19,13 +22,14 @@ python -m genesis
 Open **http://127.0.0.1:8787**. You can launch without a key to inspect the command
 center and organize ventures; objectives will explicitly block on credentials.
 In Agents & controls, choose the configured provider and its model for each role.
-For a Gemini-only or Anthropic-only setup, configure the COO and specialist roles
-you plan to use. Provider presence is configuration detection, not a health check.
+New agents initially select the first configured provider. Existing agent settings
+remain intact; select the provider/model in Agents & controls after changing your
+setup. Provider presence is configuration detection, not a health check.
 
 Use `--port 8788` or `--data-dir C:\path\to\private-data` if needed. Stop with
 Ctrl+C. Restart using the same data directory to retain history. In-flight tasks
 become interrupted and require review/resume; queued tasks continue automatically.
-Do not run two Genesis processes against the same data directory.
+An OS file lease prevents two CLI processes from sharing the same data directory.
 
 ## Operate
 
@@ -33,12 +37,15 @@ Do not run two Genesis processes against the same data directory.
 2. Submit a natural-language objective and choose a responsible agent.
 3. Inspect actual model messages, tool arguments, execution timeline and artifacts.
 4. Approve individual network or host-execution requests in the approval queue.
-5. Review results and download files. Create follow-up objectives as needed.
+5. Review results and download individual files or a complete task ZIP bundle.
+   Create follow-up objectives as needed.
 
 The COO can delegate to strategy, engineering, QA, growth, finance and operations
 agents. Specialist tasks have their own model configuration and workspaces. The
 COO waits for their results. They are functional prompt/tool capabilities, not
-independent autonomous employees or guarantees of business success.
+independent autonomous employees or guarantees of business success. Agents can
+list and import same-venture artifacts into their own workspace for independent
+QA; imports retain source attribution and content hashes in the audit log.
 
 The three founding acceptance objectives are in [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md).
 They need live credentials and appropriate approvals. They have **not** been
@@ -56,11 +63,14 @@ declared passed using test doubles.
   as the current OS user and is not an OS sandbox.** Only approve trusted code;
   use a dedicated OS account/VM for untrusted objectives. Child processes receive
   a reduced environment; this does not prevent same-user access to host files.
+- Per-invocation execution approvals record a workspace content digest. Changes
+  after approval invalidate that decision and require a fresh review.
 - External communication, purchases, public deployments and live source updates
   have no connector and cannot be approved as standalone product features yet.
   Host execution grants broad effective capabilities; review its exact code first.
 - Self-improvement copies the source into a task workspace. Changes and tests run
-  against that candidate. Applying updates to the running service is manual review.
+  against that candidate. A preserved baseline produces a real unified patch;
+  applying updates to the running service is manual review.
 - Web research fetches real public HTTPS pages. Default search uses Wikipedia
   discovery; a `BRAVE_SEARCH_API_KEY` enables general web search. Source coverage
   is limited without that optional key; market claims must be checked accordingly.

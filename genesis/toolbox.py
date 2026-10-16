@@ -1,12 +1,13 @@
 """Real, permission-gated tools. Workspace isolation is not an OS sandbox."""
 from __future__ import annotations
 
+import difflib
+import hashlib
 import http.client
 import ipaddress
 import json
 import os
 from pathlib import Path
-import shutil
 import socket
 import ssl
 import stat
@@ -46,13 +47,15 @@ def _is_link(path: Path) -> bool:
     return stat.S_ISLNK(info.st_mode) or bool(getattr(info, 'st_file_attributes', 0) & 0x400)
 
 
-def _safe_path(root: Path, relative: str) -> Path:
+def _safe_path(root: Path, relative: str, *, internal: bool = False) -> Path:
     raw = Path(relative)
     if raw.is_absolute() or raw.drive or '..' in raw.parts or ':' in relative:
         raise ValueError('Path must be relative to the workspace without traversal')
     reserved = {'CON', 'PRN', 'AUX', 'NUL', 'CONIN$', 'CONOUT$',
                 *(f'COM{i}' for i in range(1, 10)), *(f'LPT{i}' for i in range(1, 10))}
     for part in raw.parts:
+        if not internal and part.lower().startswith('.genesis-'):
+            raise ValueError('Genesis internal snapshot metadata is protected')
         if (part.rstrip(' .') != part or any(ord(char) < 32 for char in part)
                 or part.split('.')[0].upper() in reserved):
             raise ValueError('Invalid or reserved workspace filename')
@@ -69,6 +72,55 @@ def _safe_path(root: Path, relative: str) -> Path:
     if not candidate.resolve().is_relative_to(root.resolve()):
         raise ValueError('Path leaves the workspace')
     return candidate
+
+
+def _snapshot_excluded(name: str) -> bool:
+    lower = name.lower()
+    return (lower in EXCLUDED or lower.startswith(('.env', '.genesis-'))
+            or any(word in lower for word in ('secret', 'credential', 'token'))
+            or lower.endswith(('.pem', '.key', '.p12', '.db', '.sqlite', '.sqlite3')))
+
+
+def _snapshot_files(root: Path, excluded_root: Path | None = None):
+    """The same exclusion and resource limits apply to snapshots and candidates."""
+    _safe_path(root, '.')
+    count = 0
+    total = 0
+    for directory, dirs, files in os.walk(root, followlinks=False):
+        current = Path(directory)
+        dirs[:] = sorted(d for d in dirs if not _snapshot_excluded(d)
+                         and not _is_link(current / d)
+                         and not (excluded_root and (current / d).resolve().is_relative_to(excluded_root.resolve())))
+        for filename in sorted(files):
+            path = current / filename
+            if _snapshot_excluded(filename) or _is_link(path) or not path.is_file():
+                continue
+            if path.stat().st_size > 1_000_000:
+                continue
+            data = path.read_bytes()
+            if len(data) > 1_000_000:
+                continue
+            count += 1
+            total += len(data)
+            if total > 20_000_000 or count > 2000:
+                raise ValueError('Snapshot exceeds 20 MB / 2000 file limit')
+            yield path.relative_to(root).as_posix(), data
+
+
+def _unified_patch(relative: str, before: bytes | None, after: bytes | None) -> str | None:
+    try:
+        old = (before or b'').decode('utf-8')
+        new = (after or b'').decode('utf-8')
+    except UnicodeDecodeError:
+        return None
+    if '\x00' in old or '\x00' in new:
+        return None
+    lines = difflib.unified_diff(old.splitlines(keepends=True), new.splitlines(keepends=True),
+                                fromfile='a/' + relative if before is not None else '/dev/null',
+                                tofile='b/' + relative if after is not None else '/dev/null')
+    # difflib doesn't emit the standard marker for a missing final newline.
+    return ''.join(line if line.endswith('\n') else line + '\n\\ No newline at end of file\n'
+                   for line in lines)
 
 
 def _public_addresses(host: str, port: int) -> list:
@@ -157,6 +209,7 @@ class Toolbox:
             ('research_fetch_url', 'Fetch a public HTTPS URL; requires network approval', {'url': {'type': 'string'}}, ['url']),
             ('research_search', 'Discover web sources using Brave if configured, otherwise Wikipedia only', {'query': {'type': 'string'}}, ['query']),
             ('self_improvement_snapshot', 'Copy source files into workspace/source for candidate editing', {}, []),
+            ('self_improvement_diff', 'Compare candidate source to its persistent snapshot baseline; save a review patch without changing live source', {}, []),
             ('artifact_report', 'Write a report in workspace/artifacts', {'name': {'type': 'string'}, 'content': {'type': 'string'}}, ['name', 'content']),
         ]
         return [{'name': name, 'description': description, 'parameters': {'type': 'object', 'properties': props, 'required': required, 'additionalProperties': False}}
@@ -208,7 +261,7 @@ class Toolbox:
             return {'path': arguments['path'], 'bytes': len(content.encode('utf-8'))}
         if name == 'workspace_list':
             path = _safe_path(self.context.root, arguments.get('path', '.'))
-            children = sorted(path.iterdir(), key=lambda entry: entry.name)[:1000]
+            children = sorted((entry for entry in path.iterdir() if not entry.name.lower().startswith('.genesis-')), key=lambda entry: entry.name)[:1000]
             return {'entries': [{'name': child.name, 'kind': 'link' if _is_link(child) else 'directory' if child.is_dir() else 'file'} for child in children]}
         if name == 'run_python_tests':
             self._permission('terminal', 'Run Python unittest discovery in the task workspace')
@@ -242,30 +295,30 @@ class Toolbox:
             source = self.context.source_root
             _safe_path(source, '.')
             destination = _safe_path(self.context.root, 'source')
-            if destination.exists():
+            baseline = _safe_path(self.context.root, '.genesis-baseline', internal=True)
+            manifest_path = _safe_path(self.context.root, '.genesis-snapshot.json', internal=True)
+            if destination.exists() or baseline.exists() or manifest_path.exists():
                 raise ValueError('source snapshot already exists; use a fresh task workspace')
             copied = 0
             total = 0
-            for directory, dirs, files in os.walk(source, followlinks=False):
-                current = Path(directory)
-                dirs[:] = [d for d in dirs if d.lower() not in EXCLUDED and not _is_link(current / d)
-                           and not (current / d).resolve().is_relative_to(self.context.root.resolve())]
-                for filename in files:
-                    path = current / filename
-                    lower = filename.lower()
-                    if _is_link(path) or lower.startswith('.env') or any(word in lower for word in ('secret', 'credential', 'token')) or lower.endswith(('.pem', '.key', '.p12', '.db', '.sqlite', '.sqlite3')):
-                        continue
-                    if path.stat().st_size > 1_000_000:
-                        continue
-                    total += path.stat().st_size
-                    if total > 20_000_000 or copied >= 2000:
-                        raise ValueError('Snapshot exceeds 20 MB / 2000 file limit')
-                    target = _safe_path(self.context.root, str(Path('source') / path.relative_to(source)))
-                    target.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copyfile(path, target)
-                    copied += 1
+            manifest = {'version': 1, 'files': {}}
+            for relative, data in _snapshot_files(source, self.context.root):
+                target = _safe_path(destination, relative)
+                original = _safe_path(baseline, relative)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                original.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(data)
+                original.write_bytes(data)
+                manifest['files'][relative] = hashlib.sha256(data).hexdigest()
+                copied += 1
+                total += len(data)
             destination.mkdir(parents=True, exist_ok=True)
-            return {'path': 'source', 'files': copied, 'bytes': total, 'source_modified': False}
+            baseline.mkdir(parents=True, exist_ok=True)
+            manifest_path.write_text(json.dumps(manifest, sort_keys=True), encoding='utf-8')
+            return {'path': 'source', 'files': copied, 'bytes': total, 'source_modified': False,
+                    'baseline': 'persistent original snapshot; use self_improvement_diff after editing'}
+        if name == 'self_improvement_diff':
+            return self._self_improvement_diff()
         if name == 'artifact_report':
             filename = arguments['name']
             if not filename or Path(filename).name != filename or '/' in filename or '\\' in filename:
@@ -273,3 +326,86 @@ class Toolbox:
             result = self.execute('workspace_write', {'path': 'artifacts/' + filename, 'content': arguments['content']})
             return {'artifact': result['path'], 'bytes': result['bytes']}
         raise ValueError('Unknown tool')
+
+    def _self_improvement_diff(self) -> dict:
+        manifest_path = _safe_path(self.context.root, '.genesis-snapshot.json', internal=True)
+        if not manifest_path.is_file():
+            raise ValueError('Create a self_improvement_snapshot before requesting a diff')
+        if manifest_path.stat().st_size > 1_000_000:
+            raise ValueError('Snapshot manifest exceeds limit')
+        manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+        originals = manifest.get('files')
+        if manifest.get('version') != 1 or not isinstance(originals, dict) or len(originals) > 2000:
+            raise ValueError('Invalid snapshot manifest')
+        baseline = _safe_path(self.context.root, '.genesis-baseline', internal=True)
+        candidate = _safe_path(self.context.root, 'source')
+        if not candidate.is_dir():
+            raise ValueError('Candidate source directory is missing')
+        files = dict(_snapshot_files(candidate))
+        changed = []
+        added = []
+        deleted = []
+        binary = []
+        omitted = []
+        skipped = []
+        live_changed = []
+        chunks = []
+        patch_bytes = 0
+        for relative in sorted(originals.keys() | files.keys()):
+            if not isinstance(relative, str) or any(_snapshot_excluded(part) for part in Path(relative).parts):
+                raise ValueError('Invalid path in snapshot manifest')
+            before = None
+            if relative in originals:
+                original = _safe_path(baseline, relative)
+                if original.stat().st_size > 1_000_000:
+                    raise ValueError('Baseline file exceeds limit')
+                before = original.read_bytes()
+                if hashlib.sha256(before).hexdigest() != originals[relative]:
+                    raise ValueError('Snapshot baseline integrity check failed: ' + relative)
+            after = files.get(relative)
+            if relative in originals and relative not in files:
+                try:
+                    missing = _safe_path(candidate, relative)
+                    exists_but_excluded = missing.exists() or missing.is_symlink()
+                except ValueError:
+                    exists_but_excluded = True
+                if exists_but_excluded:
+                    changed.append(relative)
+                    omitted.append(relative)
+                    skipped.append(relative)
+                    continue
+            if before == after:
+                continue
+            (added if before is None else deleted if after is None else changed).append(relative)
+            # Source may have evolved since snapshot creation. Detect conflicts for
+            # proposed paths, but never regenerate the baseline from current source.
+            try:
+                live = _safe_path(self.context.source_root, relative)
+                current_hash = (hashlib.sha256(live.read_bytes()).hexdigest()
+                                if live.is_file() and live.stat().st_size <= 1_000_000 else None)
+                if (current_hash != originals.get(relative)
+                        or (before is None and live.exists())):
+                    live_changed.append(relative)
+            except (OSError, ValueError):
+                live_changed.append(relative)
+            patch = _unified_patch(relative, before, after)
+            if patch is None:
+                binary.append(relative)
+                omitted.append(relative)
+                continue
+            size = len(patch.encode('utf-8'))
+            if not patch or patch_bytes + size > MAX_TEXT:
+                omitted.append(relative)
+                continue
+            chunks.append(patch)
+            patch_bytes += size
+        text = ''.join(chunks)
+        artifact = _safe_path(self.context.root, 'artifacts/self-improvement.patch')
+        artifact.parent.mkdir(parents=True, exist_ok=True)
+        artifact.write_bytes(text.encode('utf-8'))
+        return {'artifact': 'artifacts/self-improvement.patch', 'comparison': 'original_snapshot_baseline',
+                'changed': changed, 'added': added, 'deleted': deleted, 'binary': binary,
+                'omitted_patch_files': omitted, 'truncated': bool(omitted), 'patch_bytes': patch_bytes,
+                'skipped_candidate_files': skipped,
+                'patch': text, 'live_source_changed': live_changed, 'source_modified': False,
+                'warning': 'Review only. No changes applied. Omitted files require separate review; live changes may cause conflicts.'}
