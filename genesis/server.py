@@ -15,7 +15,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
-from .engine import Engine, ROLES
+from .engine import Engine, ROLES, read_limited
 from .store import now
 from .toolbox import _safe_path
 from .lease import DataLease
@@ -112,10 +112,15 @@ class Handler(BaseHTTPRequestHandler):
                         file = _safe_path(engine.workspace(task), relative)
                         if not file.is_file():
                             continue
-                        total += file.stat().st_size
-                        if total > 50 * 1024 * 1024:
+                        remaining = 50 * 1024 * 1024 - total
+                        if file.stat().st_size > remaining:
                             return self._json(413, {'error':'Task bundle exceeds 50 MB. Download individual artifacts.'})
-                        archive.writestr(relative, file.read_bytes())
+                        try:
+                            data = read_limited(file, remaining)
+                        except ValueError:
+                            return self._json(413, {'error':'Task bundle exceeds 50 MB. Download individual artifacts.'})
+                        total += len(data)
+                        archive.writestr(relative, data)
                 raw = buffer.getvalue()
                 self._headers(200, 'application/zip', len(raw), 'genesis-' + task_id[:12] + '.zip')
                 return self.wfile.write(raw)
@@ -133,7 +138,7 @@ class Handler(BaseHTTPRequestHandler):
                 file = _safe_path(engine.workspace(task), artifact['path'])
                 if not file.is_file() or file.stat().st_size > 20 * 1024 * 1024:
                     return self._json(404, {'error':'Artifact missing or exceeds 20 MB download limit.'})
-                raw = file.read_bytes()
+                raw = read_limited(file, 20 * 1024 * 1024)
                 filename = ''.join(c for c in file.name if c.isascii() and (c.isalnum() or c in '._-')) or 'artifact'
                 self._headers(200, 'application/octet-stream', len(raw), filename)
                 return self.wfile.write(raw)
@@ -186,7 +191,7 @@ class Handler(BaseHTTPRequestHandler):
                 if parts[3] == 'cancel':
                     engine.cancel(parts[2])
                 elif parts[3] == 'resume':
-                    engine.resume(parts[2])
+                    engine.resume(parts[2], body.get('provider'), body.get('model'))
                 else:
                     return self._json(404, {'error':'Unknown task action.'})
                 return self._json(200, engine.store.get('tasks', parts[2]))
@@ -262,7 +267,10 @@ def main():
             except KeyboardInterrupt:
                 pass
             finally:
-                engine.close()
+                if not engine.close():
+                    print('Waiting for the in-flight request/tool before releasing the data directory...', flush=True)
+                    while not engine.close():
+                        pass
                 server.server_close()
     except (RuntimeError, OSError) as exc:
         parser.exit(1, str(exc) + '\n')

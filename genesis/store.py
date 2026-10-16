@@ -55,6 +55,16 @@ class Store:
                        (kind, body['id'], json.dumps(body)))
         return body
 
+    def batch(self, records, events=()):
+        """Commit related lifecycle records and their audit evidence together."""
+        with self.lock, self.connect() as db:
+            for kind, body in records:
+                db.execute('INSERT OR REPLACE INTO records VALUES (?,?,?)',
+                           (kind, body['id'], json.dumps(body)))
+            for event in events:
+                db.execute('INSERT INTO events(task_id,body) VALUES (?,?)',
+                           (event.get('task_id'), json.dumps(event)))
+
     def get(self, kind, record_id):
         with self.connect() as db:
             row = db.execute('SELECT body FROM records WHERE kind=? AND id=?',

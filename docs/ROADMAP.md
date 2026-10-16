@@ -11,8 +11,10 @@ provider independence, controlled tools, and reviewable execution.
    isolated task workspaces, public web research, development/test tools.
 3. **Verified — CEO command center:** connected portfolio, objective submission,
    task history, agent configuration, approvals, memory, costs and artifacts.
-4. **In progress — expanded verification:** unit/security tests, HTTP integration tests and browser
-   end-to-end verification. Provider doubles are tests only.
+4. **Verified core; final integration in progress — expanded verification:** 90
+   unit/security/HTTP tests plus real candidate repair/patch/test evidence. Final
+   browser rerun and partial-usage accounting are being completed. Provider doubles
+   are tests only.
 5. **Pending credentials — live acceptance:** run the three founding acceptance
    objectives using real provider credentials. Report actual artifacts and costs.
 6. **Next hardening:** OS-level process isolation, richer research sources,

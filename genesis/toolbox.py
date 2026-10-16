@@ -207,10 +207,13 @@ class Toolbox:
 
     def schemas(self) -> list[dict]:
         entries = [
-            ('workspace_read', 'Read a UTF-8 workspace file', {'path': {'type': 'string'}}, ['path']),
+            ('workspace_read', 'Read a UTF-8 workspace file in character chunks. Default limit 30000; use next_offset to continue. Files must be at most 1 MB.',
+             {'path': {'type': 'string'}, 'offset': {'type': 'integer', 'minimum': 0},
+              'limit': {'type': 'integer', 'minimum': 1, 'maximum': 100000}}, ['path']),
             ('workspace_write', 'Write a UTF-8 workspace file', {'path': {'type': 'string'}, 'content': {'type': 'string'}}, ['path', 'content']),
             ('workspace_list', 'List a workspace directory', {'path': {'type': 'string'}}, []),
-            ('run_python_tests', 'Run unittest discovery in workspace; requires execution approval', {'path': {'type': 'string'}, 'timeout': {'type': 'integer'}}, []),
+            ('run_python_tests', 'Run real unittest discovery with candidate imports. path and optional workdir are workspace-relative. A nested tests directory is preferred; zero tests fails. Requires execution approval.',
+             {'path': {'type': 'string'}, 'workdir': {'type': 'string'}, 'timeout': {'type': 'integer'}}, []),
             ('terminal', 'Run an allowed command without a shell; requires execution approval', {'command': {'type': 'array', 'items': {'type': 'string'}}, 'timeout': {'type': 'integer'}}, ['command']),
             ('research_fetch_url', 'Fetch a public HTTPS URL; requires network approval', {'url': {'type': 'string'}}, ['url']),
             ('research_search', 'Discover web sources using Brave if configured, otherwise Wikipedia only', {'query': {'type': 'string'}}, ['query']),
@@ -225,7 +228,7 @@ class Toolbox:
         if not getattr(self.context, 'allow_' + kind):
             raise PermissionRequired(kind, details)
 
-    def _run(self, argv: list[str], timeout: int) -> dict:
+    def _run(self, argv: list[str], timeout: int, cwd: Path | None = None) -> dict:
         self._permission('terminal', 'Execute code in the task workspace: ' + ' '.join(argv))
         timeout = max(1, min(int(timeout), 60))
         # Disk-backed output avoids unbounded in-memory capture. These processes
@@ -233,7 +236,7 @@ class Toolbox:
         with tempfile.TemporaryFile() as output:
             child_environment = {key: value for key, value in os.environ.items()
                                  if key.upper() in CHILD_ENVIRONMENT}
-            process = subprocess.Popen(argv, cwd=self.context.root, stdin=subprocess.DEVNULL,
+            process = subprocess.Popen(argv, cwd=cwd or self.context.root, stdin=subprocess.DEVNULL,
                                        stdout=output, stderr=subprocess.STDOUT, shell=False,
                                        env=child_environment)
             timed_out = False
@@ -254,9 +257,25 @@ class Toolbox:
             raise ValueError('Unknown tool: ' + name)
         if name == 'workspace_read':
             path = _safe_path(self.context.root, arguments['path'])
-            if path.stat().st_size > MAX_TEXT:
-                raise ValueError('File exceeds 100 KB limit')
-            return {'path': arguments['path'], 'content': path.read_text(encoding='utf-8')}
+            offset = arguments.get('offset', 0)
+            limit = arguments.get('limit', 30000)
+            if (type(offset) is not int or offset < 0 or type(limit) is not int
+                    or not 1 <= limit <= MAX_TEXT):
+                raise ValueError('offset must be a nonnegative integer and limit an integer from 1 to 100000')
+            # Check the actual bytes read as well as stat: a concurrently growing
+            # file must never turn this operation into an unbounded allocation.
+            if path.stat().st_size > MAX_FETCH:
+                raise ValueError('File exceeds 1 MB read limit')
+            with path.open('rb') as stream:
+                data = stream.read(MAX_FETCH + 1)
+            if len(data) > MAX_FETCH:
+                raise ValueError('File exceeds 1 MB read limit')
+            text = data.decode('utf-8')
+            content = text[offset:offset + limit]
+            end = min(offset + len(content), len(text))
+            return {'path': arguments['path'], 'content': content, 'offset': offset,
+                    'next_offset': end if end < len(text) else None,
+                    'total_characters': len(text), 'truncated': end < len(text)}
         if name == 'workspace_write':
             content = arguments['content']
             if len(content.encode('utf-8')) > MAX_TEXT:
@@ -272,7 +291,46 @@ class Toolbox:
         if name == 'run_python_tests':
             self._permission('terminal', 'Run Python unittest discovery in the task workspace')
             path = _safe_path(self.context.root, arguments.get('path', '.'))
-            return self._run([sys.executable, '-I', '-m', 'unittest', 'discover', '-s', str(path)], arguments.get('timeout', 30))
+            if not path.is_dir():
+                raise ValueError('Test discovery path must be a directory')
+            if 'workdir' in arguments:
+                workdir = _safe_path(self.context.root, arguments['workdir'])
+            else:
+                workdir = path.parent if path.name == 'tests' else path
+            if not workdir.is_dir():
+                raise ValueError('Test workdir must be a directory')
+            nested_tests = _safe_path(self.context.root, str((path / 'tests').relative_to(self.context.root)))
+            discovery = nested_tests if nested_tests.is_dir() else path
+            runner = (
+                'import json, pathlib, sys, unittest\n'
+                'sys.path.insert(0, sys.argv[1])\n'
+                'suite = unittest.defaultTestLoader.discover(sys.argv[2])\n'
+                'count = suite.countTestCases()\n'
+                'pathlib.Path(sys.argv[3]).write_text(json.dumps({"discovered_tests": count}), encoding="utf-8")\n'
+                'if not count:\n'
+                ' print("No tests discovered", flush=True)\n'
+                ' sys.exit(2)\n'
+                'result = unittest.TextTestRunner(verbosity=1).run(suite)\n'
+                'sys.exit(0 if result.wasSuccessful() else 1)\n'
+            )
+            with tempfile.TemporaryDirectory(prefix='.genesis-tests-', dir=self.context.root) as metadata_dir:
+                metadata = Path(metadata_dir) / 'result.json'
+                result = self._run([sys.executable, '-I', '-c', runner, str(workdir), str(discovery), str(metadata)],
+                                   arguments.get('timeout', 30), cwd=workdir)
+                count = None
+                if metadata.is_file():
+                    with metadata.open('rb') as stream:
+                        data = stream.read(1025)
+                    if len(data) <= 1024:
+                        try:
+                            value = json.loads(data).get('discovered_tests')
+                            if type(value) is int and value >= 0:
+                                count = value
+                        except (ValueError, AttributeError):
+                            pass
+            result.update(discovered_tests=count, no_tests=count == 0,
+                          passed=result['returncode'] == 0 and count is not None and count > 0)
+            return result
         if name == 'terminal':
             self._permission('terminal', 'Execute a restricted command in the task workspace')
             argv = arguments['command']

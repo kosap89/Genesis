@@ -26,6 +26,34 @@ class ToolboxTests(unittest.TestCase):
         self.assertEqual(result['artifact'], 'artifacts/report.md')
         json.dumps(self.tools.schemas())
 
+    def test_workspace_read_chunks_unicode_by_character_without_losing_bytes(self):
+        text = 'a' * 29999 + '\U0001f680' + '\u00e4\u6f22\r\n' + 'z' * 70000
+        (self.tools.context.root / 'large.txt').write_bytes(text.encode('utf-8'))
+        first = self.tools.execute('workspace_read', {'path': 'large.txt'})
+        self.assertEqual(first['content'], text[:30000])
+        self.assertEqual(first['content'][-1], '\U0001f680')
+        self.assertEqual(first['next_offset'], 30000)
+        self.assertEqual(first['total_characters'], len(text))
+        self.assertTrue(first['truncated'])
+        second = self.tools.execute('workspace_read', {'path': 'large.txt', 'offset': first['next_offset'], 'limit': 100000})
+        self.assertEqual(first['content'] + second['content'], text)
+        self.assertIsNone(second['next_offset'])
+        self.assertFalse(second['truncated'])
+        past_end = self.tools.execute('workspace_read', {'path': 'large.txt', 'offset': len(text) + 5})
+        self.assertEqual(past_end['content'], '')
+        self.assertIsNone(past_end['next_offset'])
+
+    def test_workspace_read_validates_chunk_limits_and_file_byte_limit(self):
+        (self.tools.context.root / 'file.txt').write_bytes(b'content')
+        for arguments in ({'offset': -1}, {'offset': True}, {'offset': 1.5},
+                          {'limit': 0}, {'limit': 100001}, {'limit': False}, {'limit': '5'}):
+            with self.subTest(arguments=arguments), self.assertRaises(ValueError):
+                self.tools.execute('workspace_read', {'path': 'file.txt', **arguments})
+        # Limit counts UTF-8 bytes on disk, not Unicode code points.
+        (self.tools.context.root / 'unicode.txt').write_bytes(('\U0001f680' * 250001).encode('utf-8'))
+        with self.assertRaisesRegex(ValueError, '1 MB'):
+            self.tools.execute('workspace_read', {'path': 'unicode.txt', 'limit': 1})
+
     def test_traversal_absolute_and_stream_paths_rejected(self):
         for path in ('../outside', 'nested/../../outside', str(self.base / 'outside'), 'a:stream', 'CON', 'nul.txt', 'trailing. '):
             with self.subTest(path=path), self.assertRaises(ValueError):
@@ -56,8 +84,40 @@ class ToolboxTests(unittest.TestCase):
         result = self.tools.execute('run_python_tests', {})
         self.assertEqual(result['returncode'], 1)
         self.assertIn('FAILED', result['output'])
+        self.assertEqual(result['discovered_tests'], 1)
+        self.assertFalse(result['passed'])
         self.tools.execute('workspace_write', {'path': 'test_example.py', 'content': 'import unittest\nclass TestExample(unittest.TestCase):\n def test_ok(self): self.assertEqual(1, 1)\n'})
         self.assertEqual(self.tools.execute('run_python_tests', {})['returncode'], 0)
+
+    def test_nested_candidate_tests_import_candidate_package_and_use_project_cwd(self):
+        self.tools.context.allow_terminal = True
+        for path, content in {
+            'source/package/__init__.py': 'VALUE = 42\n',
+            'source/input.txt': 'candidate data',
+            'source/tests/test_import.py': ('import pathlib, unittest\nfrom package import VALUE\n'
+                'class Check(unittest.TestCase):\n'
+                ' def test_candidate(self):\n'
+                '  self.assertEqual(VALUE, 42)\n'
+                '  self.assertEqual(pathlib.Path("input.txt").read_text(), "candidate data")\n'),
+        }.items():
+            self.tools.execute('workspace_write', {'path': path, 'content': content})
+        for arguments in ({'path': 'source'}, {'path': 'source/tests'},
+                          {'path': 'source/tests', 'workdir': 'source'}):
+            with self.subTest(arguments=arguments):
+                result = self.tools.execute('run_python_tests', arguments)
+                self.assertEqual(result['returncode'], 0, result['output'])
+                self.assertEqual(result['discovered_tests'], 1)
+                self.assertTrue(result['passed'])
+                self.assertFalse(result['no_tests'])
+
+    def test_no_tests_is_failure_and_cannot_masquerade_as_verification(self):
+        self.tools.context.allow_terminal = True
+        result = self.tools.execute('run_python_tests', {})
+        self.assertEqual(result['returncode'], 2)
+        self.assertEqual(result['discovered_tests'], 0)
+        self.assertTrue(result['no_tests'])
+        self.assertFalse(result['passed'])
+        self.assertIn('No tests discovered', result['output'])
 
     def test_restricted_terminal_and_bounded_output(self):
         self.tools.context.allow_terminal = True
@@ -216,10 +276,11 @@ class ToolboxTests(unittest.TestCase):
             chunks.append(_unified_patch(name, before, after))
         patchfile = self.base / 'review.patch'
         patchfile.write_bytes(''.join(chunks).encode('utf-8'))
-        result = subprocess.run([git, 'apply', '--check', str(patchfile)], cwd=application,
+        git_command = [git, '-c', 'core.autocrlf=false', '-c', 'core.eol=lf', 'apply']
+        result = subprocess.run([*git_command, '--check', str(patchfile)], cwd=application,
                                 capture_output=True, timeout=15, check=False)
         self.assertEqual(result.returncode, 0, result.stderr.decode(errors='replace'))
-        result = subprocess.run([git, 'apply', str(patchfile)], cwd=application,
+        result = subprocess.run([*git_command, str(patchfile)], cwd=application,
                                 capture_output=True, timeout=15, check=False)
         self.assertEqual(result.returncode, 0, result.stderr.decode(errors='replace'))
         for name, (_, after) in fixtures.items():

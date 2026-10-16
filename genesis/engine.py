@@ -24,6 +24,16 @@ DEFAULTS = dict(id='global', budget_usd=5.0, spent_usd=0.0, reserved_usd=0.0,
                 allow_network=False, allow_terminal=False, max_steps=16,
                 max_output_tokens=4096)
 TERMINAL = {'completed', 'failed', 'cancelled'}
+TOOL_MESSAGE_LIMIT = 40000
+
+
+def read_limited(path, limit):
+    """Enforce the byte ceiling on the actual read, even if a file grows."""
+    with path.open('rb') as stream:
+        data = stream.read(limit + 1)
+    if len(data) > limit:
+        raise ValueError(f'File exceeds {limit} byte limit.')
+    return data
 
 
 def schema(name, description, properties, required=()):
@@ -53,10 +63,18 @@ class Engine:
                                              fallbacks=[]))
         # Never blindly replay an interrupted external request or tool invocation.
         for task in self.store.all('tasks'):
-            if task['status'] == 'running':
+            approvals = [a for a in self.store.all('approvals') if a['task_id'] == task['id']]
+            pending = [a for a in approvals if a['status'] == 'pending']
+            if pending and task['status'] in TERMINAL:
+                for approval in pending:
+                    self.store.update('approvals', approval['id'], status='denied', decided_at=now())
+                    self.store.event('orphan_approval_denied', task['id'], approval_id=approval['id'])
+            elif pending and task['status'] in {'running','interrupted','queued','waiting_approval'}:
+                # Recover checkpoints created before approval persistence was atomic.
+                self.store.update('tasks', task['id'], status='waiting_approval', updated_at=now())
+            elif task['status'] == 'running':
                 self.store.update('tasks', task['id'], status='interrupted', error='Process stopped during execution. Review history before resuming: an external call or tool may have completed.', updated_at=now())
             elif task['status'] == 'waiting_approval':
-                approvals = [a for a in self.store.all('approvals') if a['task_id'] == task['id']]
                 if approvals and not any(a['status'] == 'pending' for a in approvals):
                     self.store.update('tasks', task['id'], status='interrupted', error='Approval decision persisted before interruption. Review and resume to continue.', updated_at=now())
         # An outstanding reservation may already have been billed. Charge its full
@@ -80,6 +98,7 @@ class Engine:
         self.wake.set()
         if self.thread:
             self.thread.join(timeout=2)
+        return not (self.thread and self.thread.is_alive())
 
     def _loop(self):
         while not self.stop_event.is_set():
@@ -168,9 +187,10 @@ class Engine:
                 raise ValueError('Artifact is missing or exceeds 100 KB import limit.')
             if target.exists():
                 raise ValueError('Import destination already exists; choose a new relative path.')
-            raw = source.read_bytes()
+            raw = read_limited(source, 100000)
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(raw)
+            with target.open('xb') as stream:
+                stream.write(raw)
             digest = hashlib.sha256(raw).hexdigest()
             self.register_artifacts(task)
             self.store.event('artifact_imported', task['id'], artifact_id=artifact['id'], source_task_id=origin['id'], path=target_relative, sha256=digest)
@@ -181,10 +201,13 @@ class Engine:
             body.update({'content':str(args['content'])[:100000]} if kind == 'memories' else {'summary':str(args['summary'])[:100000], 'status':'researched'})
             return self.store.put(kind, body)
         if name == 'delegate_task' and not task.get('parent_id'):
-            children = [t for t in self.store.all('tasks') if t.get('parent_id') == task['id']]
-            if len(children) >= 8:
-                raise ValueError('Maximum eight delegated tasks per objective.')
-            child = self.create_task(args['objective'], task.get('venture_id'), args['role'], parent_id=task['id'])
+            with self.guard:
+                if self.store.get('tasks', task['id'])['status'] != 'running':
+                    raise ValueError('Parent is no longer running; delegation cancelled.')
+                children = [t for t in self.store.all('tasks') if t.get('parent_id') == task['id']]
+                if len(children) >= 8:
+                    raise ValueError('Maximum eight delegated tasks per objective.')
+                child = self.create_task(args['objective'], task.get('venture_id'), args['role'], parent_id=task['id'])
             return {'task_id':child['id'], 'status':'queued'}
         if name == 'task_inspect':
             other = self.store.get('tasks', args['task_id'])
@@ -198,6 +221,9 @@ class Engine:
         completed = {m.get('tool_call_id') for m in messages if m['role'] == 'tool'}
         calls = [c for m in messages if m['role'] == 'assistant' for c in m.get('tool_calls', []) if c['id'] not in completed]
         for call in calls:
+            if self.stop_event.is_set():
+                self._status(task['id'], 'interrupted', error='Worker stopped before the next tool. Review and resume.')
+                return False
             if self.store.get('tasks', task['id'])['status'] != 'running':
                 return False
             args = call.get('arguments', {})
@@ -211,8 +237,7 @@ class Engine:
                         self.store.event('approval_invalidated', task['id'], approval_id=approval['id'], reason='Workspace changed after execution approval.')
             prior_events = self.store.events(task['id'], limit=10000)
             started = [e for e in prior_events if e['action'] == 'tool_started' and e.get('tool_call_id') == call['id']]
-            requested = [e for e in prior_events if e['action'] == 'approval_requested' and e.get('tool_call_id') == call['id']]
-            if len(started) > len(requested):
+            if len(started) > len(approvals):
                 # A process crash may have occurred after a side effect but before its
                 # result was committed. Do not replay that ambiguous invocation.
                 result = {'error':'Previous invocation has an unknown outcome after interruption. It was not replayed. Inspect workspace and audit before planning further action.'}
@@ -226,7 +251,16 @@ class Engine:
                     allow_network=settings['allow_network'] or 'network' in allowed,
                     allow_terminal=settings['allow_terminal'] or 'terminal' in allowed))
                 try:
-                    self.store.event('tool_started', task['id'], tool=call['name'], tool_call_id=call['id'], arguments=args)
+                    with self.guard:
+                        # The durable start event is the invocation's claim point.
+                        # Cancellation before this point must prevent execution;
+                        # afterwards this one invocation is already in flight.
+                        if self.stop_event.is_set() or self.store.get('tasks', task['id'])['status'] != 'running':
+                            return False
+                        current_settings = self.settings()
+                        box.context.allow_network = current_settings['allow_network'] or 'network' in allowed
+                        box.context.allow_terminal = current_settings['allow_terminal'] or 'terminal' in allowed
+                        self.store.event('tool_started', task['id'], tool=call['name'], tool_call_id=call['id'], arguments=args)
                     if call['name'] in {s['name'] for s in self.core_schemas(task)}:
                         result = self._core_tool(task, call['name'], args)
                     else:
@@ -236,18 +270,45 @@ class Engine:
                     # Tool adapter actions map to the two explicit capabilities.
                     action = 'network' if 'network' in action or 'research' in action else 'terminal'
                     fingerprint = self.workspace_fingerprint(task) if action == 'terminal' else {}
-                    self.store.put('approvals', dict(task_id=task['id'], tool_call_id=call['id'], action=action,
-                        details={'tool':call['name'], 'arguments':args, 'scope':'This invocation only', 'workspace_digest':fingerprint.get('digest'), 'workspace_files':fingerprint.get('files'), 'risk':'Host execution is not an OS sandbox. Review the task files before approval.' if action == 'terminal' else 'Sends a request to a public web service.'},
-                        status='pending', created_at=now()))
-                    self._status(task['id'], 'waiting_approval')
-                    self.store.event('approval_requested', task['id'], tool=call['name'], action_requested=action, tool_call_id=call['id'])
+                    with self.guard:
+                        current = self.store.get('tasks', task['id'])
+                        if current['status'] != 'running':
+                            return False
+                        approval = dict(id=ident(), task_id=task['id'], tool_call_id=call['id'], action=action,
+                            details={'tool':call['name'], 'arguments':args, 'scope':'This invocation only', 'workspace_digest':fingerprint.get('digest'), 'workspace_files':fingerprint.get('files'), 'risk':'Host execution is not an OS sandbox. Review the task files before approval.' if action == 'terminal' else 'Sends a request to a public web service.'},
+                            status='pending', created_at=now())
+                        current.update(status='waiting_approval', updated_at=now())
+                        event = dict(id=ident(), action='approval_requested', task_id=task['id'], created_at=now(), tool=call['name'], action_requested=action, tool_call_id=call['id'])
+                        self.store.batch([('approvals',approval),('tasks',current)],events=[event])
                     return False
                 except Exception as exc:
                     result = {'error':str(exc)[:2000], 'type':type(exc).__name__}
-            self.store.message(task['id'], dict(role='tool', tool_call_id=call['id'], name=call['name'], content=json.dumps(result, ensure_ascii=False)[:40000]))
+            content = self.tool_result_content(task, call, result)
+            self.store.message(task['id'], dict(role='tool', tool_call_id=call['id'], name=call['name'], content=content))
             self.store.event('tool_finished', task['id'], tool=call['name'], tool_call_id=call['id'])
             self.register_artifacts(task)
         return True
+
+    def tool_result_content(self, task, call, result):
+        """Keep model context bounded without losing evidence or breaking JSON."""
+        encoded = json.dumps(result, ensure_ascii=False)
+        if len(encoded) <= TOOL_MESSAGE_LIMIT:
+            return encoded
+        filename = hashlib.sha256(call['id'].encode('utf-8')).hexdigest() + '.json'
+        relative = 'artifacts/tool-results/' + filename
+        path = _safe_path(self.workspace(task), relative)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open('w', encoding='utf-8', newline='') as stream:
+            stream.write(encoded)
+        envelope = dict(truncated=True, full_result_artifact=relative,
+                        result_characters=len(encoded), preview=encoded[:16000],
+                        instruction='The complete tool result is saved as UTF-8 JSON. Use workspace_read with offset and limit to read further chunks.')
+        # Preserve pointers/summaries for large review patches and research output.
+        if isinstance(result, dict):
+            for key in ('artifact', 'path', 'comparison', 'added', 'modified', 'deleted', 'truncated', 'url', 'status'):
+                if key in result and len(json.dumps(result[key])) <= 1000:
+                    envelope['result_' + key] = result[key]
+        return json.dumps(envelope, ensure_ascii=False)
 
     def workspace_fingerprint(self, task):
         root = self.workspace(task)
@@ -314,12 +375,15 @@ class Engine:
                 per_call_reserve = (input_bytes * config['input_cost_per_million'] + settings['max_output_tokens'] * config['output_cost_per_million']) / 1e6
                 reserve = per_call_reserve * (1 + len(config.get('fallbacks', [])))
                 with self.guard:
+                    if self.stop_event.is_set() or self.store.get('tasks', task_id)['status'] != 'running':
+                        self._status(task_id, 'interrupted', error='Worker stopped before the next model request. Review and resume.')
+                        return
                     settings = self.settings()
                     if settings['spent_usd'] + settings['reserved_usd'] + reserve > settings['budget_usd']:
                         self._status(task_id, 'blocked_budget', error=f'Next call needs a ${reserve:.4f} configured reserve; review the budget.')
                         return
                     self.store.update('settings', 'global', reserved_usd=settings['reserved_usd'] + reserve)
-                self.store.event('model_request', task_id, provider=task['provider'], model=task['model'], reserved_usd=reserve)
+                    self.store.event('model_request', task_id, provider=task['provider'], model=task['model'], reserved_usd=reserve)
                 try:
                     response = self.router.generate(messages, tools, config)
                 except Exception as exc:
@@ -352,9 +416,12 @@ class Engine:
                     if not response.text.strip():
                         self._status(task_id, 'failed', error='Provider returned no content or tool calls.')
                         return
-                    self.save_result(task, response.text)
-                    self._status(task_id, 'completed', result=response.text)
-                    self.store.event('task_completed', task_id)
+                    with self.guard:
+                        if self.store.get('tasks', task_id)['status'] != 'running':
+                            return
+                        self.save_result(task, response.text)
+                        self._status(task_id, 'completed', result=response.text)
+                        self.store.event('task_completed', task_id)
                     return
             self._status(task_id, 'interrupted', error='Worker stopped. Review before resuming.')
         except Exception as exc:
@@ -402,11 +469,20 @@ class Engine:
             self._status(task['id'], 'queued')
             self.wake.set()
 
-    def resume(self, task_id):
+    def resume(self, task_id, provider=None, model=None):
         with self.guard:
             task = self.store.get('tasks', task_id)
             if not task or task['status'] not in {'interrupted','blocked_credentials','blocked_budget','paused_limit','failed'}:
                 raise ValueError('This task cannot be resumed in its current state.')
+            if provider is not None or model is not None:
+                route_provider = provider or task['provider']
+                if route_provider not in DEFAULT_MODELS:
+                    raise ValueError('Unknown provider.')
+                route_model = model or (task['model'] if route_provider == task['provider'] else DEFAULT_MODELS[route_provider])
+                if not isinstance(route_model, str) or not 1 <= len(route_model) <= 200:
+                    raise ValueError('Model must be 1–200 characters.')
+                self.store.update('tasks', task_id, provider=route_provider, model=route_model)
+                self.store.event('task_route_changed', task_id, previous_provider=task['provider'], previous_model=task['model'], provider=route_provider, model=route_model)
             self._status(task_id, 'queued', error='')
             self.store.event('task_resumed', task_id)
             self.wake.set()

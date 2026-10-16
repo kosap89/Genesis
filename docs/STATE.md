@@ -1,113 +1,74 @@
-# Persistent project state
+# Genesis persistent project state
 
-Started 2026-10-17 (Europe/Helsinki). Repository initially empty.
+Updated 2026-10-17, Europe/Helsinki. Resumed after two CEO-requested restarts.
+Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current implementation
+## Implemented
 
-Implemented durable Python/SQLite execution, seven configurable specialist roles,
-COO delegation, OpenAI/Anthropic/Gemini adapters, controlled tools, per-invocation
-approvals, configured-rate budget reservations, artifacts, audit, and a connected
-dependency-free browser command center. No paid API calls made.
+Local Python/SQLite company OS with a connected browser command center, seven
+configurable agent roles, COO delegation, venture history, organizational memory,
+opportunities, durable queued jobs, approvals, artifacts/ZIP downloads and audit.
+Real OpenAI Responses, Anthropic Messages and Gemini generateContent adapters;
+native tool calls, configured-rate budget reservations and explicit fallback.
 
-## Verified checkpoint
+Controlled public HTTPS research/search, bounded workspace files, real Python
+development/tests, cross-agent artifact imports and candidate self-improvement.
+Source snapshots preserve protected baselines and generate actual unified patches.
+Production has no mock AI provider; doubles exist only in identified test fixtures.
 
-- `python -m unittest discover -s tests -v`: 37 tests, all successful, one Windows
-  symlink privilege skip. More API/accounting tests are being added.
-- `npm.cmd run test:e2e`: PASS in installed headless Chrome. Production app tested
-  through browser for venture creation, credential blocking at zero cost, memory,
-  restart persistence and mobile layout. A separately launched, explicitly labeled
-  test fixture verified browser approval, real Python tests and artifact downloads.
-- Browser screenshots saved under ignored `test-results/` (production + fixture).
-- Missing credentials have zero charges; failed transports and fallback requests
-  have conservative reservations. Interrupted tool invocations are not replayed.
+## Latest verified checkpoint
 
-## Exact next task
+- Full `python -m unittest discover -s tests -v`: **90 tests, OK, one Windows
+  symlink privilege skip**. This includes real subprocesses and local HTTP.
+- Toolbox: 23 tests, including exact-byte Git patch application across LF/CRLF,
+  missing EOF newline, additions/deletions and Unicode line separators. The saved
+  restart test failure is fixed without modifying global Git configuration.
+- Candidate test runner supports nested project imports and working directories;
+  it reports discovered test count and treats zero tests as failure.
+- Self-improvement integration observes a real regression fail, edits only the
+  candidate, observes tests pass after a new approval, and downloads a patch ZIP.
+  Live source stays unchanged; protected baseline files stay out of artifacts.
+- Large tool results retain complete JSON evidence in artifacts, with valid bounded
+  model-message envelopes. Chunked Unicode reads support inspecting evidence.
+- Actual read ceilings cover concurrent growth during imports/ZIP downloads.
+- Atomic approval/task/audit persistence closes crash gaps. Legacy partial approvals
+  recover; cancellation cannot leave new orphan approvals or dispatch new calls
+  before their durable claim points. Shutdown keeps the data lease while worker lives.
+- Provider wire suite: 15 tests passed before partial-usage accounting follow-up.
+  No real provider account has been called.
+- Earlier extended browser E2E passed (credential blocking, real persistence/XSS,
+  draft preservation, settings/routing, mobile, approval/denial, actual tests and
+  downloads). Final rerun for new resume controls is in progress.
 
-**PAUSED at CEO request for computer restart (2026-10-17). Do not restart from scratch.**
+## Exact next tasks
 
-### Second restart checkpoint (latest)
+1. Finish provider partial-usage completeness metadata and conservative engine
+   accounting, with regressions; do not treat an omitted output count as zero cost.
+2. Collect final browser/API verification for explicit resume-with-agent-settings.
+3. Rerun the relevant/final integrated checks for these last changes, commit verified
+   work and record the final counts here.
+4. Launch `python -m genesis` on loopback, verify health and open the actual browser
+   command center. The production service has not been launched at this checkpoint.
+5. Credentials are absent for all three providers. The next LIVE acceptance stage
+   requires a CEO-supplied key and approved spend. Use masked `.\start.ps1` or a
+   process environment variable; never ask for or store keys in chat/source/data.
+6. Execute the three founding objectives in ACCEPTANCE.md with real providers,
+   approvals and independent review, retaining actual evidence. Never count the
+   infrastructure fixtures as live AI acceptance.
 
-CEO resumed briefly, then requested another restart. All subagents are stopped;
-no Genesis service or test server is running. Existing data and commits preserved.
+## Git and operations
 
-Changes saved since `80dade3`:
+Prior checkpoints: `8a88138` runtime, `e6a989c` browser app, `80dade3` first restart,
+`6ed5497` second restart. Later verified commits are available in `git log`.
+Runtime data is ignored under `data/`; browser screenshots under `test-results/`.
+No paid model calls made. Real research smoke checks already returned python.org
+HTTP 200 and five actual Wikipedia discovery URLs. Brave search remains unverified.
 
-- Provider usage validation now rejects negative, fractional, boolean, string,
-  null and object token counts, including Gemini thinking usage. Provider suite:
-  **15 tests pass**, including 72 malformed usage subcases and exact encrypted
-  OpenAI continuation replay. No live API calls or spending.
-- Known CRLF assertion fixed. Real patch bug fixed: Unicode line separators and
-  formfeeds no longer corrupt unified diff hunk counts.
-- Toolbox latest: **19 tests; 17 pass, one Windows privilege skip, one test fails**
-  because user's Git core.autocrlf rewrites LF fixtures during independent patch
-  application. Next fix: add `-c core.autocrlf=false -c core.eol=lf` to BOTH
-  `git apply` subprocess commands in test_generated_patch_applies_exact_bytes_with_git,
-  then verify all LF/CRLF/EOF byte fixtures pass. Do not change global Git config.
-- Latest HTTP suite: **11 tests pass**, including ZIP attachment byte contents.
-- Latest extended browser E2E: **PASS**, all temporary servers torn down. Actual
-  production credential blocking, XSS, memory/opportunities, polling drafts,
-  settings/agent config persistence, mobile; test-only fixture approval/denial,
-  real Python tests and artifact downloads. ZIP browser anchor itself optional
-  follow-up (server archive bytes are covered).
+## Remaining limits
 
-First tasks after this restart:
-
-1. Fix the Git newline-conversion test noted above and run the integrated suite.
-2. Finish bounded artifact_import reads and valid-JSON large tool-result artifact
-   handling in engine.py (not started this brief resumed interval).
-3. Add workspace_read character offset/limit for chunked reads of larger tool
-   artifacts/sources (not started; cap file read and test Unicode boundaries).
-4. Continue the resume sequence below, updating stale test counts as appropriate.
-
-Verified commits: `8a88138` (runtime) and `e6a989c` (browser command center).
-The next checkpoint commit preserves the additional subsystem work in progress;
-that checkpoint is not a claim that the entire new diff passed regression tests.
-
-Resume with these steps:
-
-1. Read this file, ROADMAP.md and README.md; inspect `git status`/latest log.
-2. Finish/review `self_improvement_diff` in toolbox.py and its tests. Final agent
-   toolbox run: 17 tests, 15 pass, one Windows symlink skip, one failure solely at
-   test_toolbox.py:137: LF assertion vs actual preserved CRLF patch. Normalize
-   `result['patch'].replace('\r\n','\n')` in that assertion or make fixture write
-   LF bytes; then rerun. Earlier mid-edit `shutil` error has been removed.
-3. Run `python -m unittest discover -s tests -v`, then
-   `node --check web/app.js` and `npm.cmd run test:e2e`; repair actual failures.
-4. Review task ZIP download tests/UI and latest architecture docs. Check new
-   read-only baseline files are excluded from artifact bundles/registry.
-5. Harden artifact_import to use a bounded 100001-byte read (current stat-then-read
-   has a concurrent growth race). Ensure tool result truncation retains valid JSON
-   and a full-result artifact rather than slicing JSON at 40000 characters.
-6. Commit verified subsystem changes and update this file with final test counts.
-7. Launch the actual app `python -m genesis` (or `.\start.ps1` for a masked key
-   prompt) and verify health/browser. No production service is currently running.
-8. No AI provider credentials are configured. Only after the CEO supplies one,
-   run the three LIVE objectives in ACCEPTANCE.md within an approved budget.
-
-Additional work preserved after the verified checkpoint:
-
-- Same-venture artifact_list/artifact_import with content hashes and audit; six
-  handoff tests pass including actual QA tests on imported engineering files.
-- Six accounting regression tests and eleven HTTP API tests pass individually.
-- OS CLI data-directory lease (two tests pass), masked start.ps1 launcher, new
-  agents initially select the first configured provider.
-- Workspace digest invalidates changed-code execution approvals (test passes).
-- Child environment scrub verified by real subprocess test; no provider secrets
-  inherited. Executed code still has current-user host privileges.
-- Task ZIP bundles implemented, frontend link added; rerun test_server.py for the
-  latest ZIP byte assertion. Extended browser/config/XSS/polling draft/denial tests
-  passed before the latest ZIP link addition. node syntax check passed. Architecture
-  docs and waiting_children UI filtering/metrics completed.
-- Real research tool smoke checks succeeded: python.org HTTPS returned 200 and
-  Wikipedia discovery returned five actual source URLs. Brave API unverified.
-
-No task/test server processes were running at the pause checkpoint. Runtime data
-and ignored browser screenshots remain on disk. All credentials absent; zero paid
-model calls made. The last complete clean full suite before latest additions was
-55 tests (one Windows symlink privilege skip); later individual tests passed, and
-the subsequent full suite's snapshot error requires the fresh run above.
-
-## Verification boundaries
-
-No production API calls have been verified. No CEO business objectives have run.
-Subprocess isolation is a working directory boundary, not an OS security sandbox.
+No live provider/CEO business acceptance yet. Approved Python runs with current-user
+host privileges, not an OS sandbox; credentials are scrubbed from child environment.
+No external communications, purchasing, public-deploy or live-update connector.
+Budget checks use configured estimates, not provider invoices or a provider-side cap.
+Single-user loopback service; no multi-user auth, durable external scheduler,
+retrieval compaction, OS container backend or automatic source promotion.

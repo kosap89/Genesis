@@ -30,6 +30,8 @@ Use `--port 8788` or `--data-dir C:\path\to\private-data` if needed. Stop with
 Ctrl+C. Restart using the same data directory to retain history. In-flight tasks
 become interrupted and require review/resume; queued tasks continue automatically.
 An OS file lease prevents two CLI processes from sharing the same data directory.
+On graceful shutdown, the service retains that lease until the in-flight worker
+finishes. Cancellation prevents new invocations, while already claimed work may finish.
 
 ## Operate
 
@@ -39,6 +41,10 @@ An OS file lease prevents two CLI processes from sharing the same data directory
 4. Approve individual network or host-execution requests in the approval queue.
 5. Review results and download individual files or a complete task ZIP bundle.
    Create follow-up objectives as needed.
+
+Tasks retain their original provider/model when resumed. After changing agent
+configuration, use **Resume with agent settings** to explicitly change a blocked
+task's route; the previous and new route are recorded in its audit history.
 
 The COO can delegate to strategy, engineering, QA, growth, finance and operations
 agents. Specialist tasks have their own model configuration and workspaces. The
@@ -65,6 +71,10 @@ declared passed using test doubles.
   a reduced environment; this does not prevent same-user access to host files.
 - Per-invocation execution approvals record a workspace content digest. Changes
   after approval invalidate that decision and require a fresh review.
+- Candidate test runs report the number of discovered tests. Empty discovery is
+  a failure. Nested projects can set a workspace-relative test path and workdir.
+- Large tool responses are kept as complete JSON artifacts, with a bounded preview
+  in model history; workspace reads support Unicode character offsets and limits.
 - External communication, purchases, public deployments and live source updates
   have no connector and cannot be approved as standalone product features yet.
   Host execution grants broad effective capabilities; review its exact code first.
