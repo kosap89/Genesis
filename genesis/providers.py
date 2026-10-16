@@ -82,6 +82,16 @@ def _arguments(value):
     return value
 
 
+def _tokens(usage, name):
+    """Provider usage is a JSON integer, never a coercible or signed value."""
+    if not isinstance(usage, dict):
+        raise ProviderError("Provider returned invalid token usage")
+    value = usage.get(name, 0)
+    if type(value) is not int or value < 0:
+        raise ProviderError("Provider token usage must contain nonnegative integers")
+    return value
+
+
 def _content(message):
     value = message.get("content", "")
     return value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
@@ -123,7 +133,7 @@ class OpenAIAdapter:
             elif item.get("type") == "function_call":
                 calls.append({"id": item["call_id"], "name": item["name"], "arguments": _arguments(item["arguments"])})
         usage = data.get("usage", {})
-        return "\n".join(text), calls, usage.get("input_tokens", 0), usage.get("output_tokens", 0), {"openai_output": data["output"]}
+        return "\n".join(text), calls, _tokens(usage, "input_tokens"), _tokens(usage, "output_tokens"), {"openai_output": data["output"]}
 
 
 class AnthropicAdapter:
@@ -166,7 +176,7 @@ class AnthropicAdapter:
             elif c.get("type") == "tool_use":
                 calls.append({"id": c["id"], "name": c["name"], "arguments": _arguments(c["input"])})
         usage = data.get("usage", {})
-        return "\n".join(text), calls, usage.get("input_tokens", 0), usage.get("output_tokens", 0), {}
+        return "\n".join(text), calls, _tokens(usage, "input_tokens"), _tokens(usage, "output_tokens"), {}
 
 
 class GeminiAdapter:
@@ -224,7 +234,7 @@ class GeminiAdapter:
                 c["id"] = call["id"]
                 calls.append(call)
         usage = data.get("usageMetadata", {})
-        return "\n".join(text), calls, usage.get("promptTokenCount", 0), usage.get("candidatesTokenCount", 0) + usage.get("thoughtsTokenCount", 0), {"gemini_parts": parts}
+        return "\n".join(text), calls, _tokens(usage, "promptTokenCount"), _tokens(usage, "candidatesTokenCount") + _tokens(usage, "thoughtsTokenCount"), {"gemini_parts": parts}
 
 
 class ProviderRouter:

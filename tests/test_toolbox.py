@@ -1,11 +1,13 @@
 import json
 from pathlib import Path
+import shutil
 import socket
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
 
-from genesis.toolbox import PermissionRequired, ToolContext, Toolbox, _fetch_public, _public_addresses
+from genesis.toolbox import PermissionRequired, ToolContext, Toolbox, _fetch_public, _public_addresses, _unified_patch
 
 
 class ToolboxTests(unittest.TestCase):
@@ -134,7 +136,7 @@ class ToolboxTests(unittest.TestCase):
         self.assertEqual(result['deleted'], ['deleted.py'])
         self.assertEqual(result['live_source_changed'], ['changed.py'])
         self.assertEqual(result['comparison'], 'original_snapshot_baseline')
-        self.assertIn('-value = 1\n+value = 2\n', result['patch'])
+        self.assertIn('-value = 1\n+value = 2\n', result['patch'].replace('\r\n', '\n'))
         self.assertIn('--- /dev/null\n+++ b/added.py\n', result['patch'])
         self.assertIn('--- a/deleted.py\n+++ /dev/null\n', result['patch'])
         self.assertEqual((self.source / 'changed.py').read_text(encoding='utf-8'), 'value = 99\n')
@@ -190,6 +192,55 @@ class ToolboxTests(unittest.TestCase):
         self.assertEqual(result['deleted'], [])
         self.assertEqual(result['skipped_candidate_files'], ['large.txt'])
         self.assertEqual(result['patch'], '')
+
+    def test_generated_patch_applies_exact_bytes_with_git(self):
+        git = shutil.which('git')
+        if not git:
+            self.skipTest('Git is needed for independent unified patch verification')
+        fixtures = {
+            'lf.txt': (b'old\nlast\n', b'new\nlast\n'),
+            'crlf.txt': (b'old\r\nlast\r\n', b'new\r\nlast\r\n'),
+            'no-newline.txt': (b'old', b'new'),
+            'newline-added.txt': (b'last', b'last\n'),
+            'newline-removed.txt': (b'last\n', b'last'),
+            'unicode.txt': ('old\u2028value\x0cend\n'.encode(), 'new\u2028value\x0cend\n'.encode()),
+            'added space.txt': (None, b'added without newline'),
+            'deleted.txt': (b'deleted\r\n', None),
+        }
+        application = self.base / 'patch-application'
+        application.mkdir()
+        chunks = []
+        for name, (before, after) in fixtures.items():
+            if before is not None:
+                (application / name).write_bytes(before)
+            chunks.append(_unified_patch(name, before, after))
+        patchfile = self.base / 'review.patch'
+        patchfile.write_bytes(''.join(chunks).encode('utf-8'))
+        result = subprocess.run([git, 'apply', '--check', str(patchfile)], cwd=application,
+                                capture_output=True, timeout=15, check=False)
+        self.assertEqual(result.returncode, 0, result.stderr.decode(errors='replace'))
+        result = subprocess.run([git, 'apply', str(patchfile)], cwd=application,
+                                capture_output=True, timeout=15, check=False)
+        self.assertEqual(result.returncode, 0, result.stderr.decode(errors='replace'))
+        for name, (_, after) in fixtures.items():
+            with self.subTest(name=name):
+                if after is None:
+                    self.assertFalse((application / name).exists())
+                else:
+                    self.assertEqual((application / name).read_bytes(), after)
+
+    def test_snapshot_excludes_nested_internal_metadata(self):
+        (self.source / 'module').mkdir()
+        (self.source / 'module' / '.genesis-baseline').mkdir()
+        (self.source / 'module' / '.genesis-baseline' / 'hidden.py').write_bytes(b'hidden')
+        (self.source / '.genesis-snapshot.json').write_bytes(b'private metadata')
+        (self.source / 'module' / 'real.py').write_bytes(b'real\n')
+        snapshot = self.tools.execute('self_improvement_snapshot', {})
+        self.assertEqual(snapshot['files'], 1)
+        candidate = self.tools.context.root / 'source'
+        self.assertFalse((candidate / '.genesis-snapshot.json').exists())
+        self.assertFalse((candidate / 'module' / '.genesis-baseline').exists())
+        self.assertEqual(self.tools.execute('self_improvement_diff', {})['patch'], '')
 
 
 if __name__ == '__main__':

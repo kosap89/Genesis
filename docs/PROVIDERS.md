@@ -12,6 +12,10 @@ Requests time out after 60 seconds; responses are limited to 4 MiB. HTTP redirec
 
 Accounting metadata counts every transport invocation conservatively, including timeouts and errors that might already have been billed. Final `ProviderError.billable_attempts` contains the total attempted transports (default zero). A success exposes `provider_data['_prior_billable_attempts']` for failed transports before the successful candidate. Missing credentials and request-translation failures never increase these counters. The engine reserves all candidates and charges configured ceilings for attempts with unknown outcomes.
 
+Token usage fields must be nonnegative JSON integers. Negative numbers, floats, booleans, numeric strings, null values, and malformed usage objects fail the request; Gemini candidate and thinking counts are validated separately before addition. Such failures remain billable attempts for conservative accounting and explicit fallback handling. Omitted usage fields retain zero as the unknown-usage sentinel; the engine charges its configured ceiling when both totals are zero.
+
+Continuation contracts are exercised locally: OpenAI replays the complete output items, including encrypted reasoning, with `store=false` and `include=['reasoning.encrypted_content']`, then appends `function_call_output` linked by `call_id`. Anthropic groups parallel `tool_result` blocks into the next user message. Gemini replays preserved content parts and their opaque signatures before matching `functionResponse` by name and ID. These are wire-contract tests against the documented formats, not claims of live account verification.
+
 ## Verification
 
 Run `python -m unittest tests.test_providers -v`. Tests use a clearly labeled local HTTP server test double to exercise actual urllib serialization, authentication headers, native function exchanges, signature preservation, token accounting, fallback, response limits, error sanitization, and absence of retries. These tests do **not** establish live credential validity or model availability. A live objective requires a real configured credential and is billed by its provider.

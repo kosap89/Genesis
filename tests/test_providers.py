@@ -151,6 +151,52 @@ class ProviderWireTests(unittest.TestCase):
         self.assertEqual(caught.exception.billable_attempts, 0)
         self.assertEqual(len(self.requests), 0)
 
+    def test_malformed_usage_rejected_for_each_provider_and_counted_as_attempt(self):
+        examples = {
+            'openai': ({'output': [{'type': 'message', 'content': [{'type': 'output_text', 'text': 'Untrusted usage'}]}]}, 'usage', ('input_tokens', 'output_tokens')),
+            'anthropic': ({'content': [{'type': 'text', 'text': 'Untrusted usage'}], 'stop_reason': 'end_turn'}, 'usage', ('input_tokens', 'output_tokens')),
+            'gemini': ({'candidates': [{'finishReason': 'STOP', 'content': {'parts': [{'text': 'Untrusted usage'}]}}]}, 'usageMetadata', ('promptTokenCount', 'candidatesTokenCount', 'thoughtsTokenCount')),
+        }
+        for provider, (base, usage_key, fields) in examples.items():
+            for field in fields:
+                for invalid in (-1, -0.5, 1.5, True, False, '12', None, [], {}):
+                    with self.subTest(provider=provider, field=field, invalid=invalid):
+                        # Positive siblings must never mask a negative component.
+                        self.respond({**base, usage_key: {**{f: 10 for f in fields}, field: invalid}})
+                        with self.assertRaisesRegex(ProviderError, 'nonnegative integers') as caught:
+                            self.generate(provider)
+                        self.assertEqual(caught.exception.billable_attempts, 1)
+            for invalid in (None, [], 'usage'):
+                with self.subTest(provider=provider, invalid_usage=invalid):
+                    self.respond({**base, usage_key: invalid})
+                    with self.assertRaisesRegex(ProviderError, 'invalid token usage'):
+                        self.generate(provider)
+
+    def test_invalid_usage_fallback_retains_prior_billable_attempt(self):
+        def transport(url, headers, payload, timeout, limit):
+            if 'Authorization' in headers:
+                return {'output': [{'type': 'message', 'content': [{'type': 'output_text', 'text': 'Bad usage'}]}], 'usage': {'input_tokens': -200, 'output_tokens': 10}}
+            return {'content': [{'type': 'text', 'text': 'Valid usage'}], 'usage': {'input_tokens': 20, 'output_tokens': 5}}
+        self.router.transport = transport
+        os.environ['GENESIS_ANTHROPIC_API_KEY'] = 'test-key'
+        result = self.router.generate([{'role': 'user', 'content': 'Hi'}], [], {'provider': 'openai', 'api_key': 'test-key', 'fallbacks': [{'provider': 'anthropic'}]})
+        self.assertEqual((result.input_tokens, result.output_tokens), (20, 5))
+        self.assertEqual(result.provider_data['_prior_billable_attempts'], 1)
+
+    def test_openai_encrypted_reasoning_replayed_without_duplication(self):
+        output = [{'type': 'reasoning', 'id': 'reasoning-id', 'summary': [], 'encrypted_content': 'opaque-encrypted-state'},
+                  {'type': 'function_call', 'call_id': 'r1', 'name': 'lookup', 'arguments': '{"id":"x"}'}]
+        self.respond({'status': 'completed', 'output': output, 'usage': {'input_tokens': 0, 'output_tokens': 0}})
+        result = self.generate('openai')
+        self.assertEqual(result.provider_data['openai_output'], output)
+        self.assertEqual((result.input_tokens, result.output_tokens), (0, 0))
+        self.respond({'output': [{'type': 'message', 'content': [{'type': 'output_text', 'text': 'Done'}]}]})
+        self.generate('openai', [{'role': 'user', 'content': 'Hi'}, {'role': 'assistant', 'content': '', 'tool_calls': result.tool_calls, 'provider_data': result.provider_data}, {'role': 'tool', 'tool_call_id': 'r1', 'content': 'Found'}])
+        payload = self.requests[-1][2]
+        self.assertIn('reasoning.encrypted_content', payload['include'])
+        self.assertEqual(payload['input'][1:3], output)
+        self.assertEqual(len([i for i in payload['input'] if i.get('type') == 'function_call']), 1)
+
     def test_incomplete_output_is_not_reported_as_success(self):
         self.respond({"status": "incomplete", "output": [{"type": "function_call", "call_id": "x", "name": "lookup", "arguments": "{}"}]})
         with self.assertRaisesRegex(ProviderError, "did not complete"):

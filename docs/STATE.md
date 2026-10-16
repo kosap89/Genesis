@@ -25,6 +25,40 @@ dependency-free browser command center. No paid API calls made.
 
 **PAUSED at CEO request for computer restart (2026-10-17). Do not restart from scratch.**
 
+### Second restart checkpoint (latest)
+
+CEO resumed briefly, then requested another restart. All subagents are stopped;
+no Genesis service or test server is running. Existing data and commits preserved.
+
+Changes saved since `80dade3`:
+
+- Provider usage validation now rejects negative, fractional, boolean, string,
+  null and object token counts, including Gemini thinking usage. Provider suite:
+  **15 tests pass**, including 72 malformed usage subcases and exact encrypted
+  OpenAI continuation replay. No live API calls or spending.
+- Known CRLF assertion fixed. Real patch bug fixed: Unicode line separators and
+  formfeeds no longer corrupt unified diff hunk counts.
+- Toolbox latest: **19 tests; 17 pass, one Windows privilege skip, one test fails**
+  because user's Git core.autocrlf rewrites LF fixtures during independent patch
+  application. Next fix: add `-c core.autocrlf=false -c core.eol=lf` to BOTH
+  `git apply` subprocess commands in test_generated_patch_applies_exact_bytes_with_git,
+  then verify all LF/CRLF/EOF byte fixtures pass. Do not change global Git config.
+- Latest HTTP suite: **11 tests pass**, including ZIP attachment byte contents.
+- Latest extended browser E2E: **PASS**, all temporary servers torn down. Actual
+  production credential blocking, XSS, memory/opportunities, polling drafts,
+  settings/agent config persistence, mobile; test-only fixture approval/denial,
+  real Python tests and artifact downloads. ZIP browser anchor itself optional
+  follow-up (server archive bytes are covered).
+
+First tasks after this restart:
+
+1. Fix the Git newline-conversion test noted above and run the integrated suite.
+2. Finish bounded artifact_import reads and valid-JSON large tool-result artifact
+   handling in engine.py (not started this brief resumed interval).
+3. Add workspace_read character offset/limit for chunked reads of larger tool
+   artifacts/sources (not started; cap file read and test Unicode boundaries).
+4. Continue the resume sequence below, updating stale test counts as appropriate.
+
 Verified commits: `8a88138` (runtime) and `e6a989c` (browser command center).
 The next checkpoint commit preserves the additional subsystem work in progress;
 that checkpoint is not a claim that the entire new diff passed regression tests.

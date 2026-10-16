@@ -115,7 +115,13 @@ def _unified_patch(relative: str, before: bytes | None, after: bytes | None) -> 
         return None
     if '\x00' in old or '\x00' in new:
         return None
-    lines = difflib.unified_diff(old.splitlines(keepends=True), new.splitlines(keepends=True),
+    # Unified diff line counts use LF only. str.splitlines() also splits form
+    # feeds and Unicode separators, producing corrupt hunks for valid text.
+    def lines_with_lf(text):
+        parts = text.split('\n')
+        return [part + '\n' for part in parts[:-1]] + ([parts[-1]] if parts[-1] else [])
+
+    lines = difflib.unified_diff(lines_with_lf(old), lines_with_lf(new),
                                 fromfile='a/' + relative if before is not None else '/dev/null',
                                 tofile='b/' + relative if after is not None else '/dev/null')
     # difflib doesn't emit the standard marker for a missing final newline.
