@@ -133,7 +133,7 @@ class OpenAIAdapter:
             elif item.get("type") == "function_call":
                 calls.append({"id": item["call_id"], "name": item["name"], "arguments": _arguments(item["arguments"])})
         usage = data.get("usage", {})
-        return "\n".join(text), calls, _tokens(usage, "input_tokens"), _tokens(usage, "output_tokens"), {"openai_output": data["output"]}
+        return "\n".join(text), calls, _tokens(usage, "input_tokens"), _tokens(usage, "output_tokens"), {"openai_output": data["output"], "usage_complete": "input_tokens" in usage and "output_tokens" in usage}
 
 
 class AnthropicAdapter:
@@ -176,7 +176,7 @@ class AnthropicAdapter:
             elif c.get("type") == "tool_use":
                 calls.append({"id": c["id"], "name": c["name"], "arguments": _arguments(c["input"])})
         usage = data.get("usage", {})
-        return "\n".join(text), calls, _tokens(usage, "input_tokens"), _tokens(usage, "output_tokens"), {}
+        return "\n".join(text), calls, _tokens(usage, "input_tokens"), _tokens(usage, "output_tokens"), {"usage_complete": "input_tokens" in usage and "output_tokens" in usage}
 
 
 class GeminiAdapter:
@@ -234,7 +234,7 @@ class GeminiAdapter:
                 c["id"] = call["id"]
                 calls.append(call)
         usage = data.get("usageMetadata", {})
-        return "\n".join(text), calls, _tokens(usage, "promptTokenCount"), _tokens(usage, "candidatesTokenCount") + _tokens(usage, "thoughtsTokenCount"), {"gemini_parts": parts}
+        return "\n".join(text), calls, _tokens(usage, "promptTokenCount"), _tokens(usage, "candidatesTokenCount") + _tokens(usage, "thoughtsTokenCount"), {"gemini_parts": parts, "usage_complete": "promptTokenCount" in usage and "candidatesTokenCount" in usage}
 
 
 class ProviderRouter:

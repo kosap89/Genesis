@@ -197,6 +197,24 @@ class ProviderWireTests(unittest.TestCase):
         self.assertEqual(payload['input'][1:3], output)
         self.assertEqual(len([i for i in payload['input'] if i.get('type') == 'function_call']), 1)
 
+    def test_usage_completeness_requires_both_reported_totals(self):
+        examples = {
+            'openai': ({'output': [{'type': 'message', 'content': [{'type': 'output_text', 'text': 'Valid text'}]}]}, 'usage', ('input_tokens', 'output_tokens')),
+            'anthropic': ({'content': [{'type': 'text', 'text': 'Valid text'}]}, 'usage', ('input_tokens', 'output_tokens')),
+            'gemini': ({'candidates': [{'finishReason': 'STOP', 'content': {'parts': [{'text': 'Valid text'}]}}]}, 'usageMetadata', ('promptTokenCount', 'candidatesTokenCount')),
+        }
+        for provider, (base, usage_key, fields) in examples.items():
+            for supplied in ({}, {fields[0]: 12}, {fields[1]: 12}, {fields[0]: 0, fields[1]: 0}, {fields[0]: 12, fields[1]: 5}):
+                with self.subTest(provider=provider, usage=supplied):
+                    self.respond({**base, usage_key: supplied})
+                    result = self.generate(provider)
+                    self.assertEqual(result.provider_data['usage_complete'], all(f in supplied for f in fields))
+                    self.assertEqual(result.input_tokens, supplied.get(fields[0], 0))
+                    self.assertEqual(result.output_tokens, supplied.get(fields[1], 0))
+            with self.subTest(provider=provider, usage='omitted'):
+                self.respond(base)
+                self.assertFalse(self.generate(provider).provider_data['usage_complete'])
+
     def test_incomplete_output_is_not_reported_as_success(self):
         self.respond({"status": "incomplete", "output": [{"type": "function_call", "call_id": "x", "name": "lookup", "arguments": "{}"}]})
         with self.assertRaisesRegex(ProviderError, "did not complete"):

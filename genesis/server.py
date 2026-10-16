@@ -19,6 +19,7 @@ from .engine import Engine, ROLES, read_limited
 from .store import now
 from .toolbox import _safe_path
 from .lease import DataLease
+from .providers import KEY_NAMES, provider_status, DEFAULT_MODELS
 
 MAX_BODY = 128 * 1024
 
@@ -170,6 +171,31 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError('Expected an object.')
             path = unquote(urlsplit(self.path).path)
             parts = path.strip('/').split('/')
+            if path == '/api/credentials':
+                provider = body.get('provider')
+                key = body.get('api_key')
+                configure_agents = body.get('configure_agents', False)
+                if not isinstance(provider, str) or provider not in KEY_NAMES:
+                    raise ValueError('Unknown provider.')
+                if not isinstance(key, str) or len(key) > 4096 or any(ord(c) < 33 or ord(c) > 126 for c in key):
+                    raise ValueError('API key must be printable text without whitespace, up to 4096 characters. An empty key clears the process override.')
+                if not isinstance(configure_agents, bool):
+                    raise ValueError('configure_agents must be a boolean.')
+                # Only this service process is changed. No secret enters SQLite,
+                # logs, command arguments, browser storage, or API responses.
+                with engine.guard:
+                    variable = KEY_NAMES[provider][0]
+                    if key:
+                        os.environ[variable] = key
+                    else:
+                        os.environ.pop(variable, None)
+                    configured = next(p['configured'] for p in provider_status() if p['provider'] == provider)
+                    if configure_agents and key:
+                        for role in ROLES:
+                            engine.store.update('agents', role, provider=provider, model=DEFAULT_MODELS[provider])
+                        engine.store.event('agents_default_route_changed', provider=provider, model=DEFAULT_MODELS[provider])
+                    engine.store.event('provider_credentials_changed', provider=provider, configured=configured)
+                return self._json(200, {'provider':provider, 'configured':configured, 'storage':'process_memory'})
             if path == '/api/tasks':
                 value = engine.create_task(body.get('objective'), body.get('venture_id') or None,
                     body.get('role') or 'coo', body.get('provider') or None, body.get('model') or None)

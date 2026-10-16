@@ -4,11 +4,13 @@ from __future__ import annotations
 import http.client
 import io
 import json
+import os
 from pathlib import Path
 import tempfile
 import threading
 import unittest
 import zipfile
+from unittest.mock import patch
 
 from genesis.engine import Engine
 from genesis.server import GenesisServer
@@ -182,12 +184,47 @@ class ServerTests(unittest.TestCase):
         for endpoint, body in [('/api/ventures', {'name': ''}), ('/api/memories', {'title': 'Missing content'}), ('/api/opportunities', {'title': 'Missing summary'})]:
             self.post(endpoint, body, 400)
 
+    def test_credentials_are_session_only_never_echoed_and_can_configure_agents(self):
+        key_names = ['GENESIS_OPENAI_API_KEY', 'OPENAI_API_KEY', 'GENESIS_ANTHROPIC_API_KEY', 'ANTHROPIC_API_KEY', 'GENESIS_GEMINI_API_KEY', 'GEMINI_API_KEY', 'GOOGLE_API_KEY']
+        safe_environment = {k:v for k,v in os.environ.items() if k not in key_names}
+        fake_key = 'genesis-server-test-only-never-a-real-key'
+        with patch.dict(os.environ, safe_environment, clear=True):
+            original = self.engine.store.get('agents', 'engineering')
+            result = self.post('/api/credentials', {'provider': 'gemini', 'api_key': fake_key, 'configure_agents': True})
+            self.assertEqual(result, {'provider': 'gemini', 'configured': True, 'storage': 'process_memory'})
+            self.assertEqual(os.environ['GENESIS_GEMINI_API_KEY'], fake_key)
+            code, state, _ = self.request('GET', '/api/state')
+            self.assertEqual(code, 200)
+            self.assertNotIn(fake_key, json.dumps(state))
+            self.assertEqual(state['tasks'], [], 'Configuration must not start model work')
+            self.assertTrue(all(a['provider'] == 'gemini' for a in state['agents']))
+            self.assertEqual(self.engine.store.get('agents', 'engineering')['input_cost_per_million'], original['input_cost_per_million'])
+            self.assertEqual(self.engine.store.get('agents', 'engineering')['fallbacks'], original['fallbacks'])
+            self.assertNotIn(fake_key.encode(), (Path(self.temp.name) / 'genesis.sqlite3').read_bytes())
+            for file in Path(self.temp.name).rglob('*'):
+                if file.is_file():
+                    self.assertNotIn(fake_key.encode(), file.read_bytes(), str(file))
+            cleared = self.post('/api/credentials', {'provider': 'gemini', 'api_key': ''})
+            self.assertFalse(cleared['configured'])
+            self.assertNotIn('GENESIS_GEMINI_API_KEY', os.environ)
+            os.environ['GEMINI_API_KEY'] = 'inherited-test-only-key'
+            self.post('/api/credentials', {'provider': 'gemini', 'api_key': fake_key})
+            self.assertTrue(self.post('/api/credentials', {'provider': 'gemini', 'api_key': ''})['configured'])
+            self.assertEqual(os.environ['GEMINI_API_KEY'], 'inherited-test-only-key')
+            for body in [{'provider':'unknown','api_key':fake_key}, {'provider':'gemini','api_key':'has whitespace'}, {'provider':'gemini','api_key':fake_key,'configure_agents':'true'}, {'provider':'gemini','api_key':42}]:
+                code, error, _ = self.request('POST', '/api/credentials', body)
+                self.assertEqual(code, 400)
+                self.assertNotIn(fake_key, json.dumps(error))
+            self.assertNotIn(fake_key, json.dumps(self.engine.store.events()))
+
     def test_task_resume_cancel_and_approval_are_real_state_transitions(self):
         task = self.task()
         self.post('/api/tasks/' + task['id'] + '/resume', {}, 400)
         self.engine.store.update('tasks', task['id'], status='blocked_credentials')
         resumed = self.post('/api/tasks/' + task['id'] + '/resume', {})
         self.assertEqual(resumed['status'], 'queued')
+        self.assertEqual(resumed['provider'], task['provider'])
+        self.assertEqual(resumed['model'], task['model'])
         self.engine.store.update('tasks', task['id'], status='waiting_approval')
         approval = self.engine.store.put('approvals', {'task_id': task['id'], 'action': 'terminal_run', 'details': {'command': 'echo test'}, 'status': 'pending', 'created_at': now()})
         self.post('/api/approvals/' + approval['id'], {'decision': 'invalid'}, 400)
@@ -198,6 +235,23 @@ class ServerTests(unittest.TestCase):
         cancelled = self.post('/api/tasks/' + task['id'] + '/cancel', {})
         self.assertEqual(cancelled['status'], 'cancelled')
         self.post('/api/tasks/' + task['id'] + '/resume', {}, 400)
+
+    def test_resume_can_explicitly_change_provider_model_and_audits_route(self):
+        task = self.task()
+        self.engine.store.update('tasks', task['id'], status='blocked_credentials')
+        path = '/api/tasks/' + task['id'] + '/resume'
+        self.post(path, {'provider': 'unsupported', 'model': 'anything'}, 400)
+        self.assertEqual(self.engine.store.get('tasks', task['id'])['provider'], task['provider'])
+        resumed = self.post(path, {'provider': 'gemini', 'model': 'explicit-browser-configured-model'})
+        self.assertEqual(resumed['status'], 'queued')
+        self.assertEqual(resumed['provider'], 'gemini')
+        self.assertEqual(resumed['model'], 'explicit-browser-configured-model')
+        events = self.engine.store.events(task['id'])
+        route = next(e for e in events if e['action'] == 'task_route_changed')
+        self.assertEqual(route['previous_provider'], task['provider'])
+        self.assertEqual(route['previous_model'], task['model'])
+        self.assertEqual(route['provider'], 'gemini')
+        self.assertEqual(route['model'], resumed['model'])
 
     def test_static_assets_csp_and_unknown_resources(self):
         for path, mime in [('/', 'text/html'), ('/app.js', 'text/javascript'), ('/styles.css', 'text/css')]:

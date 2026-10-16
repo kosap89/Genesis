@@ -39,7 +39,8 @@ MAX_FETCH = 1_000_000
 CHILD_ENVIRONMENT = {'PATH', 'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP', 'COMSPEC',
                      'PATHEXT', 'LANG', 'LC_ALL'}
 EXCLUDED = {'.git', '.env', '.aws', '.codex', '.agents', 'data', 'node_modules',
-            'venv', '.venv', '__pycache__', '.pytest_cache', 'secrets', 'credentials'}
+            'venv', '.venv', '__pycache__', '.pytest_cache', 'test-results',
+            'secrets', 'credentials'}
 
 
 def _is_link(path: Path) -> bool:

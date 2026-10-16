@@ -3,6 +3,43 @@
 Updated 2026-10-17, Europe/Helsinki. Resumed after two CEO-requested restarts.
 Preserve existing implementation and data; do not scaffold a replacement.
 
+## Latest handoff: NEW CHAT requested
+
+CEO wants a fresh chat to reset inconsistent inherited permissions. Main agent
+currently has full access and normal exec works. Existing subagents reported old
+Windows sandbox helper errors; do not reuse those agents in the next chat. All
+subagents have finished and no Genesis/test service is running. Source/data safe.
+
+Verified commit `9d7ca1a` contains the 90-test core checkpoint. The latest handoff
+commit additionally preserves the following finished edits (full final verification
+still pending; this is not a claim they all passed the integrated suite):
+
+- Partial provider usage has usage_complete metadata across all three adapters;
+  provider suite **16 tests PASS**, accounting suite **8 tests PASS**. Missing
+  either token total charges the configured ceiling; explicit complete zero is zero.
+- Local session-only credentials API and password UI are implemented. Key stays
+  only in process environment, never SQLite/logs/API responses/browser storage.
+  Optional configure_agents changes all default routes, never auto-runs objectives.
+- Explicit Resume with agent settings UI, responsive task actions and real ZIP UI
+  download tested in an earlier browser run. Credential-form browser tests added
+  but NOT YET RUN by parent. Both JS files pass node syntax checks.
+- Latest server suite **13 tests PASS**, including session key nonpersistence,
+  no key echo/audit leakage, clearing overrides/inherited-key behavior, input
+  validation and audited explicit resume route changes.
+- scripts/verify_snapshot.py --execute added to copy and test the actual checkout
+  through candidate tools (no AI). Not yet run. test-results excluded from snapshots.
+
+FIRST TASK IN NEW CHAT: verify effective runtime permissions and basic file/shell
+access. Then run `python -m unittest discover -s tests -v`,
+`npm.cmd run test:e2e`, and `python scripts/verify_snapshot.py --execute` in that
+order. Repair failures (especially new credential UI assertions), update this
+state with final results and commit verified work. Launch production service on
+127.0.0.1:8787, verify health and open browser. Do not restart implementation.
+
+No provider credentials exist and no paid model calls have been made. Live AI
+acceptance still requires CEO key input via the local UI and approved spending.
+The main agent should finish the verification/launch sequence before adding scope.
+
 ## Implemented
 
 Local Python/SQLite company OS with a connected browser command center, seven

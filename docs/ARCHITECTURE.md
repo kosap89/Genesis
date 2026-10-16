@@ -22,9 +22,11 @@ reentrant guard for related application operations. `Store` uses SQLite with WAL
 - `events(seq, task_id, body)` preserves the audit timeline with top-level event
   fields, IDs, and UTC timestamps.
 
-Each store write is committed immediately. A complete engine operation may span
-several commits; the system does not claim atomicity across SQLite, external
-providers, and filesystem effects. Restart recovery accounts for these gaps.
+Each store write is committed immediately. Related approval records, waiting-task
+state, and request audit events are committed together through `Store.batch`.
+A complete engine operation may span several commits; the system does not claim
+atomicity across SQLite, external providers, and filesystem effects. Restart
+recovery accounts for these gaps.
 Store writes are serialized within the process. The CLI takes an OS-owned
 `DataLease` on `.genesis.lock`, rejecting a second CLI process for the same data
 directory and releasing the lock when the process exits. Directly embedding Engine
@@ -79,6 +81,11 @@ retains its history. Completed and cancelled tasks cannot be resumed. Cancellati
 also cancels nonterminal children and denies pending approvals. It cannot undo
 an external request or process that already started.
 
+Normal resume preserves the captured primary route. An explicit resume request can
+include a different provider/model and records the old/new route in the audit log.
+The command center offers a separate “Resume with agent settings” action for this
+purpose; updating a role configuration alone does not reroute old tasks.
+
 A top-level objective can delegate at most eight specialist tasks. Children have
 their own task records, role configurations, histories, and workspaces; they cannot
 delegate further. Work executes serially in the current worker. The parent resumes
@@ -96,9 +103,15 @@ as OpenAI response items and Gemini thought signatures. Tool execution is owned
 by the engine, never by the provider adapter.
 
 Credentials come from the server environment, with `GENESIS_*_API_KEY` taking
-precedence over the corresponding provider key names. The UI reports only key
-presence. A configured key is not proof of connectivity, quota, model availability,
-or account health. `.env` is not automatically loaded.
+precedence over the corresponding provider key names. The local command center
+can set that process override for the current session through its password form.
+The value clears from the input immediately, is not written to browser storage or
+SQLite, and is lost when the server exits. Clearing removes only the process
+override; an inherited standard provider key can remain active. An explicit checkbox
+can configure every agent's provider/default model, preserving rates/fallbacks.
+Neither operation runs model work or automatically resumes existing objectives.
+The UI reports only key presence. A configured key is not proof of connectivity,
+quota, model availability, or account health. `.env` is not automatically loaded.
 
 Each configured candidate receives at most one request. The router tries the primary
 route and then explicitly configured fallback routes; it does not silently choose a
@@ -213,6 +226,9 @@ The implemented routes are:
 - `POST /api/ventures`, `/api/memories`, `/api/opportunities`: persistent context.
 - `POST /api/settings`: estimated budget, research/host execution permissions,
   maximum steps, and maximum output tokens.
+- `POST /api/credentials`: process-only provider credential override (empty key
+  clears it) and optional explicit configuration of all agents' default routes.
+  Responses/audit contain presence and provider only, never the key.
 - `POST /api/agents/<role>`: provider, model, estimated rates, and fallback routes.
 
 Mutations accept JSON objects and require `X-Genesis-CSRF`. Requests have a 128 KiB
@@ -235,12 +251,21 @@ was persisted but the task was not requeued before shutdown, it becomes interrup
 for review. Outstanding cost reservations are conservatively transferred to spent
 usage because a dispatched request may already have been billed.
 
+Cancellation/shutdown checks and model/tool claim records are serialized under the
+engine guard. A claim is the point after which that one invocation is considered
+in flight. Approval creation is guarded against a concurrent cancellation, so a
+cancelled task cannot acquire a new pending approval. Startup also recovers legacy
+pending approvals that were written before their task's waiting transition.
+
 Tool execution records `tool_started` before invoking the tool and commits a result
 afterward. If the persisted history indicates an ambiguous invocation without a
 result, it records `tool_outcome_unknown` and does not automatically replay the
 side effect. This provides conservative recovery, not exactly-once effects across
 process crashes. Cancellation and shutdown cannot reliably retract in-flight work.
 Back up the data directory with the service stopped; there is no backup service.
+CLI shutdown retains its data-directory lease until the worker actually exits,
+including any already dispatched request, rather than releasing it after a short
+join timeout while the old worker can still write.
 
 Current limits include serial task execution, no durable external scheduler or
 multi-host workers, no external business connectors, no automatic source promotion,

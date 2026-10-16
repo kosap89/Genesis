@@ -10,9 +10,11 @@ by the provider you configure.
 From this directory:
 
 ```powershell
+python -m genesis
+# Then open the URL below and add a key in Agents & controls when ready.
 # Optional interactive launcher: asks for a hidden key, never saves it to disk.
 .\start.ps1
-# Or launch directly from a shell with an existing provider environment variable:
+# Or configure credentials in the launching shell:
 # Configure ONE provider in this shell. Do not paste credentials into chat or Git.
 $env:GENESIS_OPENAI_API_KEY = '<your key>'
 # Alternatives: GENESIS_ANTHROPIC_API_KEY or GENESIS_GEMINI_API_KEY
@@ -21,7 +23,11 @@ python -m genesis
 
 Open **http://127.0.0.1:8787**. You can launch without a key to inspect the command
 center and organize ventures; objectives will explicitly block on credentials.
-In Agents & controls, choose the configured provider and its model for each role.
+In Agents & controls, enter a provider key in the password form and save it for
+this session. It stays in the server process, is never returned to the browser,
+and is lost when the service stops. The optional checkbox configures that provider's
+default model for all roles. No model request or task resume happens automatically.
+You can also select provider/model independently for each role.
 New agents initially select the first configured provider. Existing agent settings
 remain intact; select the provider/model in Agents & controls after changing your
 setup. Provider presence is configuration detection, not a health check.
@@ -63,7 +69,10 @@ declared passed using test doubles.
   browser policy and download-only artifacts protect the local HTTP boundary.
   This is a single-user local application, without multi-user authentication.
 - Credentials are read from environment; the UI never returns their values. Do
-  not put keys in objectives or company memory. `.env` files are not auto-loaded.
+  not put keys in objectives or company memory. The local credential form can set
+  a process-only override protected by the same Host/origin/CSRF checks as other
+  mutations. Clearing it removes that override; inherited environment credentials
+  still apply. `.env` files are not auto-loaded.
 - File tools reject path traversal, Windows devices, symlinks and junctions.
   Each task has a separate directory. **Approved Python/terminal execution runs
   as the current OS user and is not an OS sandbox.** Only approve trusted code;
@@ -105,6 +114,8 @@ python -m unittest discover -s tests -v
 # Optional browser QA (uses installed Chrome/Edge):
 npm.cmd ci --ignore-scripts
 npm.cmd run test:e2e
+# Optional: copy this real checkout and run its Python suite via candidate tools:
+python scripts/verify_snapshot.py --execute
 ```
 
 Tests explicitly use provider doubles/local HTTP fixtures. Production has no demo

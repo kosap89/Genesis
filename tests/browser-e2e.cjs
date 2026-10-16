@@ -41,6 +41,7 @@ async function main(){
   await page.locator('#venture-form [type=submit]').click();
   let s=await waitState(18871,x=>x.ventures.length===1);
   await page.locator('#venture-select').selectOption(s.ventures[0].id);
+  await page.locator('#objective-role').selectOption('engineering');
   await page.locator('#objective').fill('Browser verification: missing credentials must block honestly.');
   await page.locator('#submit-objective').click();
   s=await waitState(18871,x=>x.tasks[0]?.status==='blocked_credentials');
@@ -93,6 +94,13 @@ async function main(){
   assert.equal(s.settings.budget_usd,8.25);assert.equal(s.settings.max_steps,9);
   assert.equal(s.agents.find(a=>a.role==='engineering').model,testAgent.model);
   await page.locator('#connection').filter({hasText:'Connected'}).waitFor();
+  await page.locator('[data-view=operations]').click();
+  await page.locator('#all-tasks .record-title').first().click();
+  await page.getByRole('button',{name:'Resume with agent settings',exact:true}).click();
+  s=await waitState(18871,x=>x.tasks[0]?.status==='blocked_credentials'&&x.tasks[0].provider===testAgent.provider&&x.tasks[0].model===testAgent.model);
+  assert(s.audit.some(e=>e.action==='task_route_changed'&&e.provider===testAgent.provider),'Explicit resume route switch must be audited');
+  assert.equal(s.settings.spent_usd,0,'Credential-blocked reroute must not charge usage');
+  await page.locator('#task-dialog [data-close]').click();
   await page.locator('[data-view=settings]').click();
   assert.equal(await page.locator('#budget-usd').inputValue(),'8.25');
   assert.equal(await engineering.locator('[name=model]').inputValue(),testAgent.model);
@@ -104,6 +112,26 @@ async function main(){
   s=await waitState(18871,x=>x.settings.budget_usd===originalSettings.budget_usd&&x.settings.max_steps===originalSettings.max_steps);
   const restoredAgent=s.agents.find(a=>a.role==='engineering');
   for(const field of ['provider','model','input_cost_per_million','output_cost_per_million','fallbacks'])assert.deepEqual(restoredAgent[field],originalAgent[field],'Agent configuration restored: '+field);
+  // No queued/running objectives remain: a test-only credential must never cause a paid call.
+  assert(s.tasks.every(t=>!['queued','running'].includes(t.status)));
+  const credential='browser-test-only-not-a-real-api-key';
+  await page.locator('#credentials-provider').selectOption('gemini');
+  await page.locator('#credentials-configure-agents').uncheck();
+  await page.locator('#credentials-key').fill(credential);
+  await page.locator('#credentials-form [type=submit]').click();
+  s=await waitState(18871,x=>x.providers.some(p=>p.provider==='gemini'&&p.configured));
+  assert.equal(await page.locator('#credentials-key').inputValue(),'','Session key input must clear immediately');
+  assert(!JSON.stringify(s).includes(credential),'Session credential must never appear in state or audit');
+  assert(!(await page.locator('body').innerText()).includes(credential),'Credential must not be rendered');
+  assert.equal(await page.evaluate(()=>JSON.stringify([Object.entries(localStorage),Object.entries(sessionStorage)]).includes('browser-test-only-not-a-real-api-key')),false);
+  await page.locator('#credentials-clear').click();
+  s=await waitState(18871,x=>x.providers.every(p=>p.provider!=='gemini'||!p.configured));
+  assert.equal(s.settings.spent_usd,0);
+  // A rejected request must clear the field as well.
+  await page.locator('#credentials-key').fill('invalid whitespace key');
+  await page.locator('#credentials-form [type=submit]').click();
+  await page.locator('#feedback.error').filter({hasText:'API key must be printable'}).waitFor();
+  assert.equal(await page.locator('#credentials-key').inputValue(),'');
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(output,'mobile-browser.png'),fullPage:true});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false,'Mobile should not overflow horizontally');
   await stop();
@@ -126,6 +154,15 @@ async function main(){
   const artifact=s.artifacts.find(a=>a.name==='calculator.py');
   const download=await(await fetch('http://127.0.0.1:18872/api/artifacts/'+artifact.id)).text();assert(download.includes('return a + b'));
   await page.locator('[data-view=operations]').click();
+  await page.locator('#all-tasks .record-title').first().click();
+  const [bundleDownload]=await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('link',{name:'Download task ZIP',exact:true}).click(),
+  ]);
+  assert(bundleDownload.suggestedFilename().startsWith('genesis-'));
+  assert.equal(await bundleDownload.failure(),null);
+  assert.equal(fs.readFileSync(await bundleDownload.path()).subarray(0,4).toString('hex'),'504b0304','Task ZIP UI must download a nonempty ZIP archive');
+  await page.locator('#task-dialog [data-close]').click();
   await page.waitForTimeout(3200);await page.screenshot({path:path.join(output,'fixture-execution.png'),fullPage:true});
   // A separate denied invocation must produce a refusal tool record, never execute tests.
   await page.locator('[data-view=overview]').click();
@@ -143,6 +180,6 @@ async function main(){
   assert.equal(JSON.parse(deniedTool.content).returncode,undefined,'Denied invocation must not have a process result');
   assert.equal(s.approvals.find(a=>a.task_id===deniedTask.id).status,'denied');
   assert.deepEqual(errors,[],'No JavaScript runtime errors');
-  console.log('PASS: production browser venture/objective/credential-block/literal-XSS-safe-memory/opportunity/polling/settings/rates/fallback-save-restore/restart/mobile; fixture browser approval, denial, actual Python tests, artifact download. Live AI acceptance NOT verified.');
+  console.log('PASS: production browser venture/objective/credential-block/literal-XSS-safe-memory/opportunity/polling/settings/rates/fallback-save-restore/resume-route/session-credentials/restart/mobile; fixture browser approval, denial, actual Python tests, artifact and task ZIP downloads. Live AI acceptance NOT verified.');
 }
 main().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();await stop();fs.rmSync(temp,{recursive:true,force:true});});

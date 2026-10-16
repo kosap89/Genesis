@@ -7,6 +7,7 @@
   let refreshBusy = false;
   let detailBusy = false;
   let settingsInitialized = false;
+  let credentialsInitialized = false;
   let agentSignature = '';
   const titles = {overview:['Command center','Set the direction. Review the work. Keep control.'],operations:['Operations','Follow objectives from instruction to evidence.'],knowledge:['Company knowledge','Preserve context and develop the next opportunity.'],artifacts:['Artifacts','The tangible output of your company’s work.'],settings:['Agents & controls','Configure capabilities, models, and the limits of execution.'],audit:['Activity log','A persistent record of actions and decisions.']};
   const el = (tag, text, cls) => { const n=document.createElement(tag); if(text!==undefined && text!==null)n.textContent=String(text); if(cls)n.className=cls; return n; };
@@ -36,7 +37,7 @@
   function providers(){if(Array.isArray(state.providers))return state.providers.map(p=>typeof p==='string'?{id:p,name:p}:p);return Object.entries(state.providers||{}).map(([id,p])=>typeof p==='object'?{id,...p}:{id,name:id,configured:Boolean(p)});}
   function providerId(p){return p.id||p.provider||p.name;}
   function providerReady(p){return Boolean(p.configured??p.available??p.ready??p.enabled);}
-  function renderProviders(){const host=$('provider-list');host.replaceChildren();const list=providers();if(!list.length)empty(host,'No model provider is configured. Add server credentials and restart Genesis.');for(const p of list){const row=el('div',null,'record');const top=el('div',null,'record-top');top.append(el('h3',p.name||providerId(p)),status(providerReady(p)?'configured':'not_configured'));row.append(top);const env=p.env_var||p.env_key||p.key_env||({openai:'OPENAI_API_KEY',anthropic:'ANTHROPIC_API_KEY',gemini:'GEMINI_API_KEY',google:'GEMINI_API_KEY'}[providerId(p)]);if(!providerReady(p))row.append(el('p',env?`Set ${env} in the server environment, then restart Genesis.`:p.setup||'Configure this provider in the server environment, then restart Genesis.'));if(p.base_url)row.append(el('div',p.base_url,'record-meta'));host.append(row);}const anyReady=list.some(providerReady);$('setup-notice').hidden=anyReady;if(!anyReady)$('setup-notice').textContent='Model setup required. Configure a provider API key in the server environment and restart Genesis. Open Agents & controls for provider details. Objectives cannot execute model work until a provider is available.';}
+  function renderProviders(){const host=$('provider-list');host.replaceChildren();const list=providers();if(!list.length)empty(host,'No model provider is configured. Add a session key below.');for(const p of list){const row=el('div',null,'record');const top=el('div',null,'record-top');top.append(el('h3',p.name||providerId(p)),status(providerReady(p)?'configured':'not_configured'));row.append(top);const env=p.env_var||p.env_key||p.key_env||({openai:'OPENAI_API_KEY',anthropic:'ANTHROPIC_API_KEY',gemini:'GEMINI_API_KEY',google:'GEMINI_API_KEY'}[providerId(p)]);if(!providerReady(p))row.append(el('p',env?`Add a session key below, or set ${env} before launching Genesis.`:p.setup||'Add a session key below.'));if(p.base_url)row.append(el('div',p.base_url,'record-meta'));host.append(row);}const anyReady=list.some(providerReady);$('setup-notice').hidden=anyReady;if(!anyReady)$('setup-notice').textContent='Model setup required. Open Agents & controls to add a provider key for this session. Objectives cannot execute model work until a provider is available.';if(!credentialsInitialized){$('credentials-configure-agents').checked=!anyReady;credentialsInitialized=true;}}
   function renderAgents(){
     const agents=arr(state.agents);
     const signature=JSON.stringify(agents)+JSON.stringify(providers().map(p=>[providerId(p),p.models]));
@@ -80,6 +81,30 @@
   $('venture-form').addEventListener('submit',e=>{e.preventDefault();const f=e.currentTarget;run(f.querySelector('[type=submit]'),async()=>{const fd=new FormData(f);await mutate('/api/ventures',{name:fd.get('name').trim(),description:fd.get('description').trim()},'Venture created.');f.reset();$('venture-dialog').close();});});
   for(const kind of ['memory','opportunity'])$(kind+'-form').addEventListener('submit',e=>{e.preventDefault();const f=e.currentTarget;run(f.querySelector('[type=submit]'),async()=>{const fd=new FormData(f);const body=Object.fromEntries(fd);if(venture)body.venture_id=venture;await mutate(kind==='memory'?'/api/memories':'/api/opportunities',body,kind==='memory'?'Company memory saved.':'Opportunity added.');f.reset();});});
   $('settings-form').addEventListener('submit',e=>{e.preventDefault();run(e.currentTarget.querySelector('[type=submit]'),async()=>{await mutate('/api/settings',{budget_usd:Number($('budget-usd').value),max_steps:Number($('max-steps').value),allow_network:$('allow-network').checked,allow_terminal:$('allow-terminal').checked},'Execution controls saved.');});});
+  $('credentials-form').addEventListener('submit',e=>{
+    e.preventDefault();
+    const provider=$('credentials-provider').value;
+    const key=$('credentials-key').value;
+    const configure_agents=$('credentials-configure-agents').checked;
+    $('credentials-key').value='';
+    run(e.currentTarget.querySelector('[type=submit]'),async()=>{
+      try{
+        await api('/api/credentials',{provider,api_key:key,configure_agents});
+        feedback(configure_agents?'Session key saved and agent default routes configured. Existing objectives keep their route until explicitly resumed with agent settings.':'Session key saved. Review agent routes and resume blocked objectives when ready.');
+        agentSignature='';await refresh();
+      }finally{$('credentials-key').value='';}
+    });
+  });
+  $('credentials-clear').addEventListener('click',e=>{
+    $('credentials-key').value='';
+    run(e.currentTarget,async()=>{
+      try{
+        const result=await api('/api/credentials',{provider:$('credentials-provider').value,api_key:'',configure_agents:false});
+        feedback(result.configured?'Process override cleared. An inherited environment key remains configured.':'Process override cleared. This provider has no configured key.');
+        await refresh();
+      }finally{$('credentials-key').value='';}
+    });
+  });
   async function openTask(id){selectedTask=id;if(!$('task-dialog').open)$('task-dialog').showModal();$('detail-title').textContent='Objective details';$('task-detail').replaceChildren(el('p','Loading execution history…','muted'));await refreshDetail();}
   async function refreshDetail(){
     if(!selectedTask||!$('task-dialog').open||detailBusy)return;detailBusy=true;const id=selectedTask;
@@ -90,7 +115,15 @@
       const controls=el('div',null,'record-actions');
       const bundle=el('a','Download task ZIP','secondary');bundle.href='/api/tasks/'+encodeURIComponent(id)+'/bundle';bundle.target='_blank';bundle.rel='noopener';controls.append(bundle);
       if(!['completed','cancelled','failed'].includes(t.status))controls.append(button('Cancel objective',()=>mutate('/api/tasks/'+encodeURIComponent(id)+'/cancel',{},'Objective cancelled.'),'secondary danger'));
-      if(['interrupted','blocked_credentials','blocked_budget','paused_limit','failed'].includes(t.status))controls.append(button('Resume objective',()=>mutate('/api/tasks/'+encodeURIComponent(id)+'/resume',{},'Resume requested.')));
+      if(['interrupted','blocked_credentials','blocked_budget','paused_limit','failed'].includes(t.status)){
+        controls.append(button('Resume objective',()=>mutate('/api/tasks/'+encodeURIComponent(id)+'/resume',{},'Resume requested.')));
+        const agent=arr(state?.agents).find(a=>a.role===t.role);
+        if(agent?.provider&&agent?.model){
+          const reroute=button('Resume with agent settings',()=>mutate('/api/tasks/'+encodeURIComponent(id)+'/resume',{provider:agent.provider,model:agent.model},`Resume requested using ${agent.provider} / ${agent.model}.`));
+          reroute.title=`Use the ${t.role} agent's configured route: ${agent.provider} / ${agent.model}`;
+          controls.append(reroute);
+        }
+      }
       host.append(controls,el('div',`Created ${date(t.created_at)} · Updated ${date(t.updated_at)} · Step ${t.step||0} · Estimated cost ${money(t.cost_usd)}`,'record-meta'));
       if(t.error){const box=el('div',null,'detail-section');box.append(el('h3','Execution error'),el('pre',stringify(t.error),'danger'));host.append(box);}
       if(t.result){const box=el('div',null,'detail-section');box.append(el('h3','Result'),el('pre',stringify(t.result)));host.append(box);}

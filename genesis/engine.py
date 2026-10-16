@@ -395,7 +395,8 @@ class Engine:
                     self.store.event('model_error', task_id, error=str(exc)[:2000])
                     return
                 cost = (response.input_tokens * config['input_cost_per_million'] + response.output_tokens * config['output_cost_per_million']) / 1e6
-                if not response.input_tokens and not response.output_tokens:
+                usage_complete = getattr(response, 'provider_data', {}).get('usage_complete')
+                if usage_complete is False or (usage_complete is None and not response.input_tokens and not response.output_tokens):
                     cost = per_call_reserve
                 cost += per_call_reserve * getattr(response, 'provider_data', {}).get('_prior_billable_attempts', 0)
                 self._settle(task_id, reserve, cost)

@@ -91,6 +91,20 @@ class AccountingTests(unittest.TestCase):
         self.assertEqual(engine.store.get('tasks', task['id'])['status'], 'failed')
         self.assert_settled(engine, task, self.request_reserve(engine, task))
 
+    def test_partial_usage_charges_full_configured_ceiling(self):
+        router = CallbackRouterDouble(lambda *args:ProviderResult('Partial usage fixture',[],100,0,'openai','test',{'usage_complete':False}))
+        engine = self.engine(router)
+        task = engine.create_task('Do not treat omitted output usage as free')
+        engine.run(task['id'])
+        self.assert_settled(engine,task,self.request_reserve(engine,task))
+
+    def test_explicit_complete_zero_usage_settles_zero(self):
+        router = CallbackRouterDouble(lambda *args:ProviderResult('Explicit zero usage fixture',[],0,0,'openai','test',{'usage_complete':True}))
+        engine = self.engine(router)
+        task = engine.create_task('Respect reported complete zero usage')
+        engine.run(task['id'])
+        self.assert_settled(engine,task,0)
+
     def test_no_credentials_never_transports_or_charges(self):
         def forbidden(*args):
             self.fail('A transport was invoked without credentials')
