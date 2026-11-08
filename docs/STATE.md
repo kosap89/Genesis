@@ -1,7 +1,57 @@
 # Genesis persistent project state
 
-Updated 2026-10-17, Europe/Helsinki. Resumed from checkpoint `3294389`.
+Updated 2026-11-09, Europe/Helsinki. Current preparation follows source commit `14857d6`.
 Preserve existing implementation and data; do not scaffold a replacement.
+
+## Current checkpoint: live acceptance prepared, awaiting CEO configuration
+
+Verified 2026-11-09, Europe/Helsinki, from source commit `14857d6`.
+This entry supersedes the older launch/access assertions below. Current default
+shell sandbox initialization fails; reviewed elevated commands worked. Browser
+computer-use and node_repl initialization also failed. No production code changed.
+
+- The old server was stopped (health connection refused; no listener). Relaunched
+  the existing service/data with `python -m genesis --data-dir C:\Genesis\data
+  --port 8787`, hidden background PID **38676**. Health returns **ok** and
+  **worker_alive=true**; listener verified **127.0.0.1:8787 only**.
+- Opened the local Command Center URL through Windows. Separately inspected the
+  actual port-8787 page with installed headless Chrome/Playwright: **Connected to
+  local server**, seven agent forms, OpenAI/Anthropic/Gemini selectors, password
+  field with autocomplete off, 16-step limit, no page errors. Screenshot:
+  ignored `test-results/live-acceptance-readiness.png`. Desktop foreground state
+  could not be independently inspected because the computer-use runtime failed.
+- Runtime has **0 ventures, 0 tasks, $0 spent, $0 reserved**. All three provider
+  statuses are unconfigured. Changed only the stored company budget from its $5
+  default to **$0 pending explicit spending authorization**. Broad network and
+  terminal permissions remain false. Maximum output is 4096 tokens per call.
+- All seven agent routes remain OpenAI / `gpt-4.1-mini`, $10 input / $30 output
+  per million tokens configured estimates, no fallbacks. Session setup can route
+  all agents to the selected provider; review model and rates afterward. Built-in
+  defaults are not a live catalog. Official OpenAI model documentation currently
+  labels gpt-4.1-mini deprecated; account/model access remains unverified. Recheck
+  the chosen provider's model availability before the first authorized request.
+  Reference: https://developers.openai.com/api/docs/models/gpt-4.1-mini
+- `python -m unittest discover -s tests -v`: **95 tests in 47.033s, OK,
+  one Windows symlink privilege skip**. `node --check web/app.js`: **PASS**.
+- `npm.cmd run test:e2e`: **PASS**, including production credential blocking,
+  settings/rates/routes/session-key/restart/mobile checks and explicitly identified
+  test-provider fixtures for tool execution, approval/denial and ZIP downloads.
+  These fixtures do not establish live AI acceptance. Tests used isolated data;
+  production runtime remains free of acceptance objectives.
+- Prepared exact secure UI setup steps, all three founding prompts, sequencing,
+  independent review gates and consumption/evidence requirements in ACCEPTANCE.md.
+  No paid requests made; API consumption this preparation: **0 calls, 0 tokens**.
+  Provider invoice/account balance has not been inspected.
+
+**Exact next task:** CEO enters a key directly in the local Agents & controls
+session form and explicitly approves a total USD test budget. Do not request keys
+in chat. Afterward check presence only, verify chosen model/access and configured
+rates, apply the authorized budget, create one founding venture and execute the
+three ACCEPTANCE.md runs sequentially with source/artifact/test review. Record
+actual usage and sanitized evidence here, fix real defects and reverify. Stop at
+budget exhaustion rather than increasing authorization. No live acceptance pass
+is claimed. Approved host subprocesses are not an OS sandbox, and local estimated
+budget controls are not a provider-side hard spending cap.
 
 ## Latest verified completion: verification and local launch
 
