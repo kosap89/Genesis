@@ -1,9 +1,48 @@
 # Genesis persistent project state
 
-Updated 2026-11-09, Europe/Helsinki. Full-design mission preparation continues verified commit `d635eb6`.
+Updated 2026-11-09, Europe/Helsinki. Mission budget authorization follows verified commit `73bb89c`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: complete autonomous design mission prepared, awaiting authorization
+## Current checkpoint: $4.50 mission cap authorized; Genesis credential missing
+
+Verified 2026-11-09, Europe/Helsinki. The CEO approved the mission spending request
+but constrained it to a reported **$4.85 remaining provider credit balance**.
+Applied a **$4.50 maximum additional conservative mission cost**, leaving $0.35
+below that reported balance. This supersedes the earlier proposed $10 cap; no
+further spending consent is needed within the newly approved scope/cap.
+
+Through supported APIs set venture budget to **$4.50** and global absolute ceiling
+to **$8.41808** (preserved historical spent $3.91808 plus $4.50). Neither spent nor
+reserved balances were reset. Venture spent/reserved remain $0. Updated only the
+mission policy's authorization paragraph to record this approval and the credit
+constraint. Models, memberships, concurrency/step/delegation settings, network and
+terminal permissions, all six documents and all five historical tasks are unchanged.
+
+The scoped non-generating provider check still returns **missing_credentials**:
+credential_configured=false, checked=false, generation_tested=false. Account
+visibility for Sol, Terra and Luna remains unknown. No external provider request
+was made. Opened the local password form for the sole required secret input;
+Codex subscription credentials were not accessed or substituted.
+
+Actual added tasks **0**, model calls **0**, API consumption **$0**. Historical
+model audit remains 40 requests plus 40 responses. The prepared collaborative
+mission has **not been submitted** because the Genesis key is still absent.
+Before/after checks confirm budget writes, preservation of previous spend,
+unchanged documents/models/history and no unintended execution. No source changes
+or new regression tests were needed for these supported configuration updates.
+Runtime evidence is ignored data/full-design-mission/budget-authorization.json.
+
+**Exact next task:** obtain the CEO-supplied Genesis OpenAI API key securely through
+the local password form/environment, never chat or Codex auth. Recheck the three
+exact model IDs using the non-generating endpoint. If available, submit exactly
+one saved collaborative Creative Director mission under the existing **$4.50**
+cap; do not ask for the same spending authorization again. Monitor and report
+actual individual delegation/network approval gates and budget/credential/
+execution blockers. Do not auto-approve unknown invocations or exceed the cap.
+The cap is conservative application accounting, not an independently verified
+provider invoice/credit reading; do not guarantee completion within it.
+
+## Previous checkpoint: complete autonomous design mission prepared, awaiting authorization
 
 Verified 2026-11-09, Europe/Helsinki, continuing committed/pushed d635eb6.
 Existing Card Game venture 07587388a699471aa8fdb86b958cfe3a is prepared for

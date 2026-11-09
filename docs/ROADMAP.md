@@ -42,7 +42,9 @@ provider independence, controlled tools, and reviewable execution.
    persistent nonexecuting collaborative mission draft and safe non-generating
    model-availability metadata check. 184 tests (one Windows skip) and browser
    E2E pass. Five-role full paper-design mission prepared; no model calls or task
-   submission. Await explicit new spending authorization and Genesis API key.
+   submission. CEO subsequently authorized a $4.50 additional cap against a
+   reported $4.85 credit balance; configured without resetting spend. Await only
+   the missing Genesis API credential before submission/model checks.
 10. **Next hardening:** OS-level process isolation, richer research sources,
    independent acceptance evaluators, external action connectors with approvals.
 
