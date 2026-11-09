@@ -89,7 +89,13 @@ provider independence, controlled tools, and reviewable execution.
    251 tests (one Windows skip), browser E2E and live UI/configuration checks pass.
    Existing budget-blocked research task resumed without duplicate mission root.
    Provider timeout defaults to bounded 180s, with no automatic replay.
-16. **Next hardening:** OS-level process isolation, richer research sources,
+16. **Verified brief v0.4 handoff:** protected exact new human brief, current
+   mechanics-only Game Design v1.0 assignment, concrete Tech Tree/class branches,
+   hybrid rewards and physical/mid-match deck adaptation requirements. Updated
+   project roles/draft/work documents; original protected concept/decisions and
+   prior research/revision history retained. 12 document/HTTP checks and real
+   prepared-mission browser check pass. No new inference or design root launched.
+17. **Next hardening:** OS-level process isolation, richer research sources,
    independent acceptance evaluators, external action connectors with approvals.
 
 ## Session protocol

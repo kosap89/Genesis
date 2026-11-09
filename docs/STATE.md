@@ -3,7 +3,77 @@
 Updated 2026-11-09, Europe/Helsinki. Live official reporting follows verified integration `b45a809` and repeat verification `0a49725`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: scoped project autonomy and tracking-only local accounting deployed
+## Current checkpoint: CEO brief v0.4 integrated; next target is Game Design v1.0
+
+Read the CEO's complete new Game Design Brief v0.4 and integrated the assignment
+through supported revisioned document/project/team APIs. Scope is now a complete
+first playable **Game Design v1.0 mechanics proposal**, compatible with physical
+and future digital play, with **no lore/theme/world/visual identity/art/branding
+or final title**. No software implementation is authorized. Brief v0.4 is a source
+version, not the target rulebook version.
+
+New central requirements include a common in-match Tech Tree with class-specific
+branches, provisional Aggression/Survival/Economy/Sacrifice paths, mixed-class
+eligibility and multiple strategic uses of a class. The assignment now explicitly
+requires concrete nodes/prerequisites/currencies/timing/ownership, all three reward
+types (persistent bonuses, new cards and existing-card upgrades), actual mid-match
+deck/card changes, strategic redirection/counterplay, anti-snowball checks and exact
+physical components/card pools/tracking. Example values and initial class identities
+are provisional starting points. Essential choices must be resolved autonomously,
+then independently critiqued/revised/rechecked into one coherent design.
+
+Preserved original protected **CONCEPT.md revision 2** and human-only
+**DECISIONS.md revision 1**, unchanged. The first attempted combined update was
+rejected before execution by automatic approval review because it would have
+replaced the protected concept. Used the permitted safer alternative: created
+protected **BRIEF_V0_4.md revision 1**, ID **8e30ee42995e483c8ca297620bba6833**,
+containing the user's full **17270-character** attachment verbatim, with SHA-256
+**7c397f426c1f23bba76cff002562b242424a6ab5b4ca31ce504323757ba6aa74**.
+Current project policy explicitly gives the new brief precedence for this phase
+where it differs from the historical v0.2 source. No protected concept overwrite
+or review bypass occurred.
+
+Updated **MISSION.md revision 3**, the prepared collaborative/coo objective
+(8969 characters), and all five project-specific role instructions. Models,
+reasoning, memberships/enabled states, autonomy, budget mode/counters and execution
+limits were preserved. Engineering and finance remain inactive. The workflow
+still uses actual bounded delegation/research/design/independent review/fixes/
+recheck/consolidation; it now calls for incremental saved sections to avoid another
+giant all-or-nothing response after the previous Designer timeouts.
+
+Writable planning documents updated without fabricated rules or research:
+**GAME_DESIGN.md revision 3** provides the new mechanics/Tech Tree deliverable
+outline, **IDEAS.md revision 2** adds the new alternatives scope,
+**REVIEWS.md revision 3** preserves all real prior sources and marks new coverage
+gaps, **OPEN_QUESTIONS.md revision 4** gives autonomous design questions while
+retaining the old v0.3 execution failure as history. The new source update is not
+a completed design, playtest or agent research result.
+
+Verification: **12 document/security/HTTP tests passed in 3.088s**. On an isolated
+copy of the real DB, an agent tool read the complete exact new brief by name;
+agent modification of the protected brief was denied. All **24 pre-existing
+document revision records** were compared and unchanged. Real browser verification
+confirmed the prepared-mission link loads the full new mechanics-only/Tech Tree
+objective, collaborative mode and coo, with task-submission HTTP blocked. Live
+before/after assertions preserved task history, global settings, model instances,
+protected concept/decisions, financial counters and other project configuration.
+Evidence/backups are ignored under `data/brief-v04/`.
+
+At inspection, the earlier v0.3 root **c979e9ee7bac49438ac69c407ffc8340** had already
+ended completed with an honest blocked/incomplete report: both Designer attempts
+timed out, Researcher succeeded, no complete ruleset was saved. This update did
+not rewrite those tasks or resume/create another paid mission. **New AI calls 0,
+new tasks 0, added API consumption $0.**
+
+**Exact next task:** when the CEO starts the next design phase, load the current
+prepared mission for venture 07587388a699471aa8fdb86b958cfe3a. Read BRIEF_V0_4.md
+and MISSION.md as current sources, preserve older evidence, use actual autonomous
+team work and incremental writes, and deliver Game Design v1.0 including the full
+Tech Tree/adaptation/physical prototype specification. Do not claim the old
+completed status proves a playable design, or silently launch a new paid root
+from a request to update planning documents.
+
+## Previous checkpoint: scoped project autonomy and tracking-only local accounting deployed
 
 CEO explicitly requested autonomous team work without repeated delegation/research
 prompts, then explicitly disabled the application's local dollar-cap enforcement
