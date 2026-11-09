@@ -3,7 +3,7 @@
 Updated 2026-11-10, Europe/Helsinki. Preserve the verified implementation and recorded live evidence below.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: independent review dependency bug fixed; restart awaiting session keys
+## Current checkpoint: independent review dependency bug fixed; same QA resumed
 
 QA task **2548319576f9449aaf1521c1512379a7** was blocked at step zero.
 The actual director delegation required only completed continuation
@@ -36,11 +36,19 @@ execution. Tests use explicit provider doubles and made no paid model requests.
 
 Stopped the idle old server only after verifying no running/queued tasks, and
 opened the existing local hidden-input session launcher for updated source.
-**Exact next task:** await the CEO's local session-key entry, verify loopback
-health, resume the same QA task via supported API, and observe actual progress.
-Do not create a new root or claim live QA completion before evidence. The existing
-root remains cbed76f517fa4c5fb9073758fc8913b1. No mission model calls were made
-in this repair session before credential entry.
+CEO confirmed local session keys entered. Verified `/api/health` returned
+`status: ok` and `worker_alive: true`, then resumed the same QA through the
+CSRF-protected supported API. Observed **running at step 3**, no dependency error,
+real OpenAI gpt-6.1-sol dispatches and successful task inspection/artifact import
+at 2026-11-09 22:45 UTC (Nov 10 local). This proves the execution block cleared,
+not that independent design acceptance has passed. Real mission API consumption
+has resumed; exact final usage/cost awaits settlement and provider reporting.
+No new root or duplicate QA was created; failed author history remains intact.
+
+**Exact next task:** monitor this QA's saved independent findings, then the
+existing root's bounded fix/recheck/consolidation stages. Preserve original root
+cbed76f517fa4c5fb9073758fc8913b1 and actual document revisions. Do not claim
+review completion or physical playtesting without evidence.
 
 ## Previous checkpoint: bounded continuation dependency repaired; existing mission resumed
 
