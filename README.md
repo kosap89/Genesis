@@ -114,7 +114,8 @@ declared passed using test doubles.
   not verified prices. Known model prices can raise these guards, never lower them.
   A separate published-price registry (including cached input) estimates usage
   costs; editing reporting prices never changes budget authorization or settlement.
-  Official billing remains unavailable without independent reconciliation.
+  Separate optional OpenAI organization reports show provider-reported costs;
+  Genesis-only invoice attribution still requires independent reconciliation.
   Before a call, Genesis reserves input-byte/output-token ceilings for every possible
   explicit fallback. Reported usage settles successful calls; potentially billed
   failures and interrupted reservations are charged at their configured ceilings.
@@ -160,3 +161,8 @@ See [venture configuration and documents](docs/VENTURE_DOCUMENTS.md).
 A project can save a collaborative mission draft and scoped execution limits.
 Loading its draft prepares the objective form without submitting work or granting
 spending/tool approval. See [prepared missions](docs/MISSIONS.md).
+
+The CEO financial dashboard supports read-only official OpenAI organization costs
+with a separate session-only Admin credential configured through hidden local
+input. Prepaid balance retrieval has no documented supported API; the dashboard
+links to OpenAI billing settings. See [billing setup and limits](docs/BILLING.md).

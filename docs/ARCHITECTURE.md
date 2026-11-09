@@ -298,8 +298,8 @@ join timeout while the old worker can still write.
 
 Current limits include serial task execution, no durable external scheduler or
 multi-host workers, no external business connectors, no automatic source promotion,
-no operating-system isolation, no retrieval index/context compaction, no live billing
-reconciliation, and no application authentication/encryption. Messages accumulate
+no operating-system isolation, no retrieval index/context compaction, no automatic
+Genesis-only invoice reconciliation, and no application authentication/encryption. Messages accumulate
 and are sent as history until provider/context or configured budget limits intervene.
 The command center is a local operating surface, not evidence that an objective
 was commercially validated or that its model output is correct.
@@ -322,8 +322,9 @@ without rewriting legacy charges. `settings.pricing_overrides` changes reporting
 only. `spent_usd`/`reserved_usd` remain the enforced conservative ledger. Known
 published long-context rates may raise the effective guard; user reporting prices
 cannot lower it. Missing cached details, incomplete usage and uncertain failed
-attempts are exposed rather than inferred as zero billing. Official invoice data
-is unavailable; the reporting summary explicitly returns null for it.
+attempts are exposed rather than inferred as zero billing. Genesis-attributed
+official invoice data remains null pending independent reconciliation. Separate
+OpenAI organization-reported costs do not populate that field.
 
 `POST /api/tasks/estimate` computes a local preview without task/workspace creation
 or dispatch. `POST /api/pricing` persists validated reporting overrides. Agent and
@@ -353,3 +354,19 @@ checks are serialized with reservations and capped projects do not starve others
 Limits apply live at the next request, while models/instructions remain pinned.
 Neither drafts nor scoped limits grant spending or approve delegated invocations.
 See MISSIONS.md for validation, workflow, budgeting and operational limits.
+
+## Separate official organization reporting
+
+The HTTP server owns `BillingService`; agent Engine/tool state has no billing
+service or Admin credential. Hidden local input through
+`python -m genesis.billing_credentials` uses proxy-free loopback HTTP and CSRF.
+Browser JavaScript sees credential presence only. Model credential selection
+rejects Admin keys before transport.
+
+Only fixed GET Costs and optional completion Usage endpoints are implemented.
+Cached reports/settings use dedicated records, with no budget writes. Bounded,
+serialized refreshes retain last successful reports and expose partial, delayed,
+stale and historical labels. Periodic polling defaults off. No supported prepaid
+balance endpoint was found; balance is null with an official dashboard link.
+Reporting cannot trigger inference or billing changes. See BILLING.md for sources,
+setup, limits and verification contracts.

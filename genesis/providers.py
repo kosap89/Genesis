@@ -38,7 +38,10 @@ KEY_NAMES = {"openai": ("GENESIS_OPENAI_API_KEY", "OPENAI_API_KEY"),
 
 
 def _key(provider, config):
-    return config.get("api_key") or next((os.environ[n] for n in KEY_NAMES[provider] if os.environ.get(n)), "")
+    key = config.get("api_key") or next((os.environ[n] for n in KEY_NAMES[provider] if os.environ.get(n)), "")
+    # Administrative credentials must never reach any model transport. Preserve
+    # credential precedence: an invalid selected key does not select another key.
+    return "" if isinstance(key, str) and key.startswith("sk-admin-") else key
 
 
 def provider_status():

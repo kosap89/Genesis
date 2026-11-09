@@ -9,7 +9,7 @@ const assert=require('node:assert/strict');
 const source=path.resolve(__dirname,'..');
 const temp=fs.mkdtempSync(path.join(os.tmpdir(),'genesis-browser-'));
 const env={...process.env,PYTHONUNBUFFERED:'1'};
-for(const key of ['GENESIS_OPENAI_API_KEY','OPENAI_API_KEY','GENESIS_ANTHROPIC_API_KEY','ANTHROPIC_API_KEY','GENESIS_GEMINI_API_KEY','GEMINI_API_KEY','GOOGLE_API_KEY'])delete env[key];
+for(const key of ['GENESIS_OPENAI_API_KEY','OPENAI_API_KEY','GENESIS_ANTHROPIC_API_KEY','ANTHROPIC_API_KEY','GENESIS_GEMINI_API_KEY','GEMINI_API_KEY','GOOGLE_API_KEY','GENESIS_OPENAI_ADMIN_API_KEY','OPENAI_ADMIN_KEY','OPENAI_ADMIN_API_KEY'])delete env[key];
 let processHandle,browser;
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 async function start(fixture,port,data){
@@ -35,6 +35,43 @@ async function main(){
   await start(false,18871,path.join(temp,'real'));
   await page.goto('http://127.0.0.1:18871');
   await page.locator('#connection').filter({hasText:'Connected'}).waitFor();
+  // Official billing integration: no credentials or external HTTP in this phase.
+  await page.locator('[data-view=finance]').click();
+  await page.locator('#billing-credential-status').filter({hasText:'not configured'}).waitFor();
+  assert.equal(await page.locator('#view-finance input[type=password]').count(),0,'Admin key must never enter frontend JavaScript');
+  assert.equal(await page.locator('#finance-official').textContent(),'Unavailable');
+  assert.equal(await page.locator('#view-finance a[href="https://platform.openai.com/settings/organization/billing/overview"]').count(),1);
+  const beforeBilling=await(await fetch('http://127.0.0.1:18871/api/state')).json();
+  await page.locator('#billing-refresh').click();
+  await page.waitForFunction(()=>!document.querySelector('#billing-refresh').disabled);
+  const afterBilling=await(await fetch('http://127.0.0.1:18871/api/state')).json();
+  assert.deepEqual(afterBilling.settings,beforeBilling.settings,'Billing refresh cannot alter budget or execution settings');
+  assert.equal(afterBilling.tasks.length,beforeBilling.tasks.length,'Billing refresh cannot launch work');
+  assert.equal(afterBilling.billing.credential_configured,false);
+  await page.locator('#billing-interval').selectOption('900');
+  await page.locator('#billing-settings-form [type=submit]').click();
+  await waitState(18871,x=>x.billing.config.refresh_interval_seconds===900);
+  await page.locator('#billing-interval').selectOption('0');
+  await page.locator('#billing-settings-form [type=submit]').click();
+  await waitState(18871,x=>x.billing.config.refresh_interval_seconds===0);
+  // Explicit browser-only fixture tests presentation; no official-data claim or provider HTTP.
+  const billingFixture={credential_configured:true,config:{refresh_interval_seconds:0,include_usage:true},last_successful_sync:'2026-11-09T10:00:00+00:00',stale:true,error:'Fixture synchronization failure',report:{period_start:'2026-11-01T00:00:00+00:00',period_end:'2026-11-09T10:00:00+00:00',costs:{currency:'usd',total:1.25,complete:true,daily:{'2026-11-08':1.25},by_project:{'proj_fixture':1.25},by_api_key:{}},usage:{available:true,requests:3,input_tokens:100,output_tokens:20,groups:[{project_id:'proj_fixture',api_key_id:'key_fixture',requests:3,input_tokens:100,output_tokens:20}]}}};
+  await page.route('**/api/state',async route=>{const response=await route.fetch();const body=await response.json();body.billing=billingFixture;await route.fulfill({response,json:body});});
+  await page.reload();await page.locator('#finance-official').filter({hasText:'1.25'}).waitFor();
+  await page.locator('#billing-daily').filter({hasText:'2026-11-08'}).waitFor();
+  await page.locator('#billing-projects').filter({hasText:'proj_fixture'}).waitFor();
+  await page.locator('#billing-usage').filter({hasText:'key_fixture'}).waitFor();
+  await page.locator('#billing-status').filter({hasText:'stale'}).waitFor();
+  assert((await page.locator('#billing-status').textContent()).includes('Fixture synchronization failure'));
+  await page.screenshot({path:path.join(output,'billing-fixture-dashboard.png'),fullPage:true});
+  billingFixture.report.costs.total=null;billingFixture.report.costs.complete=false;billingFixture.credential_configured=false;billingFixture.historical_snapshot=true;billingFixture.report.month='2020-02';billingFixture.report.period_start='2020-02-01T00:00:00+00:00';billingFixture.report.period_end='2020-02-20T00:00:00+00:00';
+  await page.reload();await page.locator('#finance-official').filter({hasText:'Unavailable'}).waitFor();
+  await page.locator('#billing-status').filter({hasText:'Partial report'}).waitFor();
+  await page.locator('#billing-status').filter({hasText:'Historical stored provider snapshot'}).waitFor();
+  assert.equal(await page.locator('#finance-official-label').textContent(),'Official OpenAI costs | Reported UTC month 2020-02','Previous-month cached report must never be labeled current month to date');
+  assert((await page.locator('#billing-window').textContent()).includes('2020-02-01'));
+  await page.unroute('**/api/state');
+  await page.locator('[data-view=overview]').click();
   await page.locator('#new-venture').click();
   await page.locator('#venture-form [name=name]').fill('Browser verified venture');
   await page.locator('#venture-form [name=description]').fill('Real persistent browser interaction');
@@ -109,7 +146,7 @@ async function main(){
     await page.waitForFunction(role=>!document.querySelector('.agent-form[data-agent-id="'+role+'"] [type=submit]').disabled,role);
     savedModern.push({role,model:model.id,effort,before});
   }
-  assert((await page.locator('#accounting-summary').textContent()).includes('Official billed amount: unavailable'));
+  assert((await page.locator('#accounting-summary').textContent()).includes('Genesis-attributed official billed amount: unavailable'));
   const guardRates=s.agents.map(a=>[a.role,a.input_cost_per_million,a.output_cost_per_million]);
   await page.locator('#pricing-model').selectOption(catalog.openai[0].id);
   await page.locator('#pricing-input').fill('2.123');

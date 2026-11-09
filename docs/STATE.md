@@ -1,9 +1,79 @@
 # Genesis persistent project state
 
-Updated 2026-11-09, Europe/Helsinki. Mission budget authorization follows verified commit `73bb89c`.
+Updated 2026-11-09, Europe/Helsinki. Official billing integration follows verified commit `44efa20`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: $4.50 mission cap authorized; Genesis credential missing
+## Current checkpoint: official organization billing integration verified offline
+
+Implemented the documented OpenAI Organization Costs API in a separate HTTP-server
+service, with current named UTC month totals, daily costs and provider project/API
+key attribution. Optional completion usage reports request/token counts by project,
+key and model; it does not claim to cover all API products. The CEO dashboard keeps
+these organization-wide provider figures separate from Genesis conservative
+spent/reserved budgets, published-price estimates, Genesis-attributed invoice data
+and remaining venture budgets. No organization-to-venture mapping is invented.
+
+Official report timestamps/windows, delayed reporting, partial amounts, stale and
+historical snapshots are explicit. Old-month totals name their month. Failures
+retain the last successful report; incomplete cost pagination never publishes a
+new total. Missing amounts are unavailable rather than zero, and currencies are
+not mixed. Manual refresh has a minimum 30-second cooldown; optional polling
+defaults off and accepts only 900-86400 second intervals. Page/response/time bounds,
+cursor checks, retry backoff and shutdown/key-rotation protection are implemented.
+
+No documented supported prepaid credit-balance endpoint was found in the official
+reference as of 2026-11-09. Balance stays null/unsupported; the dashboard links to
+official billing settings. There is no scraping, private endpoint, credit estimate
+presented as actual balance, top-up, billing mutation or budget adjustment.
+See [BILLING.md](BILLING.md) for official sources and setup/limitations.
+
+The optional Organization Admin key is separate, server-memory/session-only and
+never enters frontend JavaScript, persisted state, environment, logs or agent tools.
+`python -m genesis.billing_credentials` uses hidden local input and CSRF-protected
+loopback HTTP, with redirects and environment proxies disabled. No Admin key has
+been requested or configured during development. Model credential paths reject
+Admin keys before provider transport. Existing host execution remains unsandboxed;
+application-level credential isolation is not protection from hostile same-user
+host code. Existing approvals and permission controls are unchanged.
+
+Verified evidence:
+
+- Subscription authentication: `codex.cmd login status` reported ChatGPT login.
+- `python -m unittest discover -s tests -v`: **222 tests in 91.604s, OK**, one
+  existing Windows symlink privilege skip. Includes 38 deterministic billing,
+  local HTTP, hidden-input and credential-isolation tests. Provider doubles are
+  explicitly test-only. Conservative preflight/reservation/settlement tests pass.
+- `node --check web/app.js`, browser-test syntax and `git diff --check`: pass.
+- `npm.cmd run test:e2e`: pass with isolated local server, explicit browser report
+  fixtures, no model APIs. Covers display distinctions, cost/usage attribution,
+  failure/partial/historical/month rollover states, settings and preserved tasks/
+  budgets. Screenshots are fixture evidence, not live OpenAI reporting evidence.
+- Independent review found and verified fixes for local helper proxy bypass and
+  previous-month metric attribution. No remaining blocking findings.
+- Updated real loopback server restarted as PID **11920**, health **ok**, worker
+  alive. Admin/model credentials absent, official report unavailable, periodic
+  refresh **off**. All existing SQLite tables are byte-value identical row-for-row
+  to the pre-restart backup: records, messages, events and sqlite_sequence.
+  Before/after API settings, agents, tasks, ventures, approvals and accounting match.
+  Ignored local evidence: `data/billing-integration/verification.json`, before/after
+  state snapshots and SQLite backup. Runtime data/logs are not committed.
+
+Global budget remains **$8.41808**, historical conservative spent **$3.91808**,
+reserved **$0**; card venture budget **$4.50**, spent/reserved **$0**. Teams, models,
+documents, protected CONCEPT/DECISIONS, mission draft and all five historical tasks
+are preserved. **New live model calls 0, live billing API calls 0, new tasks 0,
+API-billed development consumption $0.** No real Admin-key authorization or live
+provider report has been validated. Mock success does not establish live success.
+
+**Exact next task:** optional CEO setup of a separate expiring Organization Admin
+key through the verified hidden local helper, then manual reporting refresh and
+inspection of the actual provider window/errors. No Admin key is needed to keep
+using local financial estimates. This development request forbids live Genesis
+agent execution/prepaid inference; do not submit the previously prepared card-game
+mission as part of billing verification. Its prior budget authorization remains
+recorded below but is not development-spending authorization.
+
+## Previous checkpoint: $4.50 mission cap authorized; Genesis credential missing
 
 Verified 2026-11-09, Europe/Helsinki. The CEO approved the mission spending request
 but constrained it to a reported **$4.85 remaining provider credit balance**.

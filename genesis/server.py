@@ -22,6 +22,7 @@ from .lease import DataLease
 from .providers import KEY_NAMES, provider_status, DEFAULT_MODELS, openai_model_availability
 from .models import default_route, model_info
 from .accounting import validate_prices
+from .billing import BillingService
 
 MAX_BODY = 128 * 1024
 
@@ -37,13 +38,20 @@ def number(value, minimum, maximum, integer=False):
 class GenesisServer(ThreadingHTTPServer):
     daemon_threads = True
 
-    def __init__(self, address, engine, web_root):
+    def __init__(self, address, engine, web_root, billing=None):
         if address[0] not in {'127.0.0.1', 'localhost'}:
             raise ValueError('Genesis must listen on loopback only.')
         self.engine = engine
         self.web_root = Path(web_root).resolve()
         self.csrf = secrets.token_urlsafe(32)
+        self.billing = billing if billing is not None else BillingService(engine.store)
         super().__init__(address, Handler)
+
+    def server_close(self):
+        # Keep the data lease until any bounded billing fetch has stopped too.
+        while not self.billing.close():
+            threading.Event().wait(0.05)
+        super().server_close()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -98,7 +106,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == '/api/health':
                 return self._json(200, {'status':'ok', 'service':'genesis', 'worker_alive':bool(engine.thread and engine.thread.is_alive())})
             if path == '/api/state':
-                return self._json(200, {**engine.state(), 'csrf_token':self.server.csrf})
+                return self._json(200, {**engine.state(), 'billing':self.server.billing.state(), 'csrf_token':self.server.csrf})
+            if path == '/api/billing':
+                return self._json(200, self.server.billing.state())
             parts = path.strip('/').split('/')
             if len(parts) >= 4 and parts[:2] == ['api', 'projects'] and parts[3] == 'documents':
                 venture_id = parts[2]
@@ -189,6 +199,31 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError('Expected an object.')
             path = unquote(urlsplit(self.path).path)
             parts = path.strip('/').split('/')
+            if path == '/api/billing/credentials':
+                if body == {'clear': True}:
+                    self.server.billing.set_credential('')
+                elif set(body) == {'admin_api_key'}:
+                    key = body['admin_api_key']
+                    if not isinstance(key, str) or not key or len(key) > 4096 or any(ord(c) < 33 or ord(c) > 126 for c in key):
+                        raise ValueError('Admin key must be printable text without whitespace, up to 4096 characters.')
+                    model_keys = [os.environ.get(name, '') for names in KEY_NAMES.values() for name in names]
+                    if key.startswith('sk-proj-') or any(hmac.compare_digest(key, value) for value in model_keys if value):
+                        raise ValueError('Use a separate Organization Admin API key, not a model credential.')
+                    self.server.billing.set_credential(key)
+                else:
+                    raise ValueError('Use the local hidden-input billing credential helper or clear the session credential.')
+                engine.store.event('billing_credentials_changed', configured=self.server.billing.state()['credential_configured'])
+                return self._json(200, self.server.billing.state())
+            if path == '/api/billing/settings':
+                self.server.billing.configure(body)
+                if self.server.billing.state()['config']['refresh_interval_seconds']:
+                    self.server.billing.start()
+                engine.store.event('billing_settings_changed')
+                return self._json(200, self.server.billing.state())
+            if path == '/api/billing/refresh':
+                if body:
+                    raise ValueError('Billing refresh accepts an empty object only.')
+                return self._json(200, self.server.billing.refresh())
             if path == '/api/providers/openai/check':
                 if set(body) - {'venture_id'}:
                     raise ValueError('Unsupported availability fields')
@@ -221,6 +256,8 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError('API key must be printable text without whitespace, up to 4096 characters. An empty key clears the process override.')
                 if not isinstance(configure_agents, bool):
                     raise ValueError('configure_agents must be a boolean.')
+                if key and (key.startswith('sk-admin-') or self.server.billing.credential_matches(key)):
+                    raise ValueError('An Organization Admin key cannot be configured as a model credential.')
                 # Only this service process is changed. No secret enters SQLite,
                 # logs, command arguments, browser storage, or API responses.
                 with engine.guard:
@@ -353,6 +390,7 @@ def main():
             engine = Engine(args.data_dir, source)
             server = GenesisServer(('127.0.0.1', args.port), engine, source / 'web')
             engine.start()
+            server.billing.start()
             print(f'Genesis listening at http://127.0.0.1:{server.server_address[1]}', flush=True)
             print('Local only. Credentials are read from environment. Ctrl+C stops the service.', flush=True)
             try:

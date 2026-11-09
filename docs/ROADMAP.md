@@ -45,7 +45,14 @@ provider independence, controlled tools, and reviewable execution.
    submission. CEO subsequently authorized a $4.50 additional cap against a
    reported $4.85 credit balance; configured without resetting spend. Await only
    the missing Genesis API credential before submission/model checks.
-10. **Next hardening:** OS-level process isolation, richer research sources,
+10. **Verified offline official organization reporting:** separate session Admin
+   credential, documented OpenAI Costs and optional completion Usage reads,
+   project/API key attribution, delayed/historical reports and bounded refresh.
+   Financial sources remain separate and budget enforcement unchanged. No
+   documented supported prepaid-balance API found; official dashboard link only.
+   222 tests (one Windows skip), browser E2E and real-data restart preservation
+   pass. No live billing/model requests; actual Admin-key access remains unverified.
+11. **Next hardening:** OS-level process isolation, richer research sources,
    independent acceptance evaluators, external action connectors with approvals.
 
 ## Session protocol

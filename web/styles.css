@@ -8,3 +8,5 @@
 #document-content {font-family: ui-monospace, monospace; line-height: 1.6;}
 #document-history pre {white-space: pre-wrap; overflow-wrap: anywhere;}
 #document-controls details, .team-agent-form > details {padding: 12px 0;}
+
+.financial-metrics strong{font-size:25px;overflow-wrap:anywhere}.financial-metrics small{line-height:1.6}#view-finance h3{margin-top:20px}#view-finance .record{font-size:12px}#billing-status{white-space:pre-line}#billing-settings-form{max-width:520px}
