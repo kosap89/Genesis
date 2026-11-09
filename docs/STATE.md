@@ -3,7 +3,51 @@
 Updated 2026-11-09, Europe/Helsinki. Live official reporting follows verified integration `b45a809` and repeat verification `0a49725`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: real OpenAI organization reporting connected
+## Current checkpoint: CEO-reconciled $0.15 local spending baseline
+
+The CEO explicitly requested replacing the inflated historical local spending
+balance with **$0.15** from the supplied OpenAI dashboard and continuing local
+accounting from that point. Applied at **2026-11-09 04:03:55 UTC**. This supersedes
+the previous instruction to retain the historical conservative balance.
+
+Global `spent_usd` is now **$0.15**. Preserved the previously authorized **$4.50
+remaining allowance** by lowering the absolute global budget from $8.41808 to
+**$4.65**; no additional spending was authorized. The existing Founding live
+acceptance venture's local spent balance was also manually reconciled to $0.15,
+with explicit CEO allocation provenance. The card-game venture remains spent $0,
+budget $4.50. Reservations remain $0. Model routes, permissions and execution
+limits are unchanged.
+
+The one-time data adjustment was atomic under a SQLite write transaction after
+verifying all tasks terminal and all scoped reservations zero. Recorded previous
+balances, timestamp, source and preserved allowance in `spending_reconciliation`
+metadata plus `budget_spending_reconciled` audit event. The original database
+backup and adjustment evidence are ignored under
+`data/billing-integration/reconciliation/`. Existing tasks, messages and historical
+model audit remain intact. The old task costs and independent historical price
+estimate remain historical evidence; they are not used to overwrite the new
+global baseline. The manual correction is not a Costs API response, invoice
+reconciliation or prepaid-balance reading.
+
+The financial dashboard explains the CEO-confirmed baseline and subsequent local
+safety estimates. Existing reservation/settlement logic continues adding new local
+charges to $0.15; rates and enforcement were not disabled. Verification on an
+isolated copy reserved $0.20, settled $0.05 to produce a $0.20 total from the
+$0.15 baseline, released reservations and rejected a $5 overrun. No worker or
+model execution was used. Live API readback confirms $0.15 used, $4.65 total and
+$4.50 remaining; record comparison confirms only global settings and the intended
+founding venture changed, with all historical task/message records preserved.
+The running server was not restarted; session Admin credentials are preserved.
+JavaScript syntax and the full browser E2E passed, including a baseline fixture
+asserting manual provenance and $4.50 remaining. A read-only real-browser check
+also confirmed the live dashboard displays the $0.15 baseline and $4.50 remainder.
+
+**Exact next task:** continue ordinary local budget tracking from this manually
+confirmed baseline, retaining the $4.50 remaining authorization and individual
+execution approvals. Future real provider costs remain separate, delayed reports.
+Do not automatically reset or reconcile this baseline from organization costs.
+
+## Previous checkpoint: real OpenAI organization reporting connected
 
 CEO dashboard clarification: the supplied official OpenAI screenshot shows **$0.15
 organization monthly spend against a $10 organization spend limit**. This is a

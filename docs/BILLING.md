@@ -21,6 +21,14 @@ the Costs endpoint was still empty at the subsequent synchronization. Provider
 organization spend limits, internal Genesis budgets and prepaid balance are
 three separate concepts.
 
+The CEO subsequently explicitly reconciled the live local balance to **$0.15**.
+This manual baseline has timestamp/source/previous-balance audit metadata and is
+shown as CEO-confirmed, not an API cost result. New local safety charges accumulate
+on top of it. The global ceiling was reduced to $4.65 to preserve the existing
+$4.50 remaining authorization. Historical task costs and price estimates remain
+available. This was an explicit operator correction, not automatic synchronization
+or a change to reservation/settlement enforcement.
+
 The financial section separates Genesis conservative spent/reserved/remaining
 budget, published-price estimated API cost, official OpenAI organization costs,
 and remaining internal venture budgets. Organization costs have daily, OpenAI

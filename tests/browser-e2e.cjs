@@ -79,6 +79,12 @@ async function main(){
   assert((await page.locator('#billing-window').textContent()).includes('does not establish a zero final bill or a prepaid balance'));
   assert((await page.locator('#billing-usage').textContent()).includes('3 requests'),'Real usage may coexist with an empty delayed cost report');
   await page.unroute('**/api/state');
+  await page.route('**/api/state',async route=>{const response=await route.fetch();const body=await response.json();body.settings.spending_reconciliation={confirmed_spent_usd:0.15,at:'2026-11-09T04:03:55Z'};body.settings.spent_usd=0.15;body.settings.budget_usd=4.65;body.accounting.conservative_charged_usd=0.15;await route.fulfill({response,json:body});});
+  await page.reload();await page.locator('#finance-explanation').filter({hasText:'CEO-confirmed'}).waitFor();
+  assert((await page.locator('#finance-explanation').textContent()).includes('not synchronized from the Costs API'));
+  assert((await page.locator('#finance-charged').textContent()).includes('0.15'));
+  assert((await page.locator('#finance-reserved').textContent()).includes('4.50'));
+  await page.unroute('**/api/state');
   await page.locator('[data-view=overview]').click();
   await page.locator('#new-venture').click();
   await page.locator('#venture-form [name=name]').fill('Browser verified venture');

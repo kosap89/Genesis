@@ -54,7 +54,10 @@ provider independence, controlled tools, and reviewable execution.
    pass. Subsequent CEO-authorized real Costs/Usage synchronization verified Admin
    access and 40 historical completion requests. Costs returned no monetary rows;
    dashboard explicitly distinguishes this from a zero final bill. No new model
-   inference or agent execution; budgets unchanged and polling remains off.
+   inference or agent execution; synchronization did not change budgets and
+   polling remains off. The CEO subsequently authorized a manual $0.15 local
+   spending baseline, preserving $4.50 remaining via a $4.65 global ceiling;
+   audited correction and continued local reservation/settlement were verified.
 11. **Next hardening:** OS-level process isolation, richer research sources,
    independent acceptance evaluators, external action connectors with approvals.
 
