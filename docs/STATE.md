@@ -3,7 +3,7 @@
 Updated 2026-11-09, Europe/Helsinki. Live official reporting follows verified integration `b45a809` and repeat verification `0a49725`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: exact-name document recovery implemented; live retry awaits session key
+## Current checkpoint: exact-name document recovery verified offline and in live retry
 
 Investigated the actual operations-agent messages from the failed live test: it
 read the correct document but twice changed characters in the opaque UUID when
@@ -23,7 +23,8 @@ revision checks remain in the actual write path. Model tool schemas prefer names
 Verification: **228 Python tests passed in 97.213s**, one existing Windows symlink
 privilege skip; includes **8 new deterministic selector/security regressions**.
 `node --check web/app.js` and full browser E2E passed. Independent scoped review
-found no blocking issues. No paid request was made during engineering/testing.
+found no blocking issues. No paid request was made during offline engineering
+verification; the subsequently authorized live retry is recorded separately below.
 
 Restarted the real loopback service with the verified code as PID **33076**;
 health/worker pass. Before/after settings, agents, ventures, tasks, memberships,
@@ -35,15 +36,48 @@ Prepared a fresh empty **COOP_RETRY.md** document
 **10dda3fc43bb4c47bff21486c0b48bc4** in the same isolated test venture. Previous
 failure document/revisions/tasks remain unchanged. Five test-only memberships now
 instruct exact-name use. Retry draft preserves actual sequential delegation to
-strategy/growth/qa/operations and the same five-word criterion. No new root has
-been submitted. The existing **$0.50 total project cap** remains, including old
-spent **$0.31087**, so the retry cannot silently authorize another $0.50. Current
-remaining test headroom is **$0.18913**, with calibrated rates for new tasks.
+strategy/growth/qa/operations and the same five-word criterion. The CEO re-entered
+the ordinary model key; submitted exactly one retry root
+**2bb563bb82cc4c8ca190bdb8c0a28e20**, with no reset of previous spending. All four
+actual delegations received separate explicit CEO approval before their API
+approval was recorded. The existing **$0.50 total project cap** remained unchanged.
 
-**Exact next task:** once the CEO re-enters the normal session model key, submit
-the saved retry once. Inspect each real delegation and obtain its individual
-approval. Independently verify all five revision authors/words and real usage.
-Do not start the card-game mission or claim live acceptance from offline tests.
+**Real retry PASSED:** all five tasks completed. Revision history independently
+confirms each actor appended exactly its assigned word and preserved prior text:
+
+- v2 coo: `Me`.
+- v3 strategy: `Me teemme`; task **88f32325674a4bd886d7aa04d8baa62d**.
+- v4 growth: `Me teemme yhdessä`; task **e4cb215c297e405a9456f3eac7b847aa**.
+- v5 qa: `Me teemme yhdessä hyvää`; task **9cb2779fb95b42be84ec6412be1e6be8**.
+- v6 operations: **Me teemme yhdessä hyvää työtä**; task
+  **47aab99038ba4c56912461152e566780**. The previously failing agent completed its
+  own update, without operator edits or corrected agent arguments.
+
+The root read and verified the final document and reported the actual child IDs.
+Every recorded document read/update used the correct `document_name`. This proves
+the bounded sequential delegation/read/revision/write path with real Luna agents.
+It does not establish full game-design quality, parallel-write behavior or recovery
+from every kind of model error. Explicit bad-ID recovery/scope protection was
+verified deterministically; no intentionally corrupted live write was needed.
+
+Retry consumption: **23 real requests / 23 responses**, **46419 input tokens**,
+**928 output tokens**, **11024 cached input tokens**. Registry price estimate:
+**$0.00411374** (about 0.411 US cents), not a reconciled invoice and excluding
+separate cache-write fees. New conservative local charge **$0.0153759375**.
+Combined original test plus retry local spent **$0.3262459375**, below the unchanged
+$0.50 cap, with zero outstanding reservations. Genuine usage/audit/revisions and
+independent assertions are ignored at `data/document-recovery/result.json`.
+
+Independently compared **23 card-game project/document/membership/revision records**
+with the pre-restart snapshot: all preserved. No card-game mission was submitted.
+The old failed smoke test remains failed in history; it was not rewritten as a
+success. No scripted provider response or operator-completed word was used.
+
+**Exact next task:** await the CEO's instruction to start the prepared actual
+card-game mission. Small live cooperation now passes, but preserve ordinary
+credentials, budgets, protected documents and each delegation approval. Do not
+auto-start the full design assignment from this verification request. Billing
+Admin setup is optional and requires re-entry after the earlier restart.
 
 ## Previous checkpoint: future local safety rates calibrated per configured model
 

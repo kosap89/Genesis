@@ -65,11 +65,14 @@ provider independence, controlled tools, and reviewable execution.
    the approved $0.50 conservative cap. 17 calls, published-price estimate
    $0.00275004; local conservative charge $0.31087. Preserve failure evidence;
    strengthen ID reuse/recovery before an authorized retry. No game-design work.
-12. **Verified offline document selector recovery:** exact project-local document
+12. **Verified document selectors and bounded live cooperation:** exact project-local document
    names supplement IDs, with actionable missing-selector recovery and no fuzzy
    writes. Protected/stale/cross-project checks retained. 228 tests (one Windows
-   skip) and browser E2E passed; live retry prepared, awaiting re-entry of the
-   session model key after the required server restart.
+   skip) and browser E2E passed. Subsequent real five-agent retry passed with
+   independent revision/author checks, all child/root tasks complete and four
+   explicit delegation approvals. 23 calls, price estimate $0.00411374, local
+   charge $0.0153759375; combined test history remains below the same $0.50 cap.
+   Game-design quality remains untested and that mission has not been started.
 13. **Next hardening:** OS-level process isolation, richer research sources,
    independent acceptance evaluators, external action connectors with approvals.
 
