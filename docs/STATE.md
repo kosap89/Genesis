@@ -1,9 +1,74 @@
 # Genesis persistent project state
 
-Updated 2026-11-09, Europe/Helsinki. Card game preparation continues verified commit `df814e1`.
+Updated 2026-11-09, Europe/Helsinki. Complete concept restoration continues verified commit `dd3270b`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: card game organization prepared, no design execution
+## Current checkpoint: complete human concept v0.2 restored and verified
+
+Verified 2026-11-09, Europe/Helsinki, continuing committed/pushed dd3270b.
+Existing venture 07587388a699471aa8fdb86b958cfe3a and existing document
+bbda5e47682d4ddfb7864b7a5db7d1b8 were retained; no new venture or CONCEPT.md
+was created. No application source changes were needed.
+
+- CONCEPT.md is now **revision 2**, kind **reference**, read_only **true**,
+  attributed to CEO/human source. Stored all ten sections from the supplied
+  original, with only line-ending/trailing-newline normalization: **7,984
+  characters / 8,004 UTF-8 bytes**. SHA-256:
+  c28b6e205f9b94b9dc9a1ecc8607e13469e647a17c4053324f6156b35f6ffd86.
+  The gameplay examples remain provisional, not approved requirements. The future
+  theme exploration and Miro workflow were preserved; neither was initiated.
+- Revision 1, its complete content, author/timestamps and all prior history remain
+  unchanged. The original attachment and complete private source remain outside
+  Git; authoritative content is in the existing venture document database.
+- Removed only obsolete source-availability notices: GAME_DESIGN.md now references
+  the complete human source (revision 2); OPEN_QUESTIONS.md no longer lists missing
+  original source as an unresolved issue (revision 2). Their prior revisions and
+  all other content were preserved. Updated only the corresponding obsolete
+  sentence in the venture operating policy; the prior policy is retained in the
+  local before-state/database backup. IDEAS.md, REVIEWS.md and especially
+  **DECISIONS.md remain byte-for-byte and metadata-for-metadata unchanged**.
+- All six document IDs and the six-document structure remain unchanged. Agent
+  memberships/instructions, provider/model/reasoning settings, role templates,
+  global agents, budgets, permissions, tasks, memories, opportunities and task
+  artifacts were compared before/after and preserved exactly. Only the three
+  authorized document records and the venture policy sentence changed; old
+  unrelated database records, every original message and every audit entry remain.
+- Downloaded restored content and checked exact equality and hash. Independently
+  re-extracted the concept from the supplied attachment and compared it with the
+  persisted document after restart; **PASS**. The existing command center document
+  view was opened for the venture.
+- Verified all five participating roles on an isolated copy of the actual database
+  using a router that raises on any generation call. All could read the complete
+  revision and received the full concept in source context (not truncated);
+  all were denied edits to the protected human reference. No task was created
+  or model invoked to perform these checks.
+- Existing targeted offline regressions: **9 document tests in 1.008s, PASS**;
+  **8 venture context/HTTP tests in 3.844s, PASS**. No code changed, so the full
+  172-test/browser suites were not rerun for this document-only operation.
+- Restarted only after confirming idle terminal tasks, no pending approvals,
+  no reservations and no process credentials. Without reapplying any updates,
+  complete content, exact document IDs, revisions, locks, configuration and history
+  all passed verification again. Service is healthy at **127.0.0.1:8787**, worker
+  alive, PID **21420**.
+- Added tasks **0**, added model calls **0**, paid token/API consumption **$0**.
+  Historical audit remains **40 requests + 40 responses**. Five original tasks
+  remain unchanged. Project budget **$0**, global budget **$5**, conservative spent
+  **$3.91808**, reserved **$0**; no budget or permission changes occurred.
+
+Runtime before-state/SQLite backup, restoration script, extracted source, hashes
+and verification evidence are local under ignored data/concept-restoration and
+data helper scripts. No private concept content, database, credential or runtime
+artifact is included in the continuity commit.
+
+**Next task / STOP:** the complete original concept is restored. Wait for a separate
+CEO-authorized design assignment and budget. Do not research, run agents, create
+design objectives, program a prototype or create a Miro board/integration. Existing
+live-provider availability and quality limits remain unverified; this operation
+verifies source restoration and access protection only.
+
+
+
+## Previous checkpoint: card game organization prepared, no design execution
 
 Verified 2026-11-09, Europe/Helsinki, continuing commit df814e1. Development
 authentication remains **Logged in using ChatGPT**. No Genesis task was created,

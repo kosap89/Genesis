@@ -35,7 +35,9 @@ provider independence, controlled tools, and reviewable execution.
    durable revisioned source documents, protected references/human decisions and
    agent source tools. Card Game venture prepared with five scoped roles and six
    assets, restart verified, original records preserved. 172 tests (one Windows
-   skip) and browser E2E pass. No design tasks or paid calls; await CEO assignment.
+   skip) and browser E2E pass. Complete human concept v0.2 subsequently restored
+   as protected revision 2, previous history retained, restart/access checks and
+   17 targeted tests pass. No design tasks or paid calls; await CEO assignment.
 9. **Next hardening:** OS-level process isolation, richer research sources,
    independent acceptance evaluators, external action connectors with approvals.
 
