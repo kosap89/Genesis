@@ -10,6 +10,8 @@ from pathlib import Path
 from .store import Store, ident, now
 from .providers import ProviderRouter, ProviderError, provider_status, DEFAULT_MODELS
 from .toolbox import ToolContext, Toolbox, PermissionRequired, _safe_path
+from .models import default_route, validate_model_config
+from .accounting import accounting_summary, conservative_rates, estimate_cost, usage_details
 
 ROLES = {
     'coo': ('Chief Operating Officer', 'Translate objectives into concrete deliverables. Delegate independent work, integrate results, and distinguish verified facts from assumptions.'),
@@ -58,7 +60,9 @@ class Engine:
         for role, (name, description) in ROLES.items():
             if not self.store.get('agents', role):
                 self.store.put('agents', dict(id=role, role=role, name=name, description=description,
-                                             provider=initial_provider, model=DEFAULT_MODELS[initial_provider],
+                                             provider=initial_provider,
+                                             model=default_route(role)['model'] if initial_provider == 'openai' else DEFAULT_MODELS[initial_provider],
+                                             reasoning_effort=default_route(role)['reasoning_effort'] if initial_provider == 'openai' else None,
                                              input_cost_per_million=10.0, output_cost_per_million=30.0,
                                              fallbacks=[]))
         # Never blindly replay an interrupted external request or tool invocation.
@@ -116,7 +120,7 @@ class Engine:
         if queued:
             self.run(queued['id'])
 
-    def create_task(self, objective, venture_id=None, role='coo', provider=None, model=None, parent_id=None):
+    def create_task(self, objective, venture_id=None, role='coo', provider=None, model=None, parent_id=None, reasoning_effort=None, astra_authorized=False):
         if not isinstance(objective, str) or not objective.strip() or len(objective) > 24000:
             raise ValueError('Objective must contain 1–24000 characters.')
         if role not in ROLES:
@@ -128,14 +132,22 @@ class Engine:
         if provider not in {'openai', 'anthropic', 'gemini'}:
             raise ValueError('Unknown provider.')
         model = model or (agent['model'] if provider == agent['provider'] else DEFAULT_MODELS[provider])
-        if not isinstance(model, str) or not 1 <= len(model) <= 200:
-            raise ValueError('Model must be 1–200 characters.')
+        if type(astra_authorized) is not bool:
+            raise ValueError('Astra authorization must be a boolean.')
+        if reasoning_effort is None and provider == agent['provider'] and model == agent['model']:
+            reasoning_effort = agent.get('reasoning_effort')
+        route = validate_model_config(dict(provider=provider, model=model,
+            reasoning_effort=reasoning_effort, fallbacks=agent.get('fallbacks', []), astra_authorized=astra_authorized))
         task = self.store.put('tasks', dict(id=ident(), title=objective.strip()[:100], objective=objective.strip(),
             venture_id=venture_id, parent_id=parent_id, role=role, provider=provider, model=model,
+            reasoning_effort=route.get('reasoning_effort'), astra_authorized=astra_authorized,
             status='queued', step=0, cost_usd=0.0, result='', error='', created_at=now(), updated_at=now()))
         self.workspace(task).mkdir(parents=True)
         self.store.message(task['id'], dict(role='user', content=objective.strip()))
-        self.store.event('task_created', task['id'], role=role, venture_id=venture_id)
+        self.store.event('task_created', task['id'], role=role, venture_id=venture_id,
+                         provider=provider, model=model, reasoning_effort=route.get('reasoning_effort'))
+        if astra_authorized:
+            self.store.event('astra_authorized', task['id'], scope='This task and its explicit routes only')
         self.wake.set()
         return task
 
@@ -369,10 +381,13 @@ class Engine:
                 agent = self.store.get('agents', task['role'])
                 messages = [dict(role='system', content=self.system_prompt(task))] + self.store.messages(task_id)
                 tools = Toolbox(ToolContext(root=self.workspace(task), source_root=self.source)).schemas() + self.core_schemas(task)
-                config = dict(agent, provider=task['provider'], model=task['model'], max_output_tokens=settings['max_output_tokens'])
+                config = validate_model_config(dict(agent, provider=task['provider'], model=task['model'],
+                    reasoning_effort=task.get('reasoning_effort'), astra_authorized=task.get('astra_authorized', False),
+                    max_output_tokens=settings['max_output_tokens']))
+                guard_input_rate, guard_output_rate = conservative_rates(config)
                 # All fallback routes use the same configured conservative prices.
                 input_bytes = len(json.dumps([messages, tools], ensure_ascii=False).encode('utf-8')) + 4096
-                per_call_reserve = (input_bytes * config['input_cost_per_million'] + settings['max_output_tokens'] * config['output_cost_per_million']) / 1e6
+                per_call_reserve = (input_bytes * guard_input_rate + settings['max_output_tokens'] * guard_output_rate) / 1e6
                 reserve = per_call_reserve * (1 + len(config.get('fallbacks', [])))
                 with self.guard:
                     if self.stop_event.is_set() or self.store.get('tasks', task_id)['status'] != 'running':
@@ -383,7 +398,9 @@ class Engine:
                         self._status(task_id, 'blocked_budget', error=f'Next call needs a ${reserve:.4f} configured reserve; review the budget.')
                         return
                     self.store.update('settings', 'global', reserved_usd=settings['reserved_usd'] + reserve)
-                    self.store.event('model_request', task_id, provider=task['provider'], model=task['model'], reserved_usd=reserve)
+                    self.store.event('model_request', task_id, provider=task['provider'], model=task['model'], reserved_usd=reserve,
+                        reasoning_effort=config.get('reasoning_effort'), guard_input_cost_per_million=guard_input_rate,
+                        guard_output_cost_per_million=guard_output_rate)
                 try:
                     response = self.router.generate(messages, tools, config)
                 except Exception as exc:
@@ -392,9 +409,9 @@ class Engine:
                     self._settle(task_id, reserve, per_call_reserve * attempts)
                     status = 'blocked_credentials' if attempts == 0 and ('key' in str(exc).lower() or 'credential' in str(exc).lower()) else 'failed'
                     self._status(task_id, status, error=str(exc)[:2000])
-                    self.store.event('model_error', task_id, error=str(exc)[:2000])
+                    self.store.event('model_error', task_id, error=str(exc)[:2000], billable_attempts=attempts)
                     return
-                cost = (response.input_tokens * config['input_cost_per_million'] + response.output_tokens * config['output_cost_per_million']) / 1e6
+                cost = (response.input_tokens * guard_input_rate + response.output_tokens * guard_output_rate) / 1e6
                 usage_complete = getattr(response, 'provider_data', {}).get('usage_complete')
                 if usage_complete is False or (usage_complete is None and not response.input_tokens and not response.output_tokens):
                     cost = per_call_reserve
@@ -409,7 +426,9 @@ class Engine:
                 self.store.message(task_id, message)
                 self.store.update('tasks', task_id, step=task['step'] + 1, updated_at=now())
                 self.store.event('model_response', task_id, provider=response.provider, model=response.model,
-                    input_tokens=response.input_tokens, output_tokens=response.output_tokens, cost_usd=cost)
+                    input_tokens=response.input_tokens, output_tokens=response.output_tokens, cost_usd=cost,
+                    usage_complete=usage_complete, cached_input_tokens=usage_details(getattr(response, 'provider_data', {}))[0],
+                    reasoning_output_tokens=usage_details(getattr(response, 'provider_data', {}))[1])
                 if self.store.get('tasks', task_id)['status'] == 'cancelled':
                     self.store.event('cancelled_request_settled', task_id)
                     return
@@ -470,23 +489,66 @@ class Engine:
             self._status(task['id'], 'queued')
             self.wake.set()
 
-    def resume(self, task_id, provider=None, model=None):
+    def resume(self, task_id, provider=None, model=None, reasoning_effort=None, astra_authorized=False):
         with self.guard:
             task = self.store.get('tasks', task_id)
             if not task or task['status'] not in {'interrupted','blocked_credentials','blocked_budget','paused_limit','failed'}:
                 raise ValueError('This task cannot be resumed in its current state.')
-            if provider is not None or model is not None:
-                route_provider = provider or task['provider']
-                if route_provider not in DEFAULT_MODELS:
-                    raise ValueError('Unknown provider.')
-                route_model = model or (task['model'] if route_provider == task['provider'] else DEFAULT_MODELS[route_provider])
-                if not isinstance(route_model, str) or not 1 <= len(route_model) <= 200:
-                    raise ValueError('Model must be 1–200 characters.')
-                self.store.update('tasks', task_id, provider=route_provider, model=route_model)
-                self.store.event('task_route_changed', task_id, previous_provider=task['provider'], previous_model=task['model'], provider=route_provider, model=route_model)
+            if type(astra_authorized) is not bool:
+                raise ValueError('Astra authorization must be a boolean.')
+            agent = self.store.get('agents', task['role'])
+            route_provider = provider or task['provider']
+            if route_provider not in DEFAULT_MODELS:
+                raise ValueError('Unknown provider.')
+            route_model = model or (task['model'] if route_provider == task['provider'] else DEFAULT_MODELS[route_provider])
+            effort = reasoning_effort
+            if effort is None:
+                if (route_provider, route_model) == (task['provider'], task['model']):
+                    effort = task.get('reasoning_effort')
+                elif (route_provider, route_model) == (agent['provider'], agent['model']):
+                    effort = agent.get('reasoning_effort')
+            authorized = astra_authorized or task.get('astra_authorized', False)
+            route = validate_model_config(dict(provider=route_provider, model=route_model,
+                reasoning_effort=effort, fallbacks=agent.get('fallbacks', []), astra_authorized=authorized))
+            self.store.update('tasks', task_id, provider=route_provider, model=route_model,
+                              reasoning_effort=route.get('reasoning_effort'), astra_authorized=authorized)
+            if provider is not None or model is not None or reasoning_effort is not None:
+                self.store.event('task_route_changed', task_id, previous_provider=task['provider'],
+                    previous_model=task['model'], provider=route_provider, model=route_model,
+                    reasoning_effort=route.get('reasoning_effort'))
+            if astra_authorized:
+                self.store.event('astra_authorized', task_id, scope='This task and its explicit routes only')
             self._status(task_id, 'queued', error='')
             self.store.event('task_resumed', task_id)
             self.wake.set()
+
+    def estimate_task(self, objective, venture_id=None, role='coo', astra_authorized=False):
+        """No task, workspace, reservation or provider request is created."""
+        if role not in ROLES or not isinstance(objective, str) or not objective.strip() or len(objective) > 24000:
+            raise ValueError('Choose a valid role and enter an objective (1-24000 characters).')
+        if venture_id and not self.store.get('ventures', venture_id):
+            raise ValueError('Unknown venture.')
+        if type(astra_authorized) is not bool:
+            raise ValueError('Astra authorization must be a boolean.')
+        agent = self.store.get('agents', role)
+        config = validate_model_config(dict(agent, astra_authorized=astra_authorized))
+        settings = self.settings()
+        task = dict(id='preview', role=role, venture_id=venture_id)
+        messages = [dict(role='system', content=self.system_prompt(task)), dict(role='user', content=objective.strip())]
+        tools = Toolbox(ToolContext(root=self.root, source_root=self.source)).schemas() + self.core_schemas(task)
+        input_bytes = len(json.dumps([messages, tools], ensure_ascii=False).encode('utf-8')) + 4096
+        guard_in, guard_out = conservative_rates(config)
+        reservation = ((input_bytes * guard_in + settings['max_output_tokens'] * guard_out) / 1e6) * (1 + len(config.get('fallbacks', [])))
+        # Approximation only: tokenization, output length and growing context vary.
+        call_cost = estimate_cost(config['provider'], config['model'], (input_bytes + 3) // 4,
+                                  settings['max_output_tokens'], overrides=settings.get('pricing_overrides', {}))
+        return dict(provider=config['provider'], model=config['model'], reasoning_effort=config.get('reasoning_effort'),
+                    estimated_call_cost_usd=call_cost, conservative_reservation_usd=reservation,
+                    approximate_task_cost_usd=call_cost * settings['max_steps'] if call_cost is not None else None,
+                    max_steps=settings['max_steps'], assumptions=['Approximate 4 UTF-8 bytes per input token; uncached input.',
+                    'Maximum configured output per step; fixed initial context across steps; later context may grow.',
+                    'Published standard prices or reporting overrides; excludes fallback estimates and official billing.',
+                    'Conservative reservation and authorization are enforced separately.'])
 
     def cancel(self, task_id):
         with self.guard:
@@ -504,6 +566,13 @@ class Engine:
 
     def state(self):
         result = {k:self.store.all(k) for k in ['ventures','tasks','agents','approvals','memories','artifacts','opportunities']}
-        result.update(settings=self.settings(), providers=provider_status(), audit=self.store.events(),
+        providers = provider_status()
+        overrides = self.settings().get('pricing_overrides', {})
+        for provider in providers:
+            for entry in provider.get('model_catalog', []):
+                if entry['id'] in overrides and provider['provider'] == 'openai':
+                    entry['pricing'].update(overrides[entry['id']])
+                    entry['pricing_override'] = True
+        result.update(settings=self.settings(), providers=providers, accounting=accounting_summary(self.store), audit=self.store.events(),
                       stats={'tasks':len(result['tasks']), 'completed':sum(t['status']=='completed' for t in result['tasks'])})
         return result

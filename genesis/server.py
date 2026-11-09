@@ -20,6 +20,8 @@ from .store import now
 from .toolbox import _safe_path
 from .lease import DataLease
 from .providers import KEY_NAMES, provider_status, DEFAULT_MODELS
+from .models import default_route, validate_model_config, model_info
+from .accounting import validate_prices
 
 MAX_BODY = 128 * 1024
 
@@ -192,13 +194,29 @@ class Handler(BaseHTTPRequestHandler):
                     configured = next(p['configured'] for p in provider_status() if p['provider'] == provider)
                     if configure_agents and key:
                         for role in ROLES:
-                            engine.store.update('agents', role, provider=provider, model=DEFAULT_MODELS[provider])
+                            route = default_route(role) if provider == 'openai' else dict(provider=provider, model=DEFAULT_MODELS[provider], reasoning_effort=None)
+                            engine.store.update('agents', role, **route)
                         engine.store.event('agents_default_route_changed', provider=provider, model=DEFAULT_MODELS[provider])
                     engine.store.event('provider_credentials_changed', provider=provider, configured=configured)
                 return self._json(200, {'provider':provider, 'configured':configured, 'storage':'process_memory'})
+            if path == '/api/tasks/estimate':
+                return self._json(200, engine.estimate_task(body.get('objective'), body.get('venture_id') or None,
+                    body.get('role') or 'coo', body.get('astra_authorized', False)))
+            if path == '/api/pricing':
+                model = body.get('model')
+                if not isinstance(model, str) or not model_info('openai', model):
+                    raise ValueError('Choose a known OpenAI catalog model.')
+                prices = validate_prices({k:v for k,v in body.items() if k != 'model'})
+                with engine.guard:
+                    overrides = dict(engine.settings().get('pricing_overrides', {}))
+                    overrides[model] = prices
+                    engine.store.update('settings', 'global', pricing_overrides=overrides)
+                engine.store.event('reporting_prices_changed', model=model, prices=prices, budget_enforcement_unchanged=True)
+                return self._json(200, dict(model=model, **prices))
             if path == '/api/tasks':
                 value = engine.create_task(body.get('objective'), body.get('venture_id') or None,
-                    body.get('role') or 'coo', body.get('provider') or None, body.get('model') or None)
+                    body.get('role') or 'coo', body.get('provider') or None, body.get('model') or None,
+                    reasoning_effort=body.get('reasoning_effort'), astra_authorized=body.get('astra_authorized', False))
                 return self._json(201, value)
             if path in {'/api/ventures','/api/memories','/api/opportunities'}:
                 kind = parts[1]
@@ -217,7 +235,8 @@ class Handler(BaseHTTPRequestHandler):
                 if parts[3] == 'cancel':
                     engine.cancel(parts[2])
                 elif parts[3] == 'resume':
-                    engine.resume(parts[2], body.get('provider'), body.get('model'))
+                    engine.resume(parts[2], body.get('provider'), body.get('model'),
+                        reasoning_effort=body.get('reasoning_effort'), astra_authorized=body.get('astra_authorized', False))
                 else:
                     return self._json(404, {'error':'Unknown task action.'})
                 return self._json(200, engine.store.get('tasks', parts[2]))
@@ -261,9 +280,18 @@ class Handler(BaseHTTPRequestHandler):
                     if not isinstance(fallbacks,list) or len(fallbacks) > 2:
                         raise ValueError('At most two explicit fallback routes are supported.')
                     for f in fallbacks:
-                        if not isinstance(f,dict) or set(f) != {'provider','model'} or f['provider'] not in {'openai','anthropic','gemini'} or not isinstance(f['model'],str) or not 1 <= len(f['model']) <= 200:
-                            raise ValueError('Fallbacks require provider and model only.')
+                        if not isinstance(f,dict) or not {'provider','model'} <= set(f) or not set(f) <= {'provider','model','reasoning_effort'} or f['provider'] not in {'openai','anthropic','gemini'} or not isinstance(f['model'],str) or not 1 <= len(f['model']) <= 200:
+                            raise ValueError('Fallbacks require provider/model and optional reasoning_effort only.')
                     updates['fallbacks'] = fallbacks
+                current = engine.store.get('agents', role)
+                if 'reasoning_effort' in body:
+                    updates['reasoning_effort'] = body['reasoning_effort']
+                elif any(k in updates and updates[k] != current[k] for k in ('provider', 'model')):
+                    updates['reasoning_effort'] = None
+                # Choosing an expensive model is configuration, not permission to
+                # execute it. Per-task Astra authorization remains mandatory.
+                normalized = validate_model_config(dict(current, **updates, astra_authorized=True))
+                updates['reasoning_effort'] = normalized.get('reasoning_effort')
                 value = engine.store.update('agents', role, **updates)
                 engine.store.event('agent_configured', role=role, updates=updates)
                 return self._json(200, value)

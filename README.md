@@ -25,9 +25,13 @@ Open **http://127.0.0.1:8787**. You can launch without a key to inspect the comm
 center and organize ventures; objectives will explicitly block on credentials.
 In Agents & controls, enter a provider key in the password form and save it for
 this session. It stays in the server process, is never returned to the browser,
-and is lost when the service stops. The optional checkbox configures that provider's
-default model for all roles. No model request or task resume happens automatically.
-You can also select provider/model independently for each role.
+and is lost when the service stops. The optional, initially unchecked checkbox applies recommended
+role routes; leaving it unchecked preserves every agent's saved configuration. No model request or task resume happens automatically.
+Select provider, model and reasoning effort independently for each role. A local
+preview shows approximate costs without creating an objective or calling a provider.
+New OpenAI roles use Sol, Terra or Luna according to their responsibilities; legacy
+routes remain available. Astra requires explicit authorization for each task,
+including fallback use. See [model controls](docs/PROVIDERS.md).
 New agents initially select the first configured provider. Existing agent settings
 remain intact; select the provider/model in Agents & controls after changing your
 setup. Provider presence is configuration detection, not a health check.
@@ -95,7 +99,10 @@ declared passed using test doubles.
   is limited without that optional key; market claims must be checked accordingly.
 - Budget enforcement uses **configured rate estimates**, not live provider invoices.
   Defaults ($10/$30 per million input/output tokens) are conservative placeholders,
-  not verified prices. Set rates in Agents & controls to bound all configured routes.
+  not verified prices. Known model prices can raise these guards, never lower them.
+  A separate published-price registry (including cached input) estimates usage
+  costs; editing reporting prices never changes budget authorization or settlement.
+  Official billing remains unavailable without independent reconciliation.
   Before a call, Genesis reserves input-byte/output-token ceilings for every possible
   explicit fallback. Reported usage settles successful calls; potentially billed
   failures and interrupted reservations are charged at their configured ceilings.
@@ -123,3 +130,12 @@ provider, simulated agent mode, or fabricated business results. See
 [docs/STATE.md](docs/STATE.md) for verification evidence and the exact next task,
 [docs/ROADMAP.md](docs/ROADMAP.md) for remaining stages, and
 [docs/TOOLS.md](docs/TOOLS.md) / [docs/PROVIDERS.md](docs/PROVIDERS.md) for contracts.
+
+## Development authentication and spending
+
+Develop through subscription-authenticated Codex. Check `codex login status`; do
+not switch it to API-key authentication. Development and verification use local
+unit tests, explicitly identified provider doubles and isolated browser E2E only.
+Do not start/resume live Genesis agents or use prepaid model credits for software
+development. Live acceptance requires separate CEO authorization, regardless of
+any budget amount still stored in the runtime database.

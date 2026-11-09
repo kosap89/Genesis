@@ -7,7 +7,9 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
+from copy import deepcopy
 from dataclasses import dataclass, field
+from .models import DEFAULT_MODELS, model_catalog, validate_model_config
 
 
 class ProviderError(RuntimeError):
@@ -29,7 +31,6 @@ class ProviderResult:
     provider_data: dict = field(default_factory=dict)
 
 
-DEFAULT_MODELS = {"openai": "gpt-4.1-mini", "anthropic": "claude-sonnet-4-5", "gemini": "gemini-2.5-flash"}
 KEY_NAMES = {"openai": ("GENESIS_OPENAI_API_KEY", "OPENAI_API_KEY"),
              "anthropic": ("GENESIS_ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY"),
              "gemini": ("GENESIS_GEMINI_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY")}
@@ -42,7 +43,8 @@ def _key(provider, config):
 def provider_status():
     """Configuration presence only, not a claim of network or account health."""
     return [{"provider": p, "configured": bool(_key(p, {})), "default_model": m,
-             "models": [m], "capabilities": ["text", "function_calling"]} for p, m in DEFAULT_MODELS.items()]
+             "models": [entry["id"] for entry in model_catalog(p)] or [m],
+             "model_catalog": model_catalog(p), "capabilities": ["text", "function_calling"]} for p, m in DEFAULT_MODELS.items()]
 
 
 def _post(url, headers, payload, timeout, max_bytes):
@@ -101,6 +103,7 @@ class OpenAIAdapter:
     endpoint = "https://api.openai.com/v1/responses"
 
     def request(self, messages, tools, config):
+        config = validate_model_config(config)
         items = []
         for m in messages:
             if m["role"] == "tool":
@@ -119,6 +122,8 @@ class OpenAIAdapter:
             payload["tools"] = [{"type": "function", "name": t["name"], "description": t.get("description", ""), "parameters": t["parameters"], "strict": False} for t in tools]
         if "temperature" in config:
             payload["temperature"] = config["temperature"]
+        if "reasoning_effort" in config:
+            payload["reasoning"] = {"effort": config["reasoning_effort"]}
         return self.endpoint, {"Authorization": "Bearer " + config["api_key"]}, payload
 
     def parse(self, data):
@@ -133,7 +138,22 @@ class OpenAIAdapter:
             elif item.get("type") == "function_call":
                 calls.append({"id": item["call_id"], "name": item["name"], "arguments": _arguments(item["arguments"])})
         usage = data.get("usage", {})
-        return "\n".join(text), calls, _tokens(usage, "input_tokens"), _tokens(usage, "output_tokens"), {"openai_output": data["output"], "usage_complete": "input_tokens" in usage and "output_tokens" in usage}
+        inp, out = _tokens(usage, "input_tokens"), _tokens(usage, "output_tokens")
+        def detail(container, field):
+            if container not in usage:
+                return None
+            details = usage[container]
+            if not isinstance(details, dict):
+                raise ProviderError("Provider returned invalid token usage")
+            return _tokens(details, field) if field in details else None
+        cached = detail("input_tokens_details", "cached_tokens")
+        reasoning = detail("output_tokens_details", "reasoning_tokens")
+        if (cached is not None and cached > inp) or (reasoning is not None and reasoning > out):
+            raise ProviderError("Provider token usage details exceed reported totals")
+        return "\n".join(text), calls, inp, out, {"openai_output": data["output"],
+            "usage_complete": "input_tokens" in usage and "output_tokens" in usage,
+            "cached_input_tokens": cached, "reasoning_output_tokens": reasoning,
+            "raw_usage": deepcopy(usage)}
 
 
 class AnthropicAdapter:
@@ -246,8 +266,15 @@ class ProviderRouter:
 
     def generate(self, messages, tools, config):
         """One request per explicit candidate. Tool execution belongs to the runtime."""
-        base = {k: v for k, v in config.items() if k not in ("api_key", "provider", "model", "fallbacks")}
-        candidates = [config] + [{**base, **f} for f in config.get("fallbacks", [])]
+        try:
+            config = validate_model_config(config)
+        except ValueError as exc:
+            raise ProviderError(str(exc), billable_attempts=0) from None
+        base = {k: v for k, v in config.items() if k not in ("api_key", "provider", "model", "fallbacks", "reasoning_effort")}
+        try:
+            candidates = [config] + [validate_model_config({**base, **f}) for f in config.get("fallbacks", [])]
+        except ValueError as exc:
+            raise ProviderError(str(exc), billable_attempts=0) from None
         errors = []
         billable_attempts = 0
         for candidate in candidates:

@@ -76,15 +76,69 @@ async function main(){
   const engineering=page.locator('.agent-form[data-role=engineering]');
   const configureAgent=async(config)=>{
     await engineering.locator('[name=provider]').selectOption(config.provider);
-    await engineering.locator('[name=model]').fill(config.model);
+    await engineering.locator('[name=model]').selectOption('__custom__');
+    await engineering.locator('[name=custom_model]').fill(config.model);
+    await engineering.locator('[name=reasoning_effort]').selectOption(config.reasoning_effort||'');
     await engineering.locator('[name=input_cost_per_million]').fill(String(config.input_cost_per_million));
     await engineering.locator('[name=output_cost_per_million]').fill(String(config.output_cost_per_million));
     await engineering.locator('[name=fallbacks]').fill(JSON.stringify(config.fallbacks));
     await engineering.locator('[type=submit]').click();
+    await page.waitForFunction(()=>!document.querySelector('.agent-form[data-role=engineering] [type=submit]').disabled);
   };
   const testAgent={provider:'gemini',model:'browser-configuration-only',input_cost_per_million:2.5,output_cost_per_million:7.5,fallbacks:[{provider:'anthropic',model:'browser-fallback-only'}]};
   await configureAgent(testAgent);
   await waitState(18871,x=>{const a=x.agents.find(a=>a.role==='engineering');return a.model===testAgent.model&&a.input_cost_per_million===2.5&&a.output_cost_per_million===7.5&&a.fallbacks[0]?.model==='browser-fallback-only';});
+  // Catalog selections are configuration only; credentials are absent.
+  const catalog=Object.fromEntries(s.providers.map(p=>[p.provider||p.id,p.model_catalog||[]]));
+  assert(catalog.openai?.length,'OpenAI must publish a model catalog');
+  for(const family of ['sol','terra','luna','astra'])assert(catalog.openai.some(m=>(m.label+' '+m.id).toLowerCase().includes(family)),family+' must be discoverable');
+  const roles=['coo','engineering','strategy','qa'].filter(role=>s.agents.some(a=>a.role===role));
+  const savedModern=[];
+  for(let i=0;i<roles.length;i++){
+    const role=roles[i],form=page.locator('.agent-form[data-role="'+role+'"]');
+    const model=catalog.openai.find(m=>(m.label+' '+m.id).toLowerCase().includes(['sol','terra','luna','astra'][i]));
+    if(!model)continue;
+    const before=s.agents.find(a=>a.role===role);
+    await form.locator('[name=provider]').selectOption('openai');
+    await form.locator('[name=model]').selectOption(model.id);
+    const effort=model.reasoning_efforts?.includes('high')?'high':model.reasoning_efforts?.[0]||'';
+    await form.locator('[name=reasoning_effort]').selectOption(effort);
+    const [savedResponse]=await Promise.all([page.waitForResponse(r=>r.url().endsWith('/api/agents/'+role)&&r.request().method()==='POST'),form.locator('[type=submit]').click()]);
+    const savedBody=await savedResponse.json();assert(savedResponse.ok(),role+' model configuration: '+JSON.stringify(savedBody));assert.equal(savedBody.model,model.id,role+' saved model');assert.equal(savedBody.reasoning_effort,effort||null,role+' saved effort');
+    s=await waitState(18871,x=>x.agents.some(a=>a.role===role&&a.model===model.id&&a.reasoning_effort===(effort||null)));
+    await page.waitForFunction(role=>!document.querySelector('.agent-form[data-role="'+role+'"] [type=submit]').disabled,role);
+    savedModern.push({role,model:model.id,effort,before});
+  }
+  assert((await page.locator('#accounting-summary').textContent()).includes('Official billed amount: unavailable'));
+  const guardRates=s.agents.map(a=>[a.role,a.input_cost_per_million,a.output_cost_per_million]);
+  await page.locator('#pricing-model').selectOption(catalog.openai[0].id);
+  await page.locator('#pricing-input').fill('2.123');
+  await page.locator('#pricing-form [type=submit]').click();
+  await page.locator('#feedback').filter({hasText:'Reporting prices saved'}).waitFor();
+  s=await waitState(18871,x=>x.providers.some(p=>(p.model_catalog||[]).some(m=>m.id===catalog.openai[0].id&&m.pricing.input_cost_per_million===2.123)));
+  assert.deepEqual(s.agents.map(a=>[a.role,a.input_cost_per_million,a.output_cost_per_million]),guardRates,'Reporting overrides must leave enforcement rates unchanged');
+  await page.locator('[data-view=overview]').click();
+  const astra=savedModern.find(a=>a.model.includes('astra'));
+  if(astra){
+    await page.locator('#objective-role').selectOption(astra.role);
+    await page.locator('#objective').fill('LOCAL PREVIEW ONLY: Astra requires explicit task authorization');
+    assert.equal(await page.locator('#objective-astra').isChecked(),false);
+    const before=s.tasks.length;
+    const [rejected]=await Promise.all([page.waitForResponse(r=>r.url().endsWith('/api/tasks')&&r.request().method()==='POST'),page.locator('#submit-objective').click()]);
+    assert(!rejected.ok(),'Astra task must be rejected without explicit authorization');
+    s=await waitState(18871,x=>x.tasks.length===before);assert.equal(s.tasks.length,before);
+    await page.locator('#objective-astra').check();
+    await page.locator('#objective-estimate').filter({hasText:'Local preview only'}).waitFor();
+  }
+  await page.locator('#objective-role').selectOption(savedModern[0]?.role||'engineering');
+  const count=s.tasks.length;
+  await page.locator('#objective').fill('LOCAL PREVIEW ONLY: estimate without task creation');
+  await page.locator('#objective-estimate').filter({hasText:/Local preview only|explicit|authorization/i}).waitFor();
+  s=await waitState(18871,x=>x.tasks.length===count);assert.equal(s.tasks.length,count);
+  await page.locator('#objective-astra').check();
+  await page.locator('#objective-role').selectOption('engineering');
+  if(savedModern[0]?.role!=='engineering')assert.equal(await page.locator('#objective-astra').isChecked(),false,'Role changes reset task-specific authorization');
+  await page.locator('#objective').fill('');
   await page.screenshot({path:path.join(output,'production-browser.png'),fullPage:true});
   await stop();await start(false,18871,path.join(temp,'real'));await page.reload();
   s=await waitState(18871,x=>x.memories.length===1&&x.tasks[0]?.status==='blocked_credentials');
@@ -92,7 +146,13 @@ async function main(){
   assert.equal(s.memories[0].content,unsafeMemory,'Literal memory must survive restart');
   assert.equal(s.opportunities[0].title,'Browser verified opportunity');
   assert.equal(s.settings.budget_usd,8.25);assert.equal(s.settings.max_steps,9);
-  assert.equal(s.agents.find(a=>a.role==='engineering').model,testAgent.model);
+  for(const saved of savedModern){const actual=s.agents.find(a=>a.role===saved.role);assert.equal(actual.model,saved.model);assert.equal(actual.reasoning_effort,saved.effort||null);}
+  // Restore other role configurations; route the original blocked task using the custom test route.
+  await page.locator('#connection').filter({hasText:'Connected'}).waitFor();
+  await page.locator('[data-view=settings]').click();
+  for(const saved of savedModern){if(saved.role==='engineering')continue;const form=page.locator('.agent-form[data-role="'+saved.role+'"]');await form.locator('[name=provider]').selectOption(saved.before.provider);await form.locator('[name=model]').selectOption('__custom__');await form.locator('[name=custom_model]').fill(saved.before.model);await form.locator('[name=reasoning_effort]').selectOption(saved.before.reasoning_effort||'');await form.locator('[type=submit]').click();await waitState(18871,x=>x.agents.some(a=>a.role===saved.role&&a.model===saved.before.model));}
+  await configureAgent(testAgent);
+  await waitState(18871,x=>x.agents.find(a=>a.role==='engineering').model===testAgent.model);
   await page.locator('#connection').filter({hasText:'Connected'}).waitFor();
   await page.locator('[data-view=operations]').click();
   await page.locator('#all-tasks .record-title').first().click();
@@ -109,7 +169,7 @@ async function main(){
   await page.locator('#task-dialog [data-close]').click();
   await page.locator('[data-view=settings]').click();
   assert.equal(await page.locator('#budget-usd').inputValue(),'8.25');
-  assert.equal(await engineering.locator('[name=model]').inputValue(),testAgent.model);
+  assert.equal(await engineering.locator('[name=custom_model]').inputValue(),testAgent.model);
   await configureAgent(originalAgent);
   await waitState(18871,x=>x.agents.find(a=>a.role==='engineering').model===originalAgent.model);
   await page.locator('#budget-usd').fill(String(originalSettings.budget_usd));
@@ -122,6 +182,7 @@ async function main(){
   assert(s.tasks.every(t=>!['queued','running'].includes(t.status)));
   const credential='browser-test-only-not-a-real-api-key';
   await page.locator('#credentials-provider').selectOption('gemini');
+  assert.equal(await page.locator('#credentials-configure-agents').isChecked(),false,'Key entry must preserve existing agent routes by default');
   await page.locator('#credentials-configure-agents').uncheck();
   await page.locator('#credentials-key').fill(credential);
   await page.locator('#credentials-form [type=submit]').click();
@@ -189,6 +250,6 @@ async function main(){
   assert.equal(JSON.parse(deniedTool.content).returncode,undefined,'Denied invocation must not have a process result');
   assert.equal(s.approvals.find(a=>a.task_id===deniedTask.id).status,'denied');
   assert.deepEqual(errors,[],'No JavaScript runtime errors');
-  console.log('PASS: production browser venture/objective/credential-block/literal-XSS-safe-memory/opportunity/polling/settings/rates/fallback-save-restore/resume-route/session-credentials/restart/mobile; fixture browser approval, denial, actual Python tests, artifact and task ZIP downloads. Live AI acceptance NOT verified.');
+  console.log('PASS: production browser venture/objective/credential-block/literal-XSS-safe-memory/opportunity/polling/settings/rates/fallback-save-restore/resume-route/session-credentials/restart/mobile/modern-model-catalog/reasoning-persistence/reporting-price-guard-separation/read-only-estimate/explicit-Astra-authorization; fixture browser approval, denial, actual Python tests, artifact and task ZIP downloads. Live AI acceptance NOT verified.');
 }
 main().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();await stop();fs.rmSync(temp,{recursive:true,force:true});});

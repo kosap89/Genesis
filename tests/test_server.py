@@ -253,6 +253,59 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(route['provider'], 'gemini')
         self.assertEqual(route['model'], resumed['model'])
 
+    def test_role_configuration_and_reporting_prices_persist_without_affecting_guards(self):
+        from genesis.models import default_route
+        saved = {}
+        for role in ('coo','strategy','engineering','qa','growth','finance','operations'):
+            route = default_route(role)
+            saved[role] = self.post('/api/agents/' + role, {**route, 'reasoning_effort':'high'})
+            self.assertEqual(saved[role]['reasoning_effort'], 'high')
+        guards = [(a['role'],a['input_cost_per_million'],a['output_cost_per_million']) for a in self.engine.store.all('agents')]
+        before = self.engine.settings().copy()
+        self.post('/api/pricing', {'model':'gpt-6.1-sol','input_cost_per_million':.01,
+                                 'cached_input_cost_per_million':0,'output_cost_per_million':.02})
+        self.assertEqual(guards,[(a['role'],a['input_cost_per_million'],a['output_cost_per_million']) for a in self.engine.store.all('agents')])
+        for field in ('budget_usd','spent_usd','reserved_usd'):
+            self.assertEqual(self.engine.settings()[field], before[field])
+        reopened = Engine(self.temp.name, self.engine.source)
+        self.addCleanup(reopened.close)
+        for role in saved:
+            self.assertEqual(reopened.store.get('agents', role), saved[role])
+        self.assertEqual(reopened.settings()['pricing_overrides']['gpt-6.1-sol']['input_cost_per_million'], .01)
+        for invalid in ({'model':'unknown','input_cost_per_million':1,'cached_input_cost_per_million':0,'output_cost_per_million':1},
+                        {'model':'gpt-6.1-sol','input_cost_per_million':True,'cached_input_cost_per_million':0,'output_cost_per_million':1},
+                        {'model':'gpt-6.1-sol','input_cost_per_million':1,'cached_input_cost_per_million':2,'output_cost_per_million':1}):
+            self.post('/api/pricing', invalid, 400)
+        original = self.engine.store.get('agents','engineering')
+        self.post('/api/agents/engineering', {'model':'gpt-6.1-sol','reasoning_effort':'none'},400)
+        self.assertEqual(self.engine.store.get('agents','engineering'),original)
+
+    def test_estimate_and_astra_requirements_do_not_dispatch_or_mutate_work(self):
+        self.post('/api/agents/engineering', {'model':'gpt-6-astra','reasoning_effort':'low'})
+        before = self.engine.settings().copy()
+        body = {'objective':'Review exact candidate artifacts','role':'engineering'}
+        self.post('/api/tasks/estimate', body,400)
+        self.post('/api/tasks', body,400)
+        preview=self.post('/api/tasks/estimate',{**body,'astra_authorized':True})
+        self.assertGreater(preview['conservative_reservation_usd'],0)
+        self.assertEqual(self.engine.store.all('tasks'),[])
+        self.assertEqual(self.engine.settings(),before)
+        task=self.post('/api/tasks',{**body,'astra_authorized':True},201)
+        self.assertTrue(task['astra_authorized'])
+        self.assertEqual(task['reasoning_effort'],'low')
+        self.engine.store.update('tasks',task['id'],status='blocked_credentials',astra_authorized=False)
+        self.post('/api/tasks/'+task['id']+'/resume',{},400)
+        resumed=self.post('/api/tasks/'+task['id']+'/resume',{'astra_authorized':True})
+        self.assertTrue(resumed['astra_authorized'])
+        self.assertFalse(any(e['action']=='model_request' for e in self.engine.store.events()))
+
+    def test_fallback_effort_validation_is_independent(self):
+        fallback={'provider':'openai','model':'gpt-6.1-terra','reasoning_effort':'none'}
+        agent=self.post('/api/agents/engineering',{'model':'gpt-6.1-sol','reasoning_effort':'medium','fallbacks':[fallback]})
+        self.assertEqual(agent['fallbacks'],[fallback])
+        self.post('/api/agents/engineering',{'fallbacks':[dict(fallback,reasoning_effort='unsupported')]},400)
+        self.post('/api/agents/engineering',{'fallbacks':[dict(fallback,astra_authorized=True)]},400)
+
     def test_static_assets_csp_and_unknown_resources(self):
         for path, mime in [('/', 'text/html'), ('/app.js', 'text/javascript'), ('/styles.css', 'text/css')]:
             with self.subTest(path=path):

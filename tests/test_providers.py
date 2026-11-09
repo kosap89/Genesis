@@ -220,6 +220,87 @@ class ProviderWireTests(unittest.TestCase):
         with self.assertRaisesRegex(ProviderError, "did not complete"):
             self.generate("openai")
 
+    def test_modern_reasoning_and_usage_details_preserve_output_total(self):
+        usage = {"input_tokens": 100, "output_tokens": 40,
+                 "input_tokens_details": {"cached_tokens": 80}, "output_tokens_details": {"reasoning_tokens": 25}}
+        self.respond({"output": [{"type": "message", "content": [{"type": "output_text", "text": "Done"}]}], "usage": usage})
+        result = self.router.generate([], [], {"provider": "openai", "model": "gpt-6.1-terra", "reasoning_effort": "medium", "api_key": "test-only"})
+        self.assertEqual(self.requests[-1][2]["reasoning"], {"effort": "medium"})
+        self.assertNotIn("temperature", self.requests[-1][2])
+        self.assertEqual((result.input_tokens, result.output_tokens), (100, 40))
+        self.assertEqual(result.provider_data["cached_input_tokens"], 80)
+        self.assertEqual(result.provider_data["reasoning_output_tokens"], 25)
+        self.assertEqual(result.provider_data["raw_usage"], usage)
+
+    def test_legacy_and_custom_models_do_not_receive_reasoning(self):
+        self.respond({"output": [{"type": "message", "content": [{"type": "output_text", "text": "Done"}]}]})
+        for model in ("gpt-4.1", "custom-model"):
+            self.router.generate([], [], {"model": model, "api_key": "test-only", "temperature": .2})
+            self.assertNotIn("reasoning", self.requests[-1][2])
+            self.assertEqual(self.requests[-1][2]["temperature"], .2)
+
+    def test_openai_missing_usage_details_remain_unknown(self):
+        for extra, expected in (({}, None), ({"input_tokens_details": {}, "output_tokens_details": {}}, None),
+                                ({"input_tokens_details": {"cached_tokens": 0},
+                                  "output_tokens_details": {"reasoning_tokens": 0}}, 0)):
+            usage = {"input_tokens": 10, "output_tokens": 4, **extra}
+            self.respond({"output": [{"type": "message", "content": [{"type": "output_text", "text": "Done"}]}], "usage": usage})
+            with self.subTest(extra=extra):
+                result = self.generate("openai")
+                self.assertEqual(result.provider_data["cached_input_tokens"], expected)
+                self.assertEqual(result.provider_data["reasoning_output_tokens"], expected)
+                self.assertEqual(result.provider_data["raw_usage"], usage)
+                self.assertEqual((result.input_tokens, result.output_tokens), (10, 4))
+
+    def test_invalid_fallback_prevents_all_transport(self):
+        for fallback in ({"model": "gpt-6-astra"}, {"model": "gpt-6.1-sol", "reasoning_effort": "none"},
+                         {"provider": "anthropic", "reasoning_effort": "high"}):
+            with self.subTest(fallback=fallback), self.assertRaises(ProviderError) as caught:
+                self.router.generate([], [], {"api_key": "test-only", "fallbacks": [fallback]})
+            self.assertEqual(caught.exception.billable_attempts, 0)
+        self.assertEqual(self.requests, [])
+        # Shared legacy temperature must be checked on the effective modern route
+        # before even the valid primary can incur a charge.
+        with self.assertRaisesRegex(ProviderError, "Temperature") as caught:
+            self.router.generate([], [], {"model": "gpt-4.1", "temperature": .5, "api_key": "test-only",
+                                         "fallbacks": [{"model": "gpt-6-luna"}]})
+        self.assertEqual(caught.exception.billable_attempts, 0)
+        self.assertEqual(self.requests, [])
+
+    def test_fallback_wire_effort_uses_its_own_default(self):
+        requests = []
+        def transport(url, headers, payload, *args):
+            requests.append(payload)
+            if len(requests) == 1:
+                raise ProviderError("test-only failure")
+            return {"output": [{"type": "message", "content": [{"type": "output_text", "text": "Done"}]}]}
+        self.router.transport = transport
+        self.router.generate([], [], {"api_key": "test-only", "reasoning_effort": "high",
+            "fallbacks": [{"model": "gpt-6-luna", "api_key": "test-only"}]})
+        self.assertEqual([p["reasoning"]["effort"] for p in requests], ["high", "low"])
+
+    def test_astra_snapshot_cannot_bypass_authorization_before_transport(self):
+        model = "gpt-6-astra-2026-11-01"
+        for route in ({"model": model}, {"fallbacks": [{"model": model}]},
+                      {"fallbacks": [{"model": model, "astra_authorized": True}]}):
+            with self.subTest(route=route), self.assertRaisesRegex(ProviderError, "CEO authorization") as caught:
+                self.router.generate([], [], {"api_key": "test-only", **route})
+            self.assertEqual(caught.exception.billable_attempts, 0)
+        self.assertEqual(self.requests, [])
+        for route in ({"model": model}, {"fallbacks": [{"model": model}]}):
+            with self.subTest(authorized_route=route), self.assertRaisesRegex(ProviderError, "Unverified Astra snapshot") as caught:
+                self.router.generate([], [], {"api_key": "test-only", "astra_authorized": True, **route})
+            self.assertEqual(caught.exception.billable_attempts, 0)
+        self.assertEqual(self.requests, [])
+
+    def test_invalid_openai_usage_details_are_billable_failures(self):
+        for details in ({"cached_tokens": -1}, {"cached_tokens": True}, {"cached_tokens": 11}, None):
+            self.respond({"output": [{"type": "message", "content": [{"type": "output_text", "text": "Done"}]}],
+                          "usage": {"input_tokens": 10, "output_tokens": 4, "input_tokens_details": details}})
+            with self.subTest(details=details), self.assertRaises(ProviderError) as caught:
+                self.generate("openai")
+            self.assertEqual(caught.exception.billable_attempts, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

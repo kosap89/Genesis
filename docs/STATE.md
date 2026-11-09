@@ -1,9 +1,123 @@
 # Genesis persistent project state
 
-Updated 2026-11-09, Europe/Helsinki. Live acceptance follows preparation commit `d765cb5`.
+Updated 2026-11-09, Europe/Helsinki. Offline model/accounting development follows verified commit `3d7418c`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: real live trials executed; founding acceptance NOT PASSED
+## Current checkpoint: modern model controls and separate accounting, offline verified
+
+Verified 2026-11-09, Europe/Helsinki. Continued the existing architecture and data.
+**Development used subscription-authenticated Codex only.** `codex login status`
+reported **Logged in using ChatGPT** before and after work; the local auth-mode
+check reported chatgpt with no API key. Authentication was not switched. No live
+OpenAI/other model requests and no Genesis paid task creation/resume occurred.
+The previous $5 live-test consent is not permission for this development session;
+**separate CEO authorization is required before any further live acceptance**.
+
+### GitHub synchronization and safety
+
+Initial main was clean at `3d7418c`, two commits ahead of `origin/main` at
+`14857d6`: preparation `d765cb5` and live findings/byte fix `3d7418c` had been
+committed locally but not pushed. A fresh fetch confirmed compatible ancestry.
+Audited 41 tracked paths and 46 unique blobs across both unpublished trees: no
+credential/runtime/database/private-log findings; matches were blank environment
+examples and known URL-rejection fixtures. Normal push advanced GitHub main from
+14857d6 to 3d7418c, without force or history rewriting. The implementation in this
+checkpoint is committed on the same main branch for normal synchronization.
+A final independent scan/review covered all 13 pending source/test/UI files and
+found no secrets, binary artifacts or runtime-data paths. Runtime evidence remains
+ignored. No global Git or provider account settings were changed.
+
+### Model and permission controls
+
+- Reviewed local catalog adds gpt-6.1-sol, gpt-6.1-terra, gpt-6-luna and gpt-6-astra,
+  retaining legacy/custom routes. New OpenAI COO/operations use Luna low;
+  strategy/engineering/finance Sol medium; QA Terra medium; growth Terra low.
+  Existing seven agent records are preserved byte-for-value in their JSON data;
+  none was automatically migrated away from its saved legacy route.
+- Provider/model/reasoning dropdowns persist per role. A session key preserves
+  saved routes by default; the initially unchecked opt-in applies recommended
+  routes. Reporting-only model price overrides are editable and persistent.
+- Responses payloads use supported reasoning.effort values, reject modern-model
+  temperature before dispatch and retain function calls/encrypted continuation.
+  Every primary/fallback route is prevalidated; fallback effort is independent.
+  Legacy and non-OpenAI providers remain covered by existing tests.
+- Astra requires an explicit task-scoped CEO authorization, including fallback and
+  resume routes. Agent selection alone grants nothing; delegation does not inherit
+  it. Unverified Astra snapshot aliases are rejected before transport.
+- Local objective previews show route/effort, approximate call/task costs and the
+  conservative reservation. They create no task, workspace, reservation or provider
+  call; tokenization, maximum-output, step/context and fallback assumptions are shown.
+
+### Reconciliation and preserved conservative budget protection
+
+The historical 350486 input and 13774 output tokens at configured $10/$30 per
+million equal **$3.91808 exactly**. That is the conservative charged ledger, not a
+provider invoice and not the current outstanding reservation (**$0**).
+
+The 40 historical calls used two differently priced models: 35 GPT-4.1 mini calls
+with 303225 input / 12123 output tokens, and five GPT-4.1 calls with 47261 input /
+1651 output tokens. Applying verified standard list prices without cache discounts
+yields **$0.2484168**. The CEO-reported approximately $0.15 dashboard deduction has
+not been independently reconciled. Cached-token details were not retained for any
+of those 40 old responses, so the estimate is explicitly incomplete and assumes
+uncached input. Those lost details cannot be recovered from the saved history.
+Reporting timing, actual cache usage and invoice data remain unresolved; no billed
+amount is invented. Official billed USD is null/unavailable in the dashboard.
+
+New response metadata retains raw usage and known cached/reasoning counts. Missing
+details stay unknown rather than zero. Reasoning tokens are already within output
+totals and are not added twice. Failed billable fallback attempts are exposed as
+unknown usage and mark estimates incomplete. The dashboard separates all of these
+from conservative charges and current reservations.
+
+Published registry prices and local reporting overrides never feed authorization
+or reduce spent/reserved values. The original input-byte/output-token reservation
+and uncertain-outcome settlement remain. Known expensive models can only raise
+effective guard rates (including long-context Astra), not lower them. The stored
+company budget stays $5, conservative spent $3.91808, reserved $0. The CEO reports
+an external $10 OpenAI organization limit and disabled auto-reload; those account
+protections were neither queried nor changed here.
+
+Published prices/capabilities were checked against official OpenAI model/pricing
+and reasoning pages on 2026-11-09; exact links and assumptions are in PROVIDERS.md.
+Estimates exclude other processing tiers, regional premiums, extra cache-write
+charges and hosted-tool charges. They do not guarantee a provider-side hard cap.
+The preserved 4096-output-token limit may be insufficient for harder reasoning.
+**Modern model account access and live compatibility remain unverified.**
+
+### Verification and integrated local service
+
+- `python -m unittest discover -s tests -v`: **123 tests in 49.056s, OK,
+  one Windows symlink privilege skip**.
+- `node --check web/app.js` and `node --check tests/browser-e2e.cjs`: **PASS**.
+- `npm.cmd run test:e2e`: **PASS**, isolated ports/data, credentials absent for
+  production-mode checks and explicitly identified provider doubles for execution.
+  New checks cover four modern model families, reasoning/restart persistence,
+  reporting/guard separation, non-dispatching previews, Astra authorization and
+  opt-in route reset. Existing approval/artifact/history/mobile workflows pass.
+  An intermittent test edited the next role before the preceding save handler
+  finished; awaiting handler completion fixed it while preserving saved-value checks.
+- Independent review found and repaired fallback-estimate completeness, missing
+  detail/zero conflation and preview directory creation, with regression tests.
+- Loaded the tested changes into idle production, PID **42180**, loopback
+  **127.0.0.1:8787**, health **ok**, worker alive. Original seven agent records,
+  settings and five task IDs were compared before/after restart and are unchanged.
+  **Provider request/response count remains 40**, tokens remain 350486/13774;
+  additional API consumption for this development: **0 requests / 0 tokens**.
+  All providers remain unconfigured; no session key was present to lose.
+  Chrome rendering check shows Connected, seven forms, no page errors; screenshot
+  reviewed. Ignored evidence: `test-results/model-controls-production-evidence.json`
+  and `test-results/live-acceptance-readiness.png`.
+
+**Exact next task:** continue local-only completion/evidence contract hardening or
+obtain separate CEO authorization for a tightly bounded modern-model live smoke.
+Do not start/resume paid work merely because stored budget remains nonzero. Before
+any authorized live run, choose explicit model/effort and verify account access,
+limits and pricing; reconcile actual provider usage/billing independently. Founding
+business/autonomous QA/self-improvement acceptance remains NOT PASSED; this work
+establishes local model/accounting contracts, not new live acceptance success.
+
+## Historical checkpoint: real live trials executed; founding acceptance NOT PASSED
 
 Verified 2026-11-09, Europe/Helsinki. CEO configured OpenAI through the local UI
 and explicitly authorized **$5 total**. Real OpenAI Responses requests were made;

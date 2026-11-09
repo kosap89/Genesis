@@ -2,7 +2,8 @@
 
 Status: **executed with real OpenAI on 2026-11-09; founding acceptance NOT PASSED**.
 See STATE.md for genuine task IDs, token usage, failed independent reviews and
-operator-assisted repairs. Fixtures validate infrastructure only. Runtime
+operator-assisted repairs. No new live run is authorized by development work; obtain separate CEO consent.
+Fixtures validate infrastructure only. Runtime
 `completed` does not establish that an acceptance objective passed.
 
 ## 1. Company strategy
@@ -58,14 +59,14 @@ work until a session credential and explicit CEO spending authorization exist.
 2. Under **Add a key for this session**, select the provider for the key you own.
 3. Paste the key directly into **API key**, never into chat, an objective, a shell
    command, source, or a document. Do not save it in the browser password manager.
-4. For a first single-provider run, check **Use this provider's default model for
-   all agents**, then click **Save for this session**. The password field clears.
+4. For a first single-provider run, optionally check **Use recommended model routes for all agents**
+   (leave it unchecked to preserve saved choices), then click **Save for this session**. The password field clears.
    This changes routes but makes no model call and resumes no objectives.
 5. Confirm the provider is configured. This checks key presence only: authentication,
    credits, quotas and model access remain unverified until a genuine request.
 6. Review **Agent configuration** for strategy, engineering, QA and any delegated
-   roles. Model identifiers are editable. The provider list contains built-in
-   defaults, not a live model catalog. Verify availability before the paid run;
+   roles. Model identifiers are editable. The model list is a reviewed local
+   catalog, not an authenticated account-availability check. Verify availability before the paid run;
    keep fallback routes empty for attributable first-provider evidence.
 7. Tell the operator the provider name and approved total USD amount, without the
    key. The operator will apply that authorized company budget and verify settings.

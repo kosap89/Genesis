@@ -48,7 +48,7 @@ idle roles are not background employees or continuously running autonomous agent
 
 Creating a task validates its objective, venture, role, provider, and model, then
 persists a `queued` record, initial user message, workspace, and audit event. The
-task captures its primary provider/model at creation. Rate estimates and fallback
+task captures its primary provider/model and reasoning effort at creation. Rate estimates and fallback
 routes are read from the role configuration during execution; changing those
 settings can affect later calls in an existing task.
 
@@ -279,3 +279,26 @@ Unit/HTTP/browser tests use explicitly identified fixtures and real local proces
 files, SQLite, and permission decisions. Browser model doubles verify orchestration,
 not live intelligence. Provider transport tests verify request/response contracts;
 paid live provider acceptance remains a separate, explicitly documented activity.
+
+
+## Model registry and separate reporting ledger (2026-11-09)
+
+`genesis.models` supplies reviewed catalog capabilities/prices and new-role routes;
+existing agent records are retained. Model/effort and all fallback configurations
+are validated before dispatch. Task-scoped Astra permission is checked at creation,
+resume and each dispatch; delegation does not transfer it.
+
+`genesis.accounting` reconstructs report estimates from persisted response usage
+without rewriting legacy charges. `settings.pricing_overrides` changes reporting
+only. `spent_usd`/`reserved_usd` remain the enforced conservative ledger. Known
+published long-context rates may raise the effective guard; user reporting prices
+cannot lower it. Missing cached details, incomplete usage and uncertain failed
+attempts are exposed rather than inferred as zero billing. Official invoice data
+is unavailable; the reporting summary explicitly returns null for it.
+
+`POST /api/tasks/estimate` computes a local preview without task/workspace creation
+or dispatch. `POST /api/pricing` persists validated reporting overrides. Agent and
+task/resume APIs accept reasoning_effort; task/resume also accepts an explicit
+astra_authorized boolean. Agent fallback objects allow optional reasoning_effort.
+The local credential form preserves agent routes by default; an explicit opt-in
+can apply recommended routes. No new endpoint automatically starts or resumes work.
