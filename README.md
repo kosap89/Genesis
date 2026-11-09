@@ -156,3 +156,7 @@ Project-specific instructions and operating policy can be edited without changin
 global agent defaults. The Project documents view stores revisioned reference,
 design, proposal, review and human-only decision documents outside task workspaces.
 See [venture configuration and documents](docs/VENTURE_DOCUMENTS.md).
+
+A project can save a collaborative mission draft and scoped execution limits.
+Loading its draft prepares the objective form without submitting work or granting
+spending/tool approval. See [prepared missions](docs/MISSIONS.md).

@@ -2,6 +2,7 @@
 from __future__ import annotations
 import json
 import os
+import re
 import socket
 import urllib.error
 import urllib.parse
@@ -45,6 +46,54 @@ def provider_status():
     return [{"provider": p, "configured": bool(_key(p, {})), "default_model": m,
              "models": [entry["id"] for entry in model_catalog(p)] or [m],
              "model_catalog": model_catalog(p), "capabilities": ["text", "function_calling"]} for p, m in DEFAULT_MODELS.items()]
+
+
+
+def openai_model_availability(models):
+    """Read account-visible exact model IDs; never generates or accepts credentials."""
+    if (not isinstance(models, list) or len(models) > 50 or
+            any(not isinstance(model, str) or len(model) > 200 or
+                not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/-]*", model) or
+                model.startswith(("sk-", "Bearer")) for model in models)):
+        raise ValueError("Expected at most 50 valid model IDs")
+    models = list(dict.fromkeys(models))
+    key = _key('openai', {})
+    result = dict(provider='openai', credential_configured=bool(key), checked=False,
+                  generation_tested=False, status='missing_credentials' if not key else 'not_checked',
+                  models=[dict(id=model, available=None) for model in models])
+    if not key:
+        return result
+    request = urllib.request.Request('https://api.openai.com/v1/models',
+        headers={'Authorization': 'Bearer ' + key, 'Accept': 'application/json'}, method='GET')
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None
+    try:
+        with urllib.request.build_opener(NoRedirect).open(request, timeout=10) as response:
+            raw = response.read(2 * 1024 * 1024 + 1)
+    except urllib.error.HTTPError as exc:
+        code = exc.code
+        exc.close()
+        result['status'] = 'invalid_credentials' if code == 401 else ('redirect_refused' if 300 <= code < 400 else 'http_error')
+        result['http_status'] = code
+        return result
+    except (urllib.error.URLError, TimeoutError, socket.timeout, OSError, ValueError):
+        result['status'] = 'connection_error'
+        return result
+    if len(raw) > 2 * 1024 * 1024:
+        result['status'] = 'response_too_large'
+        return result
+    try:
+        payload = json.loads(raw)
+        entries = payload['data']
+        if not isinstance(entries, list) or any(not isinstance(entry, dict) or not isinstance(entry.get('id'), str) for entry in entries):
+            raise ValueError()
+    except (UnicodeError, ValueError, KeyError, TypeError):
+        result['status'] = 'invalid_response'
+        return result
+    visible = {entry['id'] for entry in entries}
+    result.update(checked=True, status='checked', models=[dict(id=model, available=model in visible) for model in models])
+    return result
 
 
 def _post(url, headers, payload, timeout, max_bytes):

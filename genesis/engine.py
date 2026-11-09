@@ -125,6 +125,30 @@ class Engine:
     def settings(self):
         return self.store.get('settings', 'global')
 
+    def execution_settings(self, venture_id=None):
+        """Live execution caps; configuration changes apply before the next request."""
+        settings = self.settings()
+        project = self.store.get('ventures', venture_id) if venture_id else None
+        settings.update((project or {}).get('execution_limits', {}))
+        settings['max_concurrency'] = min(settings.get('max_concurrency', 1),
+                                           self.settings().get('max_concurrency', 1))
+        return settings
+
+    def _dispatch_available(self, task, scheduled=()):
+        # Caller holds guard. Include scheduled jobs before their worker starts,
+        # plus requests admitted through direct run() calls.
+        occupied = (set(scheduled) | self.active_requests) - {task['id']}
+        global_limit = max(1, min(16, int(self.settings().get('max_concurrency', 1))))
+        if len(occupied) >= global_limit:
+            return False
+        venture_id = task.get('venture_id')
+        if venture_id:
+            project_count = sum(1 for task_id in occupied
+                if (self.store.get('tasks', task_id) or {}).get('venture_id') == venture_id)
+            if project_count >= self.execution_settings(venture_id)['max_concurrency']:
+                return False
+        return True
+
     def start(self):
         if self.thread and self.thread.is_alive():
             return
@@ -152,7 +176,9 @@ class Engine:
                         if len(active) >= limit:
                             break
                         if task['status'] == 'queued' and task['id'] not in active and self._dependencies_ready(task):
-                            active[task['id']] = pool.submit(self.run, task['id'])
+                            with self.guard:
+                                if self._dispatch_available(task, active):
+                                    active[task['id']] = pool.submit(self.run, task['id'])
                 except Exception as exc:
                     self.store.event('worker_error', error=type(exc).__name__)
                 self.wake.wait(0.1)
@@ -161,7 +187,7 @@ class Engine:
     def tick(self):
         self._wake_parents()
         queued = next((t for t in self.store.all('tasks')
-                       if t['status'] == 'queued' and self._dependencies_ready(t)), None)
+                       if t['status'] == 'queued' and self._dispatch_available(t) and self._dependencies_ready(t)), None)
         if queued:
             self.run(queued['id'])
 
@@ -286,7 +312,7 @@ class Engine:
             raise ValueError('Parent is no longer running; delegation cancelled.')
         if task.get('work_mode') != 'collaborative':
             raise ValueError('Independent tasks cannot delegate.')
-        settings = self.settings()
+        settings = self.execution_settings(task.get('venture_id'))
         if task.get('delegation_depth', 0) >= settings.get('max_delegation_depth', 1):
             raise ValueError('Maximum delegation depth reached.')
         root = task
@@ -410,7 +436,7 @@ class Engine:
                 schema('venture_document_propose', 'Create a durable proposal document; this never records an approved decision.', {'name': {'type':'string'}, 'content': {'type':'string'}}, ('name', 'content')),
                 schema('venture_document_update', 'Update a writable project document against its expected revision. Reference and decision documents are protected.', {'document_id': {'type':'string'}, 'content': {'type':'string'}, 'expected_revision': {'type':'integer'}}, ('document_id', 'content', 'expected_revision')),
             ])
-        if task.get('work_mode') == 'collaborative' and task.get('delegation_depth', 0) < self.settings().get('max_delegation_depth', 1):
+        if task.get('work_mode') == 'collaborative' and task.get('delegation_depth', 0) < self.execution_settings(task.get('venture_id')).get('max_delegation_depth', 1):
             tools.append(schema('delegate_task', 'Propose a bounded task for a specific project agent; CEO approval is required before any child is queued.',
                 {'objective': {'type':'string'}, 'agent_id': {'type':'string'}, 'role': {'type':'string'},
                  'work_mode': {'type':'string', 'enum':['independent', 'collaborative']},
@@ -683,7 +709,7 @@ class Engine:
                 if any(c['status'] not in TERMINAL for c in children):
                     self._status(task_id, 'waiting_children')
                     return
-                settings = self.settings()
+                settings = self.execution_settings(task.get('venture_id'))
                 if task['step'] >= settings['max_steps']:
                     self._status(task_id, 'paused_limit', error='Step limit reached. Increase limit and resume after reviewing history.')
                     return
@@ -702,7 +728,15 @@ class Engine:
                     if self.stop_event.is_set() or self.store.get('tasks', task_id)['status'] != 'running':
                         self._status(task_id, 'interrupted', error='Worker stopped before the next model request. Review and resume.')
                         return
-                    settings = self.settings()
+                    settings = self.execution_settings(task.get('venture_id'))
+                    if task['step'] >= settings['max_steps']:
+                        self._status(task_id, 'paused_limit', error='Step limit reached. Review execution limits before resuming.')
+                        return
+                    # Re-read live limits at the reservation boundary, including
+                    # reductions made while schemas/context were being prepared.
+                    config['max_output_tokens'] = settings['max_output_tokens']
+                    per_call_reserve = (input_bytes * guard_input_rate + settings['max_output_tokens'] * guard_output_rate) / 1e6
+                    reserve = per_call_reserve * (1 + len(config.get('fallbacks', [])))
                     try:
                         enabled_agent = self.teams.effective_agent(task.get('agent_id', task['role']), task.get('venture_id'))
                         if not enabled_agent.get('enabled', True):
@@ -710,7 +744,7 @@ class Engine:
                     except ValueError as exc:
                         self._status(task_id, 'blocked_agent', error=str(exc))
                         return
-                    if len(self.active_requests) >= max(1, min(16, int(settings.get('max_concurrency', 1)))):
+                    if not self._dispatch_available(task):
                         self._status(task_id, 'queued')
                         return
                     if not self._reserve(task, reserve):
@@ -890,9 +924,11 @@ class Engine:
             raise ValueError('Unknown venture.')
         if type(astra_authorized) is not bool:
             raise ValueError('Astra authorization must be a boolean.')
+        if work_mode not in {'independent', 'collaborative'}:
+            raise ValueError('Work mode must be independent or collaborative.')
         agent = self.teams.resolve_agent(agent_id=agent_id, role=role, venture_id=venture_id)
         config = validate_model_config(dict(agent, astra_authorized=astra_authorized))
-        settings = self.settings()
+        settings = self.execution_settings(venture_id)
         task = dict(id='preview', role=agent['role'], agent_id=agent['id'], agent_name=agent['name'], config_snapshot=config, work_mode=work_mode, venture_id=venture_id, project_policy_snapshot=self._project_policy(venture_id))
         messages = [dict(role='system', content=self.system_prompt(task)), dict(role='user', content=objective.strip())]
         tools = Toolbox(ToolContext(root=self.root, source_root=self.source)).schemas() + self.core_schemas(task)
@@ -905,7 +941,8 @@ class Engine:
         return dict(provider=config['provider'], model=config['model'], reasoning_effort=config.get('reasoning_effort'),
                     estimated_call_cost_usd=call_cost, conservative_reservation_usd=reservation,
                     approximate_task_cost_usd=call_cost * settings['max_steps'] if call_cost is not None else None,
-                    max_steps=settings['max_steps'], assumptions=['Approximate 4 UTF-8 bytes per input token; uncached input.',
+                    max_steps=settings['max_steps'], max_output_tokens=settings['max_output_tokens'],
+                    max_concurrency=settings['max_concurrency'], assumptions=['Approximate 4 UTF-8 bytes per input token; uncached input.',
                     'Maximum configured output per step; fixed initial context across steps; later context may grow.',
                     'Published standard prices or reporting overrides; excludes fallback estimates and official billing.',
                     'Conservative reservation and authorization are enforced separately.'])

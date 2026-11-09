@@ -343,3 +343,13 @@ Agents can read their project sources and propose or revise writable documents;
 locked references and decision documents require CEO edits. Expected revisions
 prevent stale overwrites. The command center exposes source content, revision
 history and downloads. See VENTURE_DOCUMENTS.md for APIs, storage and limits.
+
+## Prepared missions and scoped execution controls
+
+Venture mission_draft records store a lead agent, mode and objective without
+creating tasks or model calls. execution_limits provide project step/output/
+delegation overrides and a concurrency cap bounded by global capacity. Admission
+checks are serialized with reservations and capped projects do not starve others.
+Limits apply live at the next request, while models/instructions remain pinned.
+Neither drafts nor scoped limits grant spending or approve delegated invocations.
+See MISSIONS.md for validation, workflow, budgeting and operational limits.

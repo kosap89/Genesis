@@ -12,6 +12,9 @@ ROUTE_FIELDS = {'provider', 'model', 'reasoning_effort', 'fallbacks',
                 'input_cost_per_million', 'output_cost_per_million'}
 TEXT_LIMITS = {'name': 300, 'description': 24000, 'system_instructions': 24000,
                'specialization': 2000, 'responsibilities': 24000, 'operating_policy': 24000}
+EXECUTION_LIMITS = {'max_concurrency': (1, 16), 'max_steps': (1, 100),
+                    'max_output_tokens': (1, 32768), 'max_delegation_depth': (0, 8),
+                    'max_delegated_tasks': (1, 100)}
 AGENT_FIELDS = ROUTE_FIELDS | {'name', 'description', 'system_instructions',
                              'specialization', 'enabled', 'budget_usd'}
 
@@ -238,8 +241,30 @@ class TeamManager:
 
     def update_project(self, venture_id, body):
         with self.store.lock:
-            body = _fields(body, {'budget_usd', 'operating_policy'})
-            return self.store.put('ventures', {**self._get('ventures', venture_id), **body})
+            body = _fields(body, {'budget_usd', 'operating_policy', 'execution_limits', 'mission_draft'})
+            current = self._get('ventures', venture_id)
+            if 'execution_limits' in body:
+                limits = _fields(body['execution_limits'], set(EXECUTION_LIMITS))
+                for field, value in limits.items():
+                    low, high = EXECUTION_LIMITS[field]
+                    if type(value) is not int or not low <= value <= high:
+                        raise ValueError(field + f' must be an integer from {low} to {high}')
+                body['execution_limits'] = limits
+            if body.get('mission_draft') is not None:
+                draft = _fields(body['mission_draft'], {'objective', 'agent_id', 'work_mode'})
+                if (set(draft) != {'objective', 'agent_id', 'work_mode'} or
+                        not isinstance(draft['objective'], str) or not draft['objective'].strip() or
+                        len(draft['objective']) > 24000):
+                    raise ValueError('Mission draft requires objective (1-24000 characters), agent_id and work_mode')
+                if draft['work_mode'] not in ('independent', 'collaborative'):
+                    raise ValueError('Work mode must be independent or collaborative')
+                agent = self.effective_agent(draft['agent_id'], venture_id)
+                membership = self.store.get('team_memberships', venture_id + ':' + agent['id'])
+                if not membership or membership.get('status') != 'active' or membership.get('enabled') is not True:
+                    raise ValueError('Draft lead must be an active project team member')
+                draft['objective'] = draft['objective'].strip()
+                body['mission_draft'] = draft
+            return self.store.put('ventures', {**current, **body})
 
     def effective_agent(self, agent_id, venture_id=None):
         with self.store.lock:

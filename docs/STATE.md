@@ -1,9 +1,171 @@
 # Genesis persistent project state
 
-Updated 2026-11-09, Europe/Helsinki. Complete concept restoration continues verified commit `dd3270b`.
+Updated 2026-11-09, Europe/Helsinki. Full-design mission preparation continues verified commit `d635eb6`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: complete human concept v0.2 restored and verified
+## Current checkpoint: complete autonomous design mission prepared, awaiting authorization
+
+Verified 2026-11-09, Europe/Helsinki, continuing committed/pushed d635eb6.
+Existing Card Game venture 07587388a699471aa8fdb86b958cfe3a is prepared for
+CARD GAME v0.3 — FIRST COMPLETE GAME DESIGN. This is preparation only:
+**no mission task was submitted, no game design/research was performed and no
+paid/model/provider request occurred**.
+
+### Concrete prepared mission
+
+The existing venture now stores a mission_draft with the exact lead agent coo,
+collaborative mode and a 7,849-character full objective. It asks for a cohesive
+complete playable-on-paper rules proposal, operational evolution for all four
+classes, exact two-deck starter lists and full card text, numerical examples,
+multi-turn walkthrough, independent critique, revision/recheck and durable
+consolidation. It requires actual delegate_task invocations and actual task IDs,
+document revisions and source evidence rather than invented agent activity.
+
+The suggested seven-child sequence is: parallel Researcher and initial Designer
+proposals in one tool-call batch; Designer research integration; independent QA;
+Designer fixes; independent QA recheck; Documentation Manager consolidation.
+The Creative Director coordinates the entire mission. Separate document ownership
+avoids parallel write conflicts; full paginated reads and expected revisions are
+required when excerpts are insufficient. All results remain provisional proposals.
+
+The project operating policy and five membership instruction texts were updated
+through supported APIs. They authorize ordinary provisional design choices
+without requiring CEO creative input, including complete rules/numbers and an
+initial useful theme. They retain human final approval, no programming/digital
+prototype, no Miro work or external actions, protected sources and honest evidence.
+Execution/spending is still conditional on separate CEO authorization and a
+Genesis API key. Each individual delegation/network invocation retains approval;
+a mission spending authorization is not a blanket tool decision.
+
+Exact project model/provider/reasoning/fallback configurations are unchanged:
+COO Sol medium, Designer Sol high, Researcher Terra medium, Reviewer Sol medium,
+Documentation Manager Luna low; engineering and finance remain disabled only in
+this venture. No global agent/template or other venture configuration changed.
+
+### Supported execution controls and UI
+
+Added reusable execution_limits and mission_draft project configuration to the
+existing system; no card-game behavior was hardcoded into source.
+
+- Project concurrency **3**, bounded by intentional global capacity **3**.
+  Steps per task **24**; maximum output per request **16,384 tokens**;
+  delegation depth **1** and total children per root **10** (seven planned,
+  three buffer). Concurrency is a ceiling, not promised simultaneous activity.
+- Project step/output/delegation keys override inherited global defaults.
+  Concurrency respects both scopes under the shared admission/reservation lock.
+  Capped projects do not starve other eligible work. Limits apply live at each
+  next request/delegation; model/instruction snapshots remain unchanged.
+- Global defaults remain 16 steps, 4,096 output tokens, depth one/eight descendants
+  for projects without overrides; only the global concurrency capacity changed
+  from one to three. Other ventures without a cap inherit that global capacity.
+- Project UI exposes inherited/effective limits and a saved draft editor.
+  Load prepared mission selects the exact lead and mode, resets objective-specific
+  authorization and fills the form without submitting work or reserving money.
+  Deep link opened:
+  http://127.0.0.1:8787/?venture=07587388a699471aa8fdb86b958cfe3a&view=overview&mission=1
+- Runtime budgets, scoped settlement/recovery and individual delegation approval
+  were not weakened. Drafts/limit objects cannot set credentials, permissions or
+  reset spent/reserved. Full generic documentation is in MISSIONS.md.
+
+### Credential/model readiness and proposed spending
+
+All Genesis providers are currently **unconfigured**. Codex login remains
+**Logged in using ChatGPT**; its authentication was not read or reused as a Genesis
+API credential. Only the API secret itself requires CEO input through the local
+password form or an explicitly supplied Genesis environment credential.
+
+Official OpenAI documentation was searched and fetched, confirming the exact saved
+public IDs and supported reasoning levels:
+https://developers.openai.com/api/docs/models
+https://developers.openai.com/api/reference/resources/models/methods/list
+Public listing does not establish this account's access, quota or live inference.
+
+Added guarded POST /api/providers/openai/check, optionally scoped by venture_id.
+It derives exact enabled primary/fallback model IDs and reads only the service
+process Genesis/OpenAI API environment. With a key it uses fixed GET /v1/models,
+10-second timeout, 2 MiB maximum response and no redirects, never generation.
+It accepts no key in the request; no secrets or provider error bodies are echoed
+or audited. generation_tested always remains false. Without a key it makes no
+external request.
+
+Actual scoped readiness result: missing_credentials, credential_configured=false,
+checked=false, generation_tested=false; gpt-6.1-sol, gpt-6.1-terra and gpt-6-luna
+availability all **null/unknown**. This is a genuine blocker, not a successful
+account check. No model was silently substituted and no billable probe was made.
+
+**Budgets remain unchanged and no new spending is authorized:**
+global ceiling $5; spent $3.91808; reserved $0; remaining **$1.08192**.
+Venture budget **$0**, spent/reserved $0. Network and terminal globals remain false.
+
+Proposed maximum additional mission spending is **$10 total from now**, across the
+root and all descendants, not $10 per agent. If separately approved with balances
+unchanged, set venture budget to $10 and the company ceiling to **$13.91808**
+(existing spent + $10); do not reset existing spent/reserved. Re-read all balances
+and reservations first. The cap is enforced through conservative configured
+charges, not a provider invoice/guarantee. It may stop the mission before completion
+when the next full reservation cannot fit. Do not enlarge it silently.
+
+Read-only root preview: initial configured reservation **$0.86831**, published-price
+initial-call maximum-output estimate $0.18268; its $4.38432 fixed-context 24-step
+approximation is for the selected root task only and excludes delegated work and
+context growth. These are assumptions, not a full-mission cost guarantee. All
+reported invoice/hidden usage limits from earlier checkpoints remain unchanged.
+
+### Genuine verification and preserved data
+
+- Final python -m unittest discover -s tests -v: **184 tests in 116.229s, OK,
+  one Windows symlink privilege skip**. Twelve new tests exercise scoped caps,
+  direct three-request concurrency, scheduler fairness, live preflight reductions,
+  draft nonexecution, budget/metadata isolation and safe read-only provider checks.
+- node --check web/app.js and tests/browser-e2e.cjs: **PASS**.
+- Final npm.cmd run test:e2e: **PASS** on isolated servers/data. Verified project
+  limits/inheritance, unchanged global default settings from project edits, draft
+  persistence, exact agent/mode load, restart/deep link, zero implicit tasks/
+  approvals/Astra grants and previous document, security and actual fixture test
+  workflows. Provider doubles are explicitly isolated tests only.
+- Independent actual-data verification after API configuration and again after
+  restart: saved draft hash/lead/mode, five exact effective routes, project policy,
+  all six document contents/metadata/histories, both protected locks and all
+  original tasks pass. On an isolated actual-database snapshot, all five roles
+  could read the documents and were denied protected writes; engineering/finance
+  remained unavailable. No generator or new task was used for these probes.
+- Global agents/templates, all other venture records, permissions/budget balances,
+  task history, memories/opportunities/artifacts and pending approval state are
+  unchanged. All six authoritative game documents, including CONCEPT.md revision
+  2 and DECISIONS.md revision 1, are exactly unchanged; no design proposal was
+  recorded as human approved.
+- Historical audit remains **40 model requests + 40 responses = 80**. Existing
+  five tasks unchanged; added tasks **0**, model calls **0**, external provider
+  requests **0**, additional API consumption **$0**.
+- Local service restarted only after verifying idle terminal tasks, no pending
+  approvals/reservations and no process credentials. Persistence was checked without
+  reapplying configuration. Healthy worker and loopback listener
+  **127.0.0.1:8787**, PID **34696**. Prepared collaborative form opened.
+- Private mission text, before-state/SQLite backups and verification/readiness
+  evidence remain under ignored data/full-design-mission and data helper scripts.
+  Generic source/tests/docs alone are committed; no runtime data, logs or keys.
+
+### Exact next task / required gate
+
+**Await explicit CEO authorization for the maximum additional spending cap and a
+Genesis API credential. No mission submission until both exist.** The operator
+will configure the approved limits through APIs; the CEO need not configure
+agents, mission scope or budgets manually. After securely supplied key, use the
+non-generating model check to verify the three exact account-visible IDs. Report
+credential/availability errors instead of changing models or borrowing Codex auth.
+
+With explicit spending approval, recheck balances, record authorized execution
+scope, apply the approved absolute global/project ceilings, then POST exactly one
+collaborative root task led by coo using the saved full objective and preserved
+model settings. Monitor real execution, durable revisions and usage. Every pending
+delegation and network approval remains a genuine review gate; report the exact
+invocation and do not auto-approve it from general spending consent. Independently
+check completed documents and review/fix evidence. Stop honestly on actual budget,
+credential, permission, execution or completeness failures; never fabricate success.
+
+
+
+## Previous checkpoint: complete human concept v0.2 restored and verified
 
 Verified 2026-11-09, Europe/Helsinki, continuing committed/pushed dd3270b.
 Existing venture 07587388a699471aa8fdb86b958cfe3a and existing document

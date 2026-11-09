@@ -307,6 +307,37 @@ async function main(){
   s=await waitState(18871,x=>x.settings.max_concurrency===2&&x.settings.max_delegation_depth===2&&x.settings.max_delegated_tasks===5);
   assert.equal(s.settings.spent_usd,0,'Dynamic team management and credential-blocked task must make no paid calls');
 
+  // Preparation persists project limits and a draft without creating work or approvals.
+  await page.locator('[data-view=team]').click();
+  await memberForm(frontend.id).locator('[name=enabled]').check();
+  await memberForm(frontend.id).getByRole('button',{name:'Save project agent',exact:true}).click();
+  s=await waitState(18871,x=>x.team_memberships.some(m=>m.venture_id===secondProject.id&&m.agent_id===frontend.id&&m.enabled===true));
+  const preparedTaskCount=s.tasks.length,preparedApprovalCount=s.approvals.length,preparedGlobalSteps=s.settings.max_steps;
+  const preparedObjective='Prepared complete mission\nPreserve protected sources and independently review the proposed design.';
+  await page.locator('#project-limit-max_concurrency').fill('3');
+  await page.locator('#project-limit-max_steps').fill('48');
+  await page.locator('#project-limit-max_output_tokens').fill('8192');
+  await page.locator('#project-limit-max_delegation_depth').fill('3');
+  await page.locator('#project-limit-max_delegated_tasks').fill('18');
+  await page.locator('#project-limits-form [type=submit]').click();
+  s=await waitState(18871,x=>x.ventures.find(v=>v.id===secondProject.id)?.execution_limits?.max_steps===48);
+  assert.equal(s.settings.max_steps,preparedGlobalSteps,'Project limits must preserve company limits');
+  assert.equal(s.ventures.find(v=>v.id!==secondProject.id).execution_limits?.max_steps,undefined,'Project limits stay scoped');
+  assert((await page.locator('#project-limits-summary').innerText()).includes('Global worker capacity: 2'));
+  await page.locator('#project-mission-objective').fill(preparedObjective);
+  await page.locator('#project-mission-agent').selectOption(frontend.id);
+  await page.locator('#project-mission-mode').selectOption('collaborative');
+  await page.locator('#project-mission-form [type=submit]').click();
+  s=await waitState(18871,x=>x.ventures.find(v=>v.id===secondProject.id)?.mission_draft?.objective===preparedObjective);
+  assert.equal(s.tasks.length,preparedTaskCount,'Saving mission creates no task');
+  assert.equal(s.approvals.length,preparedApprovalCount,'Saving mission grants no action approval');
+  await page.locator('#load-prepared-mission').click();
+  assert.equal(await page.locator('#objective').inputValue(),preparedObjective);
+  assert.equal(await page.locator('#objective-role').inputValue(),frontend.id,'Draft chooses its exact agent instance');
+  assert.equal(await page.locator('#objective-mode').inputValue(),'collaborative');
+  assert.equal(await page.locator('#objective-astra').isChecked(),false,'Loading draft grants no Astra authorization');
+  assert.equal((await(await fetch('http://127.0.0.1:18871/api/state')).json()).tasks.length,preparedTaskCount,'Loading must not submit');
+
   // Durable venture documents use the real local persistence API; no model calls.
   await page.locator('[data-view=team]').click();
   await page.locator('#project-policy').fill('CEO approval required before proposing rule changes.');
@@ -338,6 +369,14 @@ async function main(){
   assert.equal(await page.locator('#document-content').inputValue(),sourceText+'\nCEO corrected reference.','Document revisions survive restart');
   await page.locator('#document-history summary').filter({hasText:'Revision 1'}).waitFor();
   s=await waitState(18871,x=>x.ventures.find(v=>v.id===secondProject.id)?.operating_policy==='CEO approval required before proposing rule changes.');
+  assert.equal(s.ventures.find(v=>v.id===secondProject.id).execution_limits.max_concurrency,3,'Project limits survive restart');
+  await page.goto('http://127.0.0.1:18871/?venture='+encodeURIComponent(secondProject.id)+'&view=overview&mission=1');
+  await page.waitForFunction(expected=>document.querySelector('#objective').value===expected,preparedObjective);
+  assert.equal(await page.locator('#objective-role').inputValue(),frontend.id,'Deep link restores exact prepared lead');
+  assert.equal(await page.locator('#objective-mode').inputValue(),'collaborative');
+  assert.equal((await(await fetch('http://127.0.0.1:18871/api/state')).json()).tasks.length,preparedTaskCount,'Restart/deep link creates no work');
+  assert.equal((await(await fetch('http://127.0.0.1:18871/api/state')).json()).approvals.length,preparedApprovalCount,'Restart/deep link creates no approvals');
+  await page.locator('[data-view=documents]').click();
   await page.locator('#venture-select').selectOption(s.ventures.find(v=>v.id!==secondProject.id).id);
   assert.equal(await page.locator('#document-list [data-document-id="'+reference.id+'"]').count(),0,'Documents remain isolated by venture');
 
@@ -389,6 +428,6 @@ async function main(){
   assert.equal(JSON.parse(deniedTool.content).returncode,undefined,'Denied invocation must not have a process result');
   assert.equal(s.approvals.find(a=>a.task_id===deniedTask.id).status,'denied');
   assert.deepEqual(errors,[],'No JavaScript runtime errors');
-  console.log('PASS: production browser venture/objective/credential-block/literal-XSS-safe-memory/opportunity/polling/settings/rates/fallback-save-restore/resume-route/session-credentials/restart/mobile/modern-model-catalog/reasoning-persistence/reporting-price-guard-separation/read-only-estimate/explicit-Astra-authorization/dynamic-teams/venture-instructions/global-default-isolation/operating-policy/durable-document-revisions/download/restart/deep-links/duplicate-identities/project-isolation/project-overrides/membership-disable-remove-reassign/template-edit/history/concurrency-controls/unsaved-draft-project-switch; fixture browser approval, denial, actual Python tests, artifact and task ZIP downloads. Live AI acceptance NOT verified.');
+  console.log('PASS: production browser venture/objective/credential-block/literal-XSS-safe-memory/opportunity/polling/settings/rates/fallback-save-restore/resume-route/session-credentials/restart/mobile/modern-model-catalog/reasoning-persistence/reporting-price-guard-separation/read-only-estimate/explicit-Astra-authorization/dynamic-teams/venture-instructions/global-default-isolation/operating-policy/project-execution-limits/prepared-mission-no-submission/restart-mission-deep-link/durable-document-revisions/download/restart/deep-links/duplicate-identities/project-isolation/project-overrides/membership-disable-remove-reassign/template-edit/history/concurrency-controls/unsaved-draft-project-switch; fixture browser approval, denial, actual Python tests, artifact and task ZIP downloads. Live AI acceptance NOT verified.');
 }
 main().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();await stop();fs.rmSync(temp,{recursive:true,force:true});});

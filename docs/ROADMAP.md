@@ -38,7 +38,12 @@ provider independence, controlled tools, and reviewable execution.
    skip) and browser E2E pass. Complete human concept v0.2 subsequently restored
    as protected revision 2, previous history retained, restart/access checks and
    17 targeted tests pass. No design tasks or paid calls; await CEO assignment.
-9. **Next hardening:** OS-level process isolation, richer research sources,
+9. **Verified full-design mission preparation:** scoped live execution caps,
+   persistent nonexecuting collaborative mission draft and safe non-generating
+   model-availability metadata check. 184 tests (one Windows skip) and browser
+   E2E pass. Five-role full paper-design mission prepared; no model calls or task
+   submission. Await explicit new spending authorization and Genesis API key.
+10. **Next hardening:** OS-level process isolation, richer research sources,
    independent acceptance evaluators, external action connectors with approvals.
 
 ## Session protocol

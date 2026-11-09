@@ -19,7 +19,7 @@ from .engine import Engine, ROLES, read_limited
 from .store import now
 from .toolbox import _safe_path
 from .lease import DataLease
-from .providers import KEY_NAMES, provider_status, DEFAULT_MODELS
+from .providers import KEY_NAMES, provider_status, DEFAULT_MODELS, openai_model_availability
 from .models import default_route, model_info
 from .accounting import validate_prices
 
@@ -189,6 +189,28 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError('Expected an object.')
             path = unquote(urlsplit(self.path).path)
             parts = path.strip('/').split('/')
+            if path == '/api/providers/openai/check':
+                if set(body) - {'venture_id'}:
+                    raise ValueError('Unsupported availability fields')
+                venture_id = body.get('venture_id')
+                if 'venture_id' in body and (not isinstance(venture_id, str) or not engine.store.get('ventures', venture_id)):
+                    raise ValueError('Unknown venture')
+                models = []
+                for agent in engine.store.all('agents'):
+                    if venture_id:
+                        try:
+                            agent = engine.teams.effective_agent(agent['id'], venture_id)
+                        except ValueError:
+                            continue
+                    if not agent.get('enabled', True):
+                        continue
+                    for route in [agent] + agent.get('fallbacks', []):
+                        if route.get('provider') == 'openai' and route.get('model') not in models:
+                            models.append(route['model'])
+                result = openai_model_availability(models)
+                engine.store.event('provider_availability_checked', provider='openai',
+                    venture_id=venture_id, status=result['status'], models=[entry['id'] for entry in result['models']])
+                return self._json(200, result)
             if path == '/api/credentials':
                 provider = body.get('provider')
                 key = body.get('api_key')
