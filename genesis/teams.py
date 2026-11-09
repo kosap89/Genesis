@@ -11,7 +11,7 @@ from .store import ident, now
 ROUTE_FIELDS = {'provider', 'model', 'reasoning_effort', 'fallbacks',
                 'input_cost_per_million', 'output_cost_per_million'}
 TEXT_LIMITS = {'name': 300, 'description': 24000, 'system_instructions': 24000,
-               'specialization': 2000, 'responsibilities': 24000}
+               'specialization': 2000, 'responsibilities': 24000, 'operating_policy': 24000}
 AGENT_FIELDS = ROUTE_FIELDS | {'name', 'description', 'system_instructions',
                              'specialization', 'enabled', 'budget_usd'}
 
@@ -133,7 +133,7 @@ class TeamManager:
         return value
 
     def _membership(self, venture_id, agent_id, body, existing=None):
-        body = _fields(body, {'enabled', 'responsibilities', 'overrides', 'action'})
+        body = _fields(body, {'enabled', 'responsibilities', 'overrides', 'action', 'system_instructions', 'specialization'})
         action = body.pop('action', None)
         if action not in (None, 'remove'):
             raise ValueError('Unsupported membership action')
@@ -238,7 +238,7 @@ class TeamManager:
 
     def update_project(self, venture_id, body):
         with self.store.lock:
-            body = _fields(body, {'budget_usd'})
+            body = _fields(body, {'budget_usd', 'operating_policy'})
             return self.store.put('ventures', {**self._get('ventures', venture_id), **body})
 
     def effective_agent(self, agent_id, venture_id=None):
@@ -255,6 +255,9 @@ class TeamManager:
                     raise ValueError('Agent project membership is inactive')
                 agent.update(deepcopy(membership.get('overrides', {})))
                 agent['responsibilities'] = membership.get('responsibilities', '')
+                for field in ('system_instructions', 'specialization'):
+                    if field in membership:
+                        agent[field] = membership[field]
             elif not agent.get('legacy_default', False):
                 assigned = any(m['agent_id'] == agent_id and m.get('status') == 'active' for m in self.store.all('team_memberships'))
                 if venture_id is not None or assigned:

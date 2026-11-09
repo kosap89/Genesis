@@ -331,3 +331,15 @@ task/resume APIs accept reasoning_effort; task/resume also accepts an explicit
 astra_authorized boolean. Agent fallback objects allow optional reasoning_effort.
 The local credential form preserves agent routes by default; an explicit opt-in
 can apply recommended routes. No new endpoint automatically starts or resumes work.
+
+## Venture instructions and durable source documents
+
+Team memberships store project-specific system_instructions and specialization,
+separate from global agent defaults. Venture operating_policy is pinned in new
+tasks and refreshed only by explicit resume with agent settings; it cannot grant
+execution permissions. VentureDocuments uses the existing records table for
+current documents and immutable full revisions, independent of task workspaces.
+Agents can read their project sources and propose or revise writable documents;
+locked references and decision documents require CEO edits. Expected revisions
+prevent stale overwrites. The command center exposes source content, revision
+history and downloads. See VENTURE_DOCUMENTS.md for APIs, storage and limits.

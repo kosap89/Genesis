@@ -4,3 +4,7 @@
 .accounting-summary,.estimate,#usage-detail{white-space:pre-line;overflow-wrap:anywhere}.agent-form select{max-width:100%}.agent-form [data-model-pricing]{overflow-wrap:anywhere}
 
 #team-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px;margin-bottom:24px}#team-controls[hidden]{display:none}.team-agent-form{display:flex;flex-direction:column;gap:12px}.team-agent-form label{display:flex;flex-direction:column;gap:6px}.team-agent-form label.check{flex-direction:row}#objective-form details{margin:12px 0}#objective-form details label{display:block;margin:10px 0}.team-agent-form .record-meta{overflow-wrap:anywhere}
+
+#document-content {font-family: ui-monospace, monospace; line-height: 1.6;}
+#document-history pre {white-space: pre-wrap; overflow-wrap: anywhere;}
+#document-controls details, .team-agent-form > details {padding: 12px 0;}

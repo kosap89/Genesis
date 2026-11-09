@@ -31,7 +31,12 @@ provider independence, controlled tools, and reviewable execution.
    artifact handoffs and collaborative file claims. Atomic scoped budgets and
    configurable concurrency defaulting to one. 155 tests (one Windows skip),
    browser E2E and real-data migration preservation verified; zero new API usage.
-8. **Next hardening:** OS-level process isolation, richer research sources,
+8. **Verified venture preparation:** project-only instructions and operating policy,
+   durable revisioned source documents, protected references/human decisions and
+   agent source tools. Card Game venture prepared with five scoped roles and six
+   assets, restart verified, original records preserved. 172 tests (one Windows
+   skip) and browser E2E pass. No design tasks or paid calls; await CEO assignment.
+9. **Next hardening:** OS-level process isolation, richer research sources,
    independent acceptance evaluators, external action connectors with approvals.
 
 ## Session protocol

@@ -199,7 +199,8 @@ async function main(){
   assert.equal(s.settings.spent_usd,0);
   // A rejected request must clear the field as well.
   await page.locator('#credentials-key').fill('invalid whitespace key');
-  await page.locator('#credentials-form [type=submit]').click();
+  const [invalidCredentialResponse]=await Promise.all([page.waitForResponse(r=>r.url().endsWith('/api/credentials')&&r.request().method()==='POST'),page.locator('#credentials-form [type=submit]').click()]);
+  assert.equal(invalidCredentialResponse.status(),400,'Invalid credential validation: '+JSON.stringify(await invalidCredentialResponse.json()));
   await page.locator('#feedback.error').filter({hasText:'API key must be printable'}).waitFor();
   assert.equal(await page.locator('#credentials-key').inputValue(),'');
   // Dynamic team tests use only the isolated production server with no credentials.
@@ -219,8 +220,13 @@ async function main(){
   assert.notEqual(frontend.id,backend.id,'Same-role agents need separate identities');
   assert.equal(backend.role,frontend.role);
   const backendForm=memberForm(backend.id);
+  await backendForm.locator('details').first().locator('summary').click();
   await backendForm.locator('[name=name]').fill('Backend engineer');
   await backendForm.locator('[name=specialization]').fill('API correctness');
+  await backendForm.getByRole('button',{name:'Save global agent defaults',exact:true}).click();
+  await waitState(18871,x=>x.agents.some(a=>a.id===backend.id&&a.name==='Backend engineer'));
+  await backendForm.locator('[name=project_specialization]').fill('Venture-only API reviewer');
+  await backendForm.locator('[name=project_system_instructions]').fill('Only in this venture: inspect API contracts.');
   await backendForm.locator('[name=responsibilities]').fill('Review API changes');
   await backendForm.locator('[name=use_override]').check();
   await backendForm.locator('[name=provider]').selectOption('openai');
@@ -229,20 +235,33 @@ async function main(){
   const teamEffort=teamModel.reasoning_efforts?.[0]||'';
   await backendForm.locator('[name=reasoning_effort]').selectOption(teamEffort);
   await backendForm.locator('[name=budget_usd]').fill('1.25');
+  await backendForm.getByRole('button',{name:'Save global agent defaults',exact:true}).click();
+  await waitState(18871,x=>x.agents.some(a=>a.id===backend.id&&a.budget_usd===1.25));
+  await backendForm.locator('[name=project_specialization]').fill('Venture-only API reviewer');
+  await backendForm.locator('[name=project_system_instructions]').fill('Only in this venture: inspect API contracts.');
+  await backendForm.locator('[name=responsibilities]').fill('Review API changes');
+  await backendForm.locator('[name=use_override]').check();
+  await backendForm.locator('[name=provider]').selectOption('openai');
+  await backendForm.locator('[name=model]').selectOption(teamModel.id);
+  await backendForm.locator('[name=reasoning_effort]').selectOption(teamEffort);
   await backendForm.getByRole('button',{name:'Save project agent',exact:true}).click();
   s=await waitState(18871,x=>x.agents.some(a=>a.id===backend.id&&a.name==='Backend engineer'&&a.budget_usd===1.25)&&x.team_memberships.some(m=>m.agent_id===backend.id&&m.overrides?.model===teamModel.id));
   assert.equal(s.team_memberships.find(m=>m.agent_id===backend.id).responsibilities,'Review API changes');
+  assert.equal(s.team_memberships.find(m=>m.agent_id===backend.id).system_instructions,'Only in this venture: inspect API contracts.');
+  assert.notEqual(s.agents.find(a=>a.id===backend.id).system_instructions,'Only in this venture: inspect API contracts.','Venture instructions must not overwrite global defaults');
   await page.locator('#role-template-form [name=name]').fill('Accessibility specialist');
   await page.locator('#role-template-form [name=description]').fill('A custom reusable role');
   await page.locator('#role-template-form [name=system_instructions]').fill('Inspect accessibility and record verifiable findings.');
   await page.locator('#role-template-form [type=submit]').click();
   s=await waitState(18871,x=>x.role_templates.some(t=>t.name==='Accessibility specialist'));
   assert(s.role_templates.find(t=>t.name==='Accessibility specialist').system_instructions.includes('verifiable'));
+  await page.waitForFunction(()=>!document.querySelector('#role-template-form [type=submit]').disabled);
   const savedTemplate=s.role_templates.find(t=>t.name==='Accessibility specialist');
   await page.locator('#role-template-edit').selectOption(savedTemplate.id);
   await page.locator('#role-template-model').selectOption(teamModel.id);
   await page.locator('#role-template-effort').selectOption(teamEffort);
-  await page.locator('#role-template-form [type=submit]').click();
+  const [templateUpdate]=await Promise.all([page.waitForResponse(r=>r.url().endsWith('/api/role-templates/'+savedTemplate.id)&&r.request().method()==='POST'),page.locator('#role-template-form [type=submit]').click()]);
+  assert(templateUpdate.ok(),'Template update: '+JSON.stringify(await templateUpdate.json()));
   s=await waitState(18871,x=>x.role_templates.some(t=>t.id===savedTemplate.id&&t.model===teamModel.id&&t.reasoning_effort===(teamEffort||null)));
   await page.locator('[data-view=overview]').click();
   await page.locator('#objective-role').selectOption(frontend.id);
@@ -263,7 +282,7 @@ async function main(){
   await page.locator('#venture-form [type=submit]').click();
   s=await waitState(18871,x=>x.ventures.length===2);
   const secondProject=s.ventures.find(v=>v.name==='Isolated second project');
-  await memberForm(backend.id).locator('[name=specialization]').fill('Unsaved project draft');
+  await memberForm(backend.id).locator('[name=project_specialization]').fill('Unsaved project draft');
   await page.locator('#venture-select').selectOption(secondProject.id);
   assert.equal(await page.locator('.team-agent-form').count(),0,'Project teams stay separate');
   assert.equal(await page.locator('#objective-role option[value="'+backend.id+'"]').count(),0,'Unassigned custom agents cannot be chosen for another project');
@@ -287,6 +306,41 @@ async function main(){
   await page.locator('#settings-form [type=submit]').click();
   s=await waitState(18871,x=>x.settings.max_concurrency===2&&x.settings.max_delegation_depth===2&&x.settings.max_delegated_tasks===5);
   assert.equal(s.settings.spent_usd,0,'Dynamic team management and credential-blocked task must make no paid calls');
+
+  // Durable venture documents use the real local persistence API; no model calls.
+  await page.locator('[data-view=team]').click();
+  await page.locator('#project-policy').fill('CEO approval required before proposing rule changes.');
+  await page.locator('#project-policy-form [type=submit]').click();
+  await waitState(18871,x=>x.ventures.find(v=>v.id===secondProject.id)?.operating_policy==='CEO approval required before proposing rule changes.');
+  await page.locator('[data-view=documents]').click();
+  await page.locator('#document-controls summary').click();
+  await page.locator('#document-create-form [name=name]').fill('Approved source reference.md');
+  const sourceText='# Source reference\n<img src=x onerror="window.genesisDocXss=true">\nCEO supplied content.';
+  await page.locator('#document-create-form [name=content]').fill(sourceText);
+  const [documentCreated]=await Promise.all([page.waitForResponse(r=>r.url().endsWith('/api/projects/'+secondProject.id+'/documents')&&r.request().method()==='POST'),page.locator('#document-create-form [type=submit]').click()]);
+  assert(documentCreated.ok(),'Document create: '+JSON.stringify(await documentCreated.json()));
+  s=await waitState(18871,x=>x.venture_documents.some(d=>d.name==='Approved source reference.md'));
+  const reference=s.venture_documents.find(d=>d.name==='Approved source reference.md');
+  await page.locator('#document-content').waitFor({state:'visible'});
+  assert.equal(await page.locator('#document-content').inputValue(),sourceText);
+  assert.equal(await page.evaluate(()=>Boolean(window.genesisDocXss)),false);
+  await page.locator('#document-content').fill(sourceText+'\nCEO corrected reference.');
+  await page.locator('#document-revise-form [type=submit]').click();
+  await waitState(18871,x=>x.venture_documents.find(d=>d.id===reference.id)?.revision===2);
+  await page.locator('#document-history summary').filter({hasText:'Revision 1'}).waitFor();
+  const [referenceDownload]=await Promise.all([page.waitForEvent('download'),page.locator('#document-download').click()]);
+  assert((fs.readFileSync(await referenceDownload.path(),'utf8')).includes('CEO corrected reference.'));
+  await stop();await start(false,18871,path.join(temp,'real'));
+  await page.goto('http://127.0.0.1:18871/?venture='+encodeURIComponent(secondProject.id)+'&view=documents');
+  await page.locator('#document-list button').filter({hasText:'Approved source reference.md'}).click();
+  await page.locator('#document-content').waitFor({state:'visible'});
+  assert.equal(await page.locator('#venture-select').inputValue(),secondProject.id,'Venture deep link restores selected project');
+  assert.equal(await page.locator('#document-content').inputValue(),sourceText+'\nCEO corrected reference.','Document revisions survive restart');
+  await page.locator('#document-history summary').filter({hasText:'Revision 1'}).waitFor();
+  s=await waitState(18871,x=>x.ventures.find(v=>v.id===secondProject.id)?.operating_policy==='CEO approval required before proposing rule changes.');
+  await page.locator('#venture-select').selectOption(s.ventures.find(v=>v.id!==secondProject.id).id);
+  assert.equal(await page.locator('#document-list [data-document-id="'+reference.id+'"]').count(),0,'Documents remain isolated by venture');
+
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(output,'mobile-browser.png'),fullPage:true});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false,'Mobile should not overflow horizontally');
   await stop();
@@ -335,6 +389,6 @@ async function main(){
   assert.equal(JSON.parse(deniedTool.content).returncode,undefined,'Denied invocation must not have a process result');
   assert.equal(s.approvals.find(a=>a.task_id===deniedTask.id).status,'denied');
   assert.deepEqual(errors,[],'No JavaScript runtime errors');
-  console.log('PASS: production browser venture/objective/credential-block/literal-XSS-safe-memory/opportunity/polling/settings/rates/fallback-save-restore/resume-route/session-credentials/restart/mobile/modern-model-catalog/reasoning-persistence/reporting-price-guard-separation/read-only-estimate/explicit-Astra-authorization/dynamic-teams/duplicate-identities/project-isolation/project-overrides/membership-disable-remove-reassign/template-edit/history/concurrency-controls/unsaved-draft-project-switch; fixture browser approval, denial, actual Python tests, artifact and task ZIP downloads. Live AI acceptance NOT verified.');
+  console.log('PASS: production browser venture/objective/credential-block/literal-XSS-safe-memory/opportunity/polling/settings/rates/fallback-save-restore/resume-route/session-credentials/restart/mobile/modern-model-catalog/reasoning-persistence/reporting-price-guard-separation/read-only-estimate/explicit-Astra-authorization/dynamic-teams/venture-instructions/global-default-isolation/operating-policy/durable-document-revisions/download/restart/deep-links/duplicate-identities/project-isolation/project-overrides/membership-disable-remove-reassign/template-edit/history/concurrency-controls/unsaved-draft-project-switch; fixture browser approval, denial, actual Python tests, artifact and task ZIP downloads. Live AI acceptance NOT verified.');
 }
 main().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();await stop();fs.rmSync(temp,{recursive:true,force:true});});

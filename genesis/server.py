@@ -99,6 +99,22 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, {'status':'ok', 'service':'genesis', 'worker_alive':bool(engine.thread and engine.thread.is_alive())})
             if path == '/api/state':
                 return self._json(200, {**engine.state(), 'csrf_token':self.server.csrf})
+            parts = path.strip('/').split('/')
+            if len(parts) >= 4 and parts[:2] == ['api', 'projects'] and parts[3] == 'documents':
+                venture_id = parts[2]
+                if len(parts) == 4:
+                    return self._json(200, {'documents': engine.documents.list(venture_id)})
+                if len(parts) == 5:
+                    return self._json(200, engine.documents.get(venture_id, parts[4]))
+                if len(parts) == 6 and parts[5] == 'revisions':
+                    return self._json(200, {'revisions': engine.documents.revisions(venture_id, parts[4])})
+                if len(parts) == 6 and parts[5] == 'download':
+                    document = engine.documents.get(venture_id, parts[4])
+                    raw = document['content'].encode('utf-8')
+                    filename = ''.join(c for c in document['name'] if c.isascii() and (c.isalnum() or c in '._-')) or 'document.md'
+                    self._headers(200, 'text/plain; charset=utf-8', len(raw), filename)
+                    return self.wfile.write(raw)
+                return self._json(404, {'error':'Endpoint not found.'})
             if path.startswith('/api/tasks/') and path.endswith('/bundle'):
                 task_id = path.split('/')[-2]
                 task = engine.store.get('tasks', task_id)
@@ -268,6 +284,10 @@ class Handler(BaseHTTPRequestHandler):
                     value = engine.store.update('settings', 'global', **updates)
                 engine.store.event('settings_changed', updates=updates)
                 return self._json(200, value)
+            if len(parts) in {4, 5} and parts[:2] == ['api', 'projects'] and parts[3] == 'documents':
+                if len(parts) == 4:
+                    return self._json(201, engine.documents.create(parts[2], body, actor='ceo'))
+                return self._json(200, engine.documents.update(parts[2], parts[4], body, actor='ceo'))
             teams = engine.teams
             value = None
             status = 200

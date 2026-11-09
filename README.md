@@ -151,3 +151,8 @@ unit tests, explicitly identified provider doubles and isolated browser E2E only
 Do not start/resume live Genesis agents or use prepaid model credits for software
 development. Live acceptance requires separate CEO authorization, regardless of
 any budget amount still stored in the runtime database.
+
+Project-specific instructions and operating policy can be edited without changing
+global agent defaults. The Project documents view stores revisioned reference,
+design, proposal, review and human-only decision documents outside task workspaces.
+See [venture configuration and documents](docs/VENTURE_DOCUMENTS.md).

@@ -1,9 +1,149 @@
 # Genesis persistent project state
 
-Updated 2026-11-09, Europe/Helsinki. Dynamic-team development continues verified commit `6681fa0`.
+Updated 2026-11-09, Europe/Helsinki. Card game preparation continues verified commit `df814e1`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: dynamic project teams, offline verified
+## Current checkpoint: card game organization prepared, no design execution
+
+Verified 2026-11-09, Europe/Helsinki, continuing commit df814e1. Development
+authentication remains **Logged in using ChatGPT**. No Genesis task was created,
+resumed or executed, no design research/playtest was performed and no paid model
+request occurred. This is preparation, not live design or founding acceptance.
+
+### Configured venture and organization
+
+Exactly one **Card Game — Concept Development** venture exists:
+07587388a699471aa8fdb86b958cfe3a. Open
+http://127.0.0.1:8787/?venture=07587388a699471aa8fdb86b958cfe3a&view=team
+or use view=documents for its durable assets.
+
+The existing role IDs are reused through venture-specific memberships; no global
+agent or reusable role template was rewritten.
+
+- COO / Creative Project Director: OpenAI gpt-6.1-sol, medium.
+- Strategy / Lead Game Designer: OpenAI gpt-6.1-sol, high.
+- Growth / Comparative Game Researcher: OpenAI gpt-6.1-terra, medium.
+- QA / Critical Game Design Reviewer: OpenAI gpt-6.1-sol, medium.
+- Operations / Design Documentation Manager: OpenAI gpt-6-luna, low.
+- Engineering and finance: disabled only in this venture, no active assignment;
+  their global configurations remain unchanged.
+
+Each participating membership stores the requested specialization, instructions
+and responsibilities, plus explicit provider/model/reasoning overrides and empty
+fallbacks. Venture operating policy preserves human creative authority, provisional
+mechanics, physical playability, evidence distinctions, durable results, no initial
+programming/worldbuilding, and individual delegation approval. Project instructions
+do not grant global permissions. The venture budget is **$0** as an execution
+barrier pending the separately authorized first design assignment. Global controls
+remain unchanged: budget $5, conservative spent $3.91808, reserved $0, concurrency 1.
+
+### Source documents and reusable functionality
+
+Six actual venture documents are stored durably in the existing SQLite database,
+not only in task workspaces: CONCEPT.md, GAME_DESIGN.md, IDEAS.md, DECISIONS.md,
+OPEN_QUESTIONS.md and REVIEWS.md. All currently have one immutable revision.
+CONCEPT.md preserves every known fact supplied in the configuration request,
+including the four placeholder evolution classes and proposed battle/resource/
+reserve/evolution mechanics. **The complete original v0.2 source was unavailable**;
+the reference explicitly states that it is incomplete. No missing rules or values
+were invented. Other documents provide an unfilled structure and distinguish
+provisional ideas, absent evidence and human approval; no actual design work is
+represented as complete.
+
+Already available: ventures, global role templates/agents, persistent memberships,
+project model overrides, budgets, task artifact storage and downloads, approvals,
+read-only estimates, and concurrency controls.
+
+Added as general features, with no card-game behavior hardcoded into source:
+
+- Membership-level system_instructions and specialization, separate from global
+  instance defaults; project operating_policy; explicit UI editors. New tasks pin
+  effective instructions/policy; plain resume retains them and explicit resume
+  with agent settings can refresh them.
+- VentureDocuments using records kinds venture_documents and
+  venture_document_revisions, immutable full revisions, source actors, timestamps,
+  safe filenames, duplicate-name rejection, project isolation and optimistic
+  expected_revision updates. Reference locks and human-only decision documents
+  are enforced against agent tools. CEO revisions preserve history.
+- CEO project document viewing, creation, revision, full history and actual file
+  downloads; project deep links. Existing task artifacts remain unchanged.
+- Agent document list/read/propose/update tools scoped to active membership.
+  Proposal creation cannot promote content into approved decisions. Current source
+  excerpts include revision/lock/truncation metadata; full reads are paginated.
+
+Application source and generic operational instructions are documented in
+VENTURE_DOCUMENTS.md and ARCHITECTURE.md. Actual venture instructions, baseline
+content, local backups, configuration/verification scripts and runtime evidence
+remain in ignored data/test-results locations, outside Git.
+
+### Genuine verification
+
+- Full regression: **172 tests in 111.364s, OK, one Windows symlink privilege
+  skip**. Seventeen new tests cover document durability/revisions/concurrency,
+  protected decisions/references, cross-project isolation, membership instruction
+  snapshots, actual agent tool dispatch without generation, and real HTTP APIs.
+- node --check web/app.js and node --check tests/browser-e2e.cjs: **PASS**.
+- npm.cmd run test:e2e: **PASS**. Isolated production-mode server had provider
+  credentials removed. Verified project/global instruction separation, policy,
+  document create/revise/history, actual downloaded bytes, restart persistence,
+  deep links, venture isolation, mobile layout and existing execution/approval
+  paths. Provider doubles were confined to the explicitly identified fixture.
+  Synchronization exposed async form reset/editor draft issues and the global
+  save flow was repaired to preserve unsaved venture fields.
+- Independently reviewed protections: spoofed actor/kind cannot approve decisions;
+  references remain unchanged; wrong-venture IDs, stale revisions and removed
+  memberships are rejected. The local HTTP integration tests also verify CSRF
+  and forbidden permission fields.
+- Applied configuration through local APIs. A retry-script error initially created
+  an unused duplicate; uniqueness checks detected it. After a local backup, only
+  that new duplicate and its 19 membership/document/revision records were removed
+  while the service was stopped, with an audit event retained. The corrected
+  idempotent preparation preserves existing documents instead of overwriting them.
+  Final state contains exactly one Card Game venture.
+- Restarted the configured real service **without reapplying configuration**.
+  Verified all five intended routes and project-specific prompts on an isolated
+  snapshot with a router that raises if invoked; all five could read all six
+  documents and were denied changes to CONCEPT.md and DECISIONS.md. Engineering/
+  finance remain unavailable in this venture. Downloaded all six actual documents,
+  checked hashes and revision-one content against saved preparation evidence.
+- Compared the pre-configuration SQLite backup against the current database:
+  **all 144 original raw records and every original message/audit entry are
+  preserved exactly**. Derived project_ids in API agent displays appropriately
+  reflect new memberships; underlying global agents are unchanged.
+- Real model audit totals remain **40 requests + 40 responses = 80 events**.
+  Existing five tasks remain unchanged. Added tasks **0**, added provider calls
+  **0**, added API consumption **$0**. All providers are currently unconfigured.
+- Current service: **127.0.0.1:8787**, PID **15668**, health ok, worker alive.
+  CEO Command Center opened directly on the configured venture. There are two
+  ventures total (one original plus this one), seven unchanged global agents,
+  seven new venture memberships (five enabled), and six durable venture documents.
+
+### Limits and exact next task
+
+STOP CONDITION reached. **Wait for a separate CEO-authorized first design
+assignment and budget. Do not start design research, prototype construction or
+paid agents.** The complete original v0.2 text may be added later by the CEO in a
+preserved reference revision; until then the source remains explicitly incomplete.
+
+Preferred models are configured, but account availability/live compatibility is
+unverified. No provider credential is needed for this prepared state. Before
+authorized paid execution, a process-only key and an explicit venture budget are
+still required. Global permissions and individual delegation/host/network approval
+boundaries remain intact; operating policy is an instruction, not an OS sandbox.
+Approved host processes can access same-user files and are outside document-tool
+locks. This remains a single-user loopback application.
+
+Document content is stored as SQLite assets with downloadable filenames, not
+authoritative files in task directories. CEO revisions may change locked source
+content while immutable history preserves earlier versions. Service content limit
+is 200,000 characters, while HTTP JSON requests remain bounded to 128 KiB. Prompt
+excerpts and paginated tool reads are bounded; very large archives are not fully
+included automatically. These are configuration/infrastructure checks, not proof
+of live agent quality, game balance or successful founding acceptance.
+
+
+
+## Previous checkpoint: dynamic project teams, offline verified
 
 Verified 2026-11-09, Europe/Helsinki. Extended the existing system and preserved
 real data. Development remained subscription authenticated: `codex login status`
