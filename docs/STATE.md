@@ -3,7 +3,33 @@
 Updated 2026-11-09, Europe/Helsinki. Live official reporting follows verified integration `b45a809` and repeat verification `0a49725`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: CEO-reconciled $0.15 local spending baseline
+## Current checkpoint: tiny live collaboration test requested; model key missing
+
+The CEO requested a genuinely minimal paid-agent cooperation smoke test, with
+each of the five participants adding one word to an isolated test document.
+Read-only runtime checks found OpenAI model credentials **not configured**;
+the separate billing Admin credential is not a model credential. No live smoke
+task has been submitted, no test document has been modified and no paid request
+was made. Global baseline remains $0.15, cap $4.65, reserved $0.
+
+Ran `python -m unittest discover -s tests -p test_team_runtime.py -v`:
+**20 tests passed in 19.039s**, including actual delegation approvals, dependencies,
+identity isolation, shared file claims and concurrent budget guards. These use
+explicit provider doubles and do not establish live AI collaboration.
+
+Prepared an unsubmitted five-word objective in ignored
+`data/collaboration-smoke/prepared.json`. A non-generating local preview confirmed
+that the current full-design settings (16384 output tokens, 24 steps) are excessive
+for a one-word smoke test; do not launch it under those settings.
+
+**Exact next task:** CEO supplies the ordinary OpenAI model key through the local
+session form, leaving recommended-route replacement unchecked. Prepare an isolated
+tiny test scope with short output/step limits and a clearly confirmed spending
+ceiling before live submission. Preserve the real design project/model settings,
+individual delegation approvals and protected documents. Independently inspect
+revision authors and word sequence; never count fixture results as live acceptance.
+
+## Previous checkpoint: CEO-reconciled $0.15 local spending baseline
 
 The CEO explicitly requested replacing the inflated historical local spending
 balance with **$0.15** from the supplied OpenAI dashboard and continuing local
