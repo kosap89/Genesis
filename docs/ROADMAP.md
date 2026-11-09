@@ -73,7 +73,11 @@ provider independence, controlled tools, and reviewable execution.
    explicit delegation approvals. 23 calls, price estimate $0.00411374, local
    charge $0.0153759375; combined test history remains below the same $0.50 cap.
    Game-design quality remains untested and that mission has not been started.
-13. **Next hardening:** OS-level process isolation, richer research sources,
+13. **Verified general web-search connection:** separate session Brave credential,
+   genuine HTTP 200 search with three official rulebook results and healthy service
+   launched with the same environment. One Brave request, zero model calls; normal
+   network approvals retained. Main game-design mission has not been submitted.
+14. **Next hardening:** OS-level process isolation, richer research sources,
    independent acceptance evaluators, external action connectors with approvals.
 
 ## Session protocol

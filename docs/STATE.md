@@ -3,7 +3,39 @@
 Updated 2026-11-09, Europe/Helsinki. Live official reporting follows verified integration `b45a809` and repeat verification `0a49725`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: exact-name document recovery verified offline and in live retry
+## Current checkpoint: Brave Search connected and verified without model inference
+
+CEO configured a separate Brave Search API credential for general web discovery.
+The old background service PID 33076 was still running, so setting the variable
+in another PowerShell had not updated its process environment. Stopped that idle
+service and opened a local interactive setup window with hidden Brave/ordinary
+OpenAI input. No credentials were read back, sent to chat or written to disk.
+The setup launches Genesis with the same process environment used for its check.
+
+One genuine direct Brave Web Search query through Genesis's existing pinned HTTPS
+transport succeeded at **2026-11-09 14:11:25 UTC / 16:11:25 Europe/Helsinki**:
+HTTP **200**, **3 results**, including the official Pokemon.com TCG rules page
+and official rulebook PDFs. This verifies actual Brave authentication/network
+results, not a provider double or Wikipedia fallback. It was one Brave search
+request, **0 model calls**, and no agent/task was created. Brave billing, if any,
+is separate from OpenAI and is not asserted to be free or covered by Genesis's
+model budget. Safe evidence: ignored `data/brave-verification/result.json`.
+
+Production now runs as PID **20812**, loopback health **ok**, worker alive, ordinary
+OpenAI model credential configured, no active tasks. The interactive service
+window must remain open while Genesis runs. Keys are session-only. The local
+setup/probe helper files under ignored `data/` contain code but no saved secrets.
+Global automatic network permission remains **false**: real agent search/fetch
+invocations still require their normal individual network approvals. No approvals,
+budgets, existing source documents or model routes were weakened or replaced.
+
+**Exact next task:** the prepared card-game mission now has a verified Brave
+connection in addition to the previously verified small collaborative workflow.
+Wait for the CEO's explicit mission start instruction; do not auto-submit it.
+Keep individual delegation/network approvals and the current budget caps. This
+connection check does not prove complete research coverage or game-design quality.
+
+## Previous checkpoint: exact-name document recovery verified offline and in live retry
 
 Investigated the actual operations-agent messages from the failed live test: it
 read the correct document but twice changed characters in the opaque UUID when
