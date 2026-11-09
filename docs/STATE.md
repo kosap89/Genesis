@@ -5,6 +5,27 @@ Preserve existing implementation and data; do not scaffold a replacement.
 
 ## Current checkpoint: real OpenAI organization reporting connected
 
+CEO dashboard clarification: the supplied official OpenAI screenshot shows **$0.15
+organization monthly spend against a $10 organization spend limit**. This is a
+CEO-supplied dashboard observation, not a Costs API result or prepaid balance.
+An authorized reporting refresh at **2026-11-09 03:57:00 UTC** still returned no
+monetary rows. Genesis's **$3.91808** historical internal safety ledger and
+**$0.2484168** published-price estimate are separate figures. The safety ledger
+uses deliberately conservative configured rates, not provider invoicing; these
+historical token totals at $10/$30 per million yield $3.91808. Cache/price/reporting
+differences can affect the separate estimate, which is not a verified invoice.
+
+The financial dashboard now places official organization costs first, explicitly
+labels the internal safety estimate and explains that it is not the OpenAI bill
+or consumed prepaid credit. Overview and venture budget labels use the same
+distinction. The empty-cost message directs comparison with the official dashboard
+while API costs lag. No screenshot amount was inserted into the provider API
+report, no historical charges were rewritten and no budget limits were changed.
+The full browser E2E and both JavaScript syntax checks passed after this change.
+New assertions cover provider-cost ordering and the internal-budget disclaimer.
+A separate read-only browser check of the real running dashboard passed too;
+its screenshot remains ignored under `data/billing-integration/live/`.
+
 The CEO supplied the separate Admin credential through the local setup flow and
 authorized updating Genesis from official billing data. Credential presence was
 verified without reading the key. A supported manual reporting refresh succeeded

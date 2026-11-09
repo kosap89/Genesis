@@ -11,6 +11,16 @@ STATE.md for the exact window and evidence. No new model inference was performed
 
 ## Dashboard figures
 
+Official provider costs appear first. The internal safety budget is explicitly
+labeled as protective accounting, not the OpenAI bill or prepaid credit consumed.
+For example, the historical $3.91808 Genesis safety ledger uses high configured
+rates; it can coexist with a much smaller amount on the provider dashboard. The
+CEO supplied a screenshot showing $0.15 monthly organization spend against a $10
+provider spend limit. That observation is not copied into API-reported data;
+the Costs endpoint was still empty at the subsequent synchronization. Provider
+organization spend limits, internal Genesis budgets and prepaid balance are
+three separate concepts.
+
 The financial section separates Genesis conservative spent/reserved/remaining
 budget, published-price estimated API cost, official OpenAI organization costs,
 and remaining internal venture budgets. Organization costs have daily, OpenAI

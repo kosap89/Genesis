@@ -40,6 +40,9 @@ async function main(){
   await page.locator('#billing-credential-status').filter({hasText:'not configured'}).waitFor();
   assert.equal(await page.locator('#view-finance input[type=password]').count(),0,'Admin key must never enter frontend JavaScript');
   assert.equal(await page.locator('#finance-official').textContent(),'Unavailable');
+  assert((await page.locator('#finance-explanation').textContent()).includes('does not represent prepaid credits consumed'));
+  assert((await page.locator('.financial-metrics article').first().textContent()).includes('Official OpenAI costs'),'Provider-reported spending must precede the internal safety ledger');
+  assert((await page.locator('#finance-charged').locator('..').textContent()).includes('this is not your OpenAI bill'));
   assert.equal(await page.locator('#view-finance a[href="https://platform.openai.com/settings/organization/billing/overview"]').count(),1);
   const beforeBilling=await(await fetch('http://127.0.0.1:18871/api/state')).json();
   await page.locator('#billing-refresh').click();
