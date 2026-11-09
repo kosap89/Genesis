@@ -24,12 +24,12 @@ async function start(fixture,port,data){
   throw new Error('Server startup timed out: '+output);
 }
 async function stop(){if(!processHandle)return;const p=processHandle;processHandle=null;await new Promise(resolve=>{if(p.exitCode!==null)return resolve();p.once('exit',resolve);p.kill();});}
-async function waitState(port,predicate){for(let i=0;i<100;i++){const s=await(await fetch(`http://127.0.0.1:${port}/api/state`)).json();if(predicate(s))return s;await pause(150);}throw new Error('Expected state timed out');}
+async function waitState(port,predicate){for(let i=0;i<100;i++){const s=await(await fetch(`http://127.0.0.1:${port}/api/state`)).json();if(predicate(s))return s;await pause(150);}const last=await(await fetch(`http://127.0.0.1:${port}/api/state`)).json();throw new Error('Expected state timed out: '+JSON.stringify({tasks:last.tasks,agents:last.agents.map(a=>({id:a.id,name:a.name,model:a.model})),memberships:last.team_memberships,audit:last.audit.slice(-8)}));}
 async function main(){
   const executable=process.env.GENESIS_BROWSER_PATH||['C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe','C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'].find(p=>fs.existsSync(p));
   browser=await chromium.launch({headless:true,...(executable?{executablePath:executable}:{})});
   const page=await browser.newPage({viewport:{width:1440,height:1000}});
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.error('Browser runtime error:',e.message);});
   const output=path.join(source,'test-results');fs.mkdirSync(output,{recursive:true});
   // Phase A: production service, credentials intentionally absent, no paid calls.
   await start(false,18871,path.join(temp,'real'));
@@ -73,7 +73,7 @@ async function main(){
   await page.locator('#max-steps').fill('9');
   await page.locator('#settings-form [type=submit]').click();
   await waitState(18871,x=>x.settings.budget_usd===8.25&&x.settings.max_steps===9);
-  const engineering=page.locator('.agent-form[data-role=engineering]');
+  const engineering=page.locator('.agent-form[data-agent-id=engineering]');
   const configureAgent=async(config)=>{
     await engineering.locator('[name=provider]').selectOption(config.provider);
     await engineering.locator('[name=model]').selectOption('__custom__');
@@ -83,7 +83,7 @@ async function main(){
     await engineering.locator('[name=output_cost_per_million]').fill(String(config.output_cost_per_million));
     await engineering.locator('[name=fallbacks]').fill(JSON.stringify(config.fallbacks));
     await engineering.locator('[type=submit]').click();
-    await page.waitForFunction(()=>!document.querySelector('.agent-form[data-role=engineering] [type=submit]').disabled);
+    await page.waitForFunction(()=>!document.querySelector('.agent-form[data-agent-id=engineering] [type=submit]').disabled);
   };
   const testAgent={provider:'gemini',model:'browser-configuration-only',input_cost_per_million:2.5,output_cost_per_million:7.5,fallbacks:[{provider:'anthropic',model:'browser-fallback-only'}]};
   await configureAgent(testAgent);
@@ -95,7 +95,7 @@ async function main(){
   const roles=['coo','engineering','strategy','qa'].filter(role=>s.agents.some(a=>a.role===role));
   const savedModern=[];
   for(let i=0;i<roles.length;i++){
-    const role=roles[i],form=page.locator('.agent-form[data-role="'+role+'"]');
+    const role=roles[i],form=page.locator('.agent-form[data-agent-id="'+role+'"]');
     const model=catalog.openai.find(m=>(m.label+' '+m.id).toLowerCase().includes(['sol','terra','luna','astra'][i]));
     if(!model)continue;
     const before=s.agents.find(a=>a.role===role);
@@ -106,7 +106,7 @@ async function main(){
     const [savedResponse]=await Promise.all([page.waitForResponse(r=>r.url().endsWith('/api/agents/'+role)&&r.request().method()==='POST'),form.locator('[type=submit]').click()]);
     const savedBody=await savedResponse.json();assert(savedResponse.ok(),role+' model configuration: '+JSON.stringify(savedBody));assert.equal(savedBody.model,model.id,role+' saved model');assert.equal(savedBody.reasoning_effort,effort||null,role+' saved effort');
     s=await waitState(18871,x=>x.agents.some(a=>a.role===role&&a.model===model.id&&a.reasoning_effort===(effort||null)));
-    await page.waitForFunction(role=>!document.querySelector('.agent-form[data-role="'+role+'"] [type=submit]').disabled,role);
+    await page.waitForFunction(role=>!document.querySelector('.agent-form[data-agent-id="'+role+'"] [type=submit]').disabled,role);
     savedModern.push({role,model:model.id,effort,before});
   }
   assert((await page.locator('#accounting-summary').textContent()).includes('Official billed amount: unavailable'));
@@ -150,7 +150,7 @@ async function main(){
   // Restore other role configurations; route the original blocked task using the custom test route.
   await page.locator('#connection').filter({hasText:'Connected'}).waitFor();
   await page.locator('[data-view=settings]').click();
-  for(const saved of savedModern){if(saved.role==='engineering')continue;const form=page.locator('.agent-form[data-role="'+saved.role+'"]');await form.locator('[name=provider]').selectOption(saved.before.provider);await form.locator('[name=model]').selectOption('__custom__');await form.locator('[name=custom_model]').fill(saved.before.model);await form.locator('[name=reasoning_effort]').selectOption(saved.before.reasoning_effort||'');await form.locator('[type=submit]').click();await waitState(18871,x=>x.agents.some(a=>a.role===saved.role&&a.model===saved.before.model));}
+  for(const saved of savedModern){if(saved.role==='engineering')continue;const form=page.locator('.agent-form[data-agent-id="'+saved.role+'"]');await form.locator('[name=provider]').selectOption(saved.before.provider);await form.locator('[name=model]').selectOption('__custom__');await form.locator('[name=custom_model]').fill(saved.before.model);await form.locator('[name=reasoning_effort]').selectOption(saved.before.reasoning_effort||'');await form.locator('[type=submit]').click();await waitState(18871,x=>x.agents.some(a=>a.role===saved.role&&a.model===saved.before.model));}
   await configureAgent(testAgent);
   await waitState(18871,x=>x.agents.find(a=>a.role==='engineering').model===testAgent.model);
   await page.locator('#connection').filter({hasText:'Connected'}).waitFor();
@@ -202,6 +202,91 @@ async function main(){
   await page.locator('#credentials-form [type=submit]').click();
   await page.locator('#feedback.error').filter({hasText:'API key must be printable'}).waitFor();
   assert.equal(await page.locator('#credentials-key').inputValue(),'');
+  // Dynamic team tests use only the isolated production server with no credentials.
+  await page.locator('[data-view=team]').click();
+  await page.locator('#venture-select').selectOption(s.ventures[0].id);
+  await page.locator('#team-template').selectOption('engineering');
+  await page.locator('#team-agent-name').fill('Frontend engineer');
+  await page.locator('#team-specialization').fill('Frontend accessibility');
+  await page.locator('#team-add-form [type=submit]').click();
+  s=await waitState(18871,x=>x.agents.some(a=>a.name==='Frontend engineer'));
+  const frontend=s.agents.find(a=>a.name==='Frontend engineer');
+  assert.notEqual(frontend.id,'engineering');
+  const memberForm=id=>page.locator('.team-agent-form[data-agent-id="'+id+'"]');
+  await memberForm(frontend.id).getByRole('button',{name:'Duplicate agent',exact:true}).click();
+  s=await waitState(18871,x=>x.agents.some(a=>a.name==='Frontend engineer copy'));
+  const backend=s.agents.find(a=>a.name==='Frontend engineer copy');
+  assert.notEqual(frontend.id,backend.id,'Same-role agents need separate identities');
+  assert.equal(backend.role,frontend.role);
+  const backendForm=memberForm(backend.id);
+  await backendForm.locator('[name=name]').fill('Backend engineer');
+  await backendForm.locator('[name=specialization]').fill('API correctness');
+  await backendForm.locator('[name=responsibilities]').fill('Review API changes');
+  await backendForm.locator('[name=use_override]').check();
+  await backendForm.locator('[name=provider]').selectOption('openai');
+  const teamModel=catalog.openai.find(m=>m.id.includes('sol'))||catalog.openai[0];
+  await backendForm.locator('[name=model]').selectOption(teamModel.id);
+  const teamEffort=teamModel.reasoning_efforts?.[0]||'';
+  await backendForm.locator('[name=reasoning_effort]').selectOption(teamEffort);
+  await backendForm.locator('[name=budget_usd]').fill('1.25');
+  await backendForm.getByRole('button',{name:'Save project agent',exact:true}).click();
+  s=await waitState(18871,x=>x.agents.some(a=>a.id===backend.id&&a.name==='Backend engineer'&&a.budget_usd===1.25)&&x.team_memberships.some(m=>m.agent_id===backend.id&&m.overrides?.model===teamModel.id));
+  assert.equal(s.team_memberships.find(m=>m.agent_id===backend.id).responsibilities,'Review API changes');
+  await page.locator('#role-template-form [name=name]').fill('Accessibility specialist');
+  await page.locator('#role-template-form [name=description]').fill('A custom reusable role');
+  await page.locator('#role-template-form [name=system_instructions]').fill('Inspect accessibility and record verifiable findings.');
+  await page.locator('#role-template-form [type=submit]').click();
+  s=await waitState(18871,x=>x.role_templates.some(t=>t.name==='Accessibility specialist'));
+  assert(s.role_templates.find(t=>t.name==='Accessibility specialist').system_instructions.includes('verifiable'));
+  const savedTemplate=s.role_templates.find(t=>t.name==='Accessibility specialist');
+  await page.locator('#role-template-edit').selectOption(savedTemplate.id);
+  await page.locator('#role-template-model').selectOption(teamModel.id);
+  await page.locator('#role-template-effort').selectOption(teamEffort);
+  await page.locator('#role-template-form [type=submit]').click();
+  s=await waitState(18871,x=>x.role_templates.some(t=>t.id===savedTemplate.id&&t.model===teamModel.id&&t.reasoning_effort===(teamEffort||null)));
+  await page.locator('[data-view=overview]').click();
+  await page.locator('#objective-role').selectOption(frontend.id);
+  await page.locator('#objective').fill('Isolated team verification: missing credentials must block this specific frontend agent.');
+  await page.locator('#submit-objective').click();
+  s=await waitState(18871,x=>x.tasks.some(t=>t.agent_id===frontend.id&&t.status==='blocked_credentials'));
+  const teamTask=s.tasks.find(t=>t.agent_id===frontend.id);
+  assert.equal(teamTask.role,frontend.role);
+  assert((await page.locator('#task-detail').innerText()).includes(frontend.id),'Task details must show exact agent identity');
+  await page.locator('#task-dialog [data-close]').click();
+  await page.locator('[data-view=team]').click();
+  await memberForm(frontend.id).getByRole('button',{name:'Remove from project',exact:true}).click();
+  s=await waitState(18871,x=>x.team_memberships.some(m=>m.agent_id===frontend.id&&m.status==='removed'));
+  assert(s.tasks.some(t=>t.id===teamTask.id&&t.agent_id===frontend.id),'Removing membership preserves task identity and history');
+  await page.locator('#new-venture').click();
+  await page.locator('#venture-form [name=name]').fill('Isolated second project');
+  await page.locator('#venture-form [name=description]').fill('Must not inherit the first project team');
+  await page.locator('#venture-form [type=submit]').click();
+  s=await waitState(18871,x=>x.ventures.length===2);
+  const secondProject=s.ventures.find(v=>v.name==='Isolated second project');
+  await memberForm(backend.id).locator('[name=specialization]').fill('Unsaved project draft');
+  await page.locator('#venture-select').selectOption(secondProject.id);
+  assert.equal(await page.locator('.team-agent-form').count(),0,'Project teams stay separate');
+  assert.equal(await page.locator('#objective-role option[value="'+backend.id+'"]').count(),0,'Unassigned custom agents cannot be chosen for another project');
+  await page.locator('#team-existing').selectOption(frontend.id);
+  await page.locator('#team-assign-form [type=submit]').click();
+  s=await waitState(18871,x=>x.team_memberships.some(m=>m.venture_id===secondProject.id&&m.agent_id===frontend.id&&m.status==='active'));
+  await memberForm(frontend.id).waitFor();
+  await page.locator('#project-budget').fill('0.75');
+  await page.locator('#project-budget-form [type=submit]').click();
+  s=await waitState(18871,x=>x.ventures.some(v=>v.id===secondProject.id&&v.budget_usd===0.75));
+  await memberForm(frontend.id).locator('[name=enabled]').uncheck();
+  await memberForm(frontend.id).getByRole('button',{name:'Save project agent',exact:true}).click();
+  s=await waitState(18871,x=>x.team_memberships.some(m=>m.venture_id===secondProject.id&&m.agent_id===frontend.id&&m.enabled===false));
+  await page.locator('#objective-role option[value="'+frontend.id+'"]').waitFor({state:'detached'});
+  assert.equal(await page.locator('#objective-role option[value="'+frontend.id+'"]').count(),0,'Disabled membership cannot receive new objectives');
+  await page.locator('[data-view=settings]').click();
+  assert.equal(await page.locator('#max-concurrency').inputValue(),'1','Concurrency defaults to one');
+  await page.locator('#max-concurrency').fill('2');
+  await page.locator('#max-delegation-depth').fill('2');
+  await page.locator('#max-delegated-tasks').fill('5');
+  await page.locator('#settings-form [type=submit]').click();
+  s=await waitState(18871,x=>x.settings.max_concurrency===2&&x.settings.max_delegation_depth===2&&x.settings.max_delegated_tasks===5);
+  assert.equal(s.settings.spent_usd,0,'Dynamic team management and credential-blocked task must make no paid calls');
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(output,'mobile-browser.png'),fullPage:true});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false,'Mobile should not overflow horizontally');
   await stop();
@@ -250,6 +335,6 @@ async function main(){
   assert.equal(JSON.parse(deniedTool.content).returncode,undefined,'Denied invocation must not have a process result');
   assert.equal(s.approvals.find(a=>a.task_id===deniedTask.id).status,'denied');
   assert.deepEqual(errors,[],'No JavaScript runtime errors');
-  console.log('PASS: production browser venture/objective/credential-block/literal-XSS-safe-memory/opportunity/polling/settings/rates/fallback-save-restore/resume-route/session-credentials/restart/mobile/modern-model-catalog/reasoning-persistence/reporting-price-guard-separation/read-only-estimate/explicit-Astra-authorization; fixture browser approval, denial, actual Python tests, artifact and task ZIP downloads. Live AI acceptance NOT verified.');
+  console.log('PASS: production browser venture/objective/credential-block/literal-XSS-safe-memory/opportunity/polling/settings/rates/fallback-save-restore/resume-route/session-credentials/restart/mobile/modern-model-catalog/reasoning-persistence/reporting-price-guard-separation/read-only-estimate/explicit-Astra-authorization/dynamic-teams/duplicate-identities/project-isolation/project-overrides/membership-disable-remove-reassign/template-edit/history/concurrency-controls/unsaved-draft-project-switch; fixture browser approval, denial, actual Python tests, artifact and task ZIP downloads. Live AI acceptance NOT verified.');
 }
 main().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();await stop();fs.rmSync(temp,{recursive:true,force:true});});

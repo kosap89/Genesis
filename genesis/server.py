@@ -20,7 +20,7 @@ from .store import now
 from .toolbox import _safe_path
 from .lease import DataLease
 from .providers import KEY_NAMES, provider_status, DEFAULT_MODELS
-from .models import default_route, validate_model_config, model_info
+from .models import default_route, model_info
 from .accounting import validate_prices
 
 MAX_BODY = 128 * 1024
@@ -201,7 +201,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, {'provider':provider, 'configured':configured, 'storage':'process_memory'})
             if path == '/api/tasks/estimate':
                 return self._json(200, engine.estimate_task(body.get('objective'), body.get('venture_id') or None,
-                    body.get('role') or 'coo', body.get('astra_authorized', False)))
+                    body.get('role') or 'coo', body.get('astra_authorized', False),
+                    agent_id=body.get('agent_id'), work_mode=body.get('work_mode', 'independent')))
             if path == '/api/pricing':
                 model = body.get('model')
                 if not isinstance(model, str) or not model_info('openai', model):
@@ -216,7 +217,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == '/api/tasks':
                 value = engine.create_task(body.get('objective'), body.get('venture_id') or None,
                     body.get('role') or 'coo', body.get('provider') or None, body.get('model') or None,
-                    reasoning_effort=body.get('reasoning_effort'), astra_authorized=body.get('astra_authorized', False))
+                    reasoning_effort=body.get('reasoning_effort'), astra_authorized=body.get('astra_authorized', False),
+                    agent_id=body.get('agent_id'), work_mode=body.get('work_mode', 'independent'),
+                    depends_on=body.get('depends_on'), review_of=body.get('review_of'), file_claims=body.get('file_claims'))
                 return self._json(201, value)
             if path in {'/api/ventures','/api/memories','/api/opportunities'}:
                 kind = parts[1]
@@ -228,7 +231,10 @@ class Handler(BaseHTTPRequestHandler):
                 if venture and not engine.store.get('ventures', venture):
                     raise ValueError('Unknown venture.')
                 fields = {'ventures':['name','description'], 'memories':['title','content','venture_id'], 'opportunities':['title','summary','venture_id']}[kind]
-                value = engine.store.put(kind, {**{k:body[k] for k in fields if k in body}, 'created_at':now(), 'status':'active' if kind=='ventures' else 'proposed'})
+                extra = {}
+                if kind == 'ventures':
+                    extra = dict(budget_usd=None if body.get('budget_usd') is None else number(body['budget_usd'], 0, 1000000), spent_usd=0.0, reserved_usd=0.0)
+                value = engine.store.put(kind, {**extra, **{k:body[k] for k in fields if k in body}, 'created_at':now(), 'status':'active' if kind=='ventures' else 'proposed'})
                 engine.store.event(kind + '_created', record_id=value['id'])
                 return self._json(201, value)
             if len(parts) == 4 and parts[:2] == ['api','tasks']:
@@ -236,7 +242,8 @@ class Handler(BaseHTTPRequestHandler):
                     engine.cancel(parts[2])
                 elif parts[3] == 'resume':
                     engine.resume(parts[2], body.get('provider'), body.get('model'),
-                        reasoning_effort=body.get('reasoning_effort'), astra_authorized=body.get('astra_authorized', False))
+                        reasoning_effort=body.get('reasoning_effort'), astra_authorized=body.get('astra_authorized', False),
+                        agent_id=body.get('agent_id'))
                 else:
                     return self._json(404, {'error':'Unknown task action.'})
                 return self._json(200, engine.store.get('tasks', parts[2]))
@@ -252,49 +259,39 @@ class Handler(BaseHTTPRequestHandler):
                         if not isinstance(body[field], bool):
                             raise ValueError(field + ' must be a boolean.')
                         updates[field] = body[field]
-                for field, maximum in [('max_steps',100), ('max_output_tokens',32768)]:
+                for field, maximum in [('max_steps',100), ('max_output_tokens',32768), ('max_concurrency',16), ('max_delegated_tasks',100)]:
                     if field in body:
                         updates[field] = number(body[field], 1, maximum, integer=True)
+                if 'max_delegation_depth' in body:
+                    updates['max_delegation_depth'] = number(body['max_delegation_depth'], 0, 8, integer=True)
                 with engine.guard:
                     value = engine.store.update('settings', 'global', **updates)
                 engine.store.event('settings_changed', updates=updates)
                 return self._json(200, value)
-            if len(parts) == 3 and parts[:2] == ['api','agents']:
-                role = parts[2]
-                if role not in ROLES:
-                    raise ValueError('Unknown role.')
-                updates = {}
-                if 'provider' in body:
-                    if body['provider'] not in {'openai','anthropic','gemini'}:
-                        raise ValueError('Unknown provider.')
-                    updates['provider'] = body['provider']
-                if 'model' in body:
-                    if not isinstance(body['model'], str) or not 1 <= len(body['model']) <= 200:
-                        raise ValueError('Model must be 1–200 characters.')
-                    updates['model'] = body['model']
-                for field in ['input_cost_per_million', 'output_cost_per_million']:
-                    if field in body:
-                        updates[field] = number(body[field], 0.001, 100000)
-                if 'fallbacks' in body:
-                    fallbacks = body['fallbacks']
-                    if not isinstance(fallbacks,list) or len(fallbacks) > 2:
-                        raise ValueError('At most two explicit fallback routes are supported.')
-                    for f in fallbacks:
-                        if not isinstance(f,dict) or not {'provider','model'} <= set(f) or not set(f) <= {'provider','model','reasoning_effort'} or f['provider'] not in {'openai','anthropic','gemini'} or not isinstance(f['model'],str) or not 1 <= len(f['model']) <= 200:
-                            raise ValueError('Fallbacks require provider/model and optional reasoning_effort only.')
-                    updates['fallbacks'] = fallbacks
-                current = engine.store.get('agents', role)
-                if 'reasoning_effort' in body:
-                    updates['reasoning_effort'] = body['reasoning_effort']
-                elif any(k in updates and updates[k] != current[k] for k in ('provider', 'model')):
-                    updates['reasoning_effort'] = None
-                # Choosing an expensive model is configuration, not permission to
-                # execute it. Per-task Astra authorization remains mandatory.
-                normalized = validate_model_config(dict(current, **updates, astra_authorized=True))
-                updates['reasoning_effort'] = normalized.get('reasoning_effort')
-                value = engine.store.update('agents', role, **updates)
-                engine.store.event('agent_configured', role=role, updates=updates)
-                return self._json(200, value)
+            teams = engine.teams
+            value = None
+            status = 200
+            action = None
+            if path == '/api/role-templates':
+                value, status, action = teams.create_template(body), 201, 'role_template_created'
+            elif len(parts) == 3 and parts[:2] == ['api', 'role-templates']:
+                value, action = teams.update_template(parts[2], body), 'role_template_updated'
+            elif path == '/api/agents':
+                value, status, action = teams.create_agent(body), 201, 'agent_created'
+            elif len(parts) == 3 and parts[:2] == ['api', 'agents']:
+                value, action = teams.update_agent(parts[2], body), 'agent_configured'
+            elif len(parts) == 4 and parts[:2] == ['api', 'agents'] and parts[3] == 'duplicate':
+                value, status, action = teams.duplicate_agent(parts[2], body), 201, 'agent_duplicated'
+            elif len(parts) == 3 and parts[:2] == ['api', 'projects']:
+                value, action = teams.update_project(parts[2], body), 'project_configured'
+            elif len(parts) == 4 and parts[:2] == ['api', 'projects'] and parts[3] == 'team':
+                member_body = {k: v for k, v in body.items() if k != 'agent_id'}
+                value, action = teams.assign(parts[2], body.get('agent_id'), member_body), 'team_member_assigned'
+            elif len(parts) == 5 and parts[:2] == ['api', 'projects'] and parts[3] == 'team':
+                value, action = teams.update_membership(parts[2], parts[4], body), 'team_member_updated'
+            if action:
+                engine.store.event(action, record_id=value['id'])
+                return self._json(status, value)
             return self._json(404, {'error':'Endpoint not found.'})
         except (ValueError, KeyError, TypeError) as exc:
             self._json(400, {'error':str(exc)[:1000]})

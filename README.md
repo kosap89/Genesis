@@ -26,13 +26,14 @@ center and organize ventures; objectives will explicitly block on credentials.
 In Agents & controls, enter a provider key in the password form and save it for
 this session. It stays in the server process, is never returned to the browser,
 and is lost when the service stops. The optional, initially unchecked checkbox applies recommended
-role routes; leaving it unchecked preserves every agent's saved configuration. No model request or task resume happens automatically.
-Select provider, model and reasoning effort independently for each role. A local
+routes to the seven legacy default agents; leaving it unchecked preserves every
+agent's saved configuration. Custom instances retain their individual routes. No model request or task resume happens automatically.
+Select provider, model and reasoning effort independently for each agent instance. A local
 preview shows approximate costs without creating an objective or calling a provider.
 New OpenAI roles use Sol, Terra or Luna according to their responsibilities; legacy
 routes remain available. Astra requires explicit authorization for each task,
 including fallback use. See [model controls](docs/PROVIDERS.md).
-New agents initially select the first configured provider. Existing agent settings
+New instances inherit their selected template; initial legacy defaults select the first configured provider. Existing agent settings
 remain intact; select the provider/model in Agents & controls after changing your
 setup. Provider presence is configuration detection, not a health check.
 
@@ -46,22 +47,33 @@ finishes. Cancellation prevents new invocations, while already claimed work may 
 ## Operate
 
 1. Create a venture to group its objectives, memory and deliverables.
-2. Submit a natural-language objective and choose a responsible agent.
-3. Inspect actual model messages, tool arguments, execution timeline and artifacts.
-4. Approve individual network or host-execution requests in the approval queue.
-5. Review results and download individual files or a complete task ZIP bundle.
+2. Open **Agent Team**, select the project and add agents from reusable templates
+   or create a custom role. Duplicate agents for different specializations, assign
+   responsibilities, choose individual routes and optional budgets. Creation is free.
+3. Submit a natural-language objective, choose the specific agent and independent
+   or collaborative mode. Dependencies and independent review may refer to existing
+   same-project task IDs; a one-agent project needs no COO.
+4. Inspect actual model messages, tool arguments, execution timeline and artifacts.
+5. Approve individual delegation, network or host-execution requests in the approval queue.
+6. Review results and download individual files or a complete task ZIP bundle.
    Create follow-up objectives as needed.
 
 Tasks retain their original provider/model when resumed. After changing agent
 configuration, use **Resume with agent settings** to explicitly change a blocked
 task's route; the previous and new route are recorded in its audit history.
 
-The COO can delegate to strategy, engineering, QA, growth, finance and operations
-agents. Specialist tasks have their own model configuration and workspaces. The
-COO waits for their results. They are functional prompt/tool capabilities, not
-independent autonomous employees or guarantees of business success. Agents can
-list and import same-venture artifacts into their own workspace for independent
-QA; imports retain source attribution and content hashes in the audit log.
+Any collaborative agent can propose delegation to a specific team member. Each
+proposal needs individual CEO approval before child creation. Independent agents
+cannot delegate. Concurrency defaults to one request at a time; Agents & controls
+allows a bounded increase, delegation depth and total descendants per root.
+Global, project and optional agent budgets all constrain conservative reservations.
+Agents with identical roles retain separate names, IDs, histories and costs.
+Project membership can be disabled, removed or reassigned without deleting work.
+Template edits affect future instances; instance/project edits affect new tasks,
+while active tasks retain snapshots until explicitly resumed with new settings.
+Agents can import same-project artifacts with source attribution and content
+hashes for independent QA. Collaborative file claims reject overlapping paths;
+separate task workspaces and host-execution limitations still apply.
 
 The three founding acceptance objectives are in [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md).
 They need live credentials and appropriate approvals. They have **not** been

@@ -7,7 +7,7 @@ objectives and `STATE.md` for verification evidence and the next development tas
 ## Runtime and persistence
 
 `python -m genesis` starts `genesis.server`: a loopback-only Python HTTP service,
-the static command center, and one background agent worker. The production runtime
+the static command center, and a background scheduler with a bounded worker pool. The production runtime
 uses the Python standard library; Playwright is an optional development dependency
 for browser verification. No external database, message broker, frontend build,
 cloud deployment, or production demonstration provider is required.
@@ -41,18 +41,25 @@ the download route returns them as attachments.
 
 ## Task and agent lifecycle
 
-The seven persisted roles are COO, strategy, engineering, QA, growth, finance, and
-operations. Each has a prompt, provider, model, estimated input/output token rates,
-and up to two explicit fallback routes. These are real model/tool configurations;
-idle roles are not background employees or continuously running autonomous agents.
+The seven built-in roles are reusable templates. `TeamManager` persists custom
+role templates, UUID agent instances and project memberships with route overrides
+and responsibilities. Agents may share a role and belong to several projects.
+There is no agent-count limit. Creating, configuring or duplicating an agent makes
+no provider call. Legacy seven IDs remain compatible and their configurations and
+history survive the additive, idempotent migration. These legacy defaults remain
+available across projects; new instances require active project membership, or
+may run standalone only when they have no active memberships.
 
-Creating a task validates its objective, venture, role, provider, and model, then
-persists a `queued` record, initial user message, workspace, and audit event. The
-task captures its primary provider/model and reasoning effort at creation. Rate estimates and fallback
-routes are read from the role configuration during execution; changing those
-settings can affect later calls in an existing task.
+Task creation captures the exact agent ID/name and a configuration snapshot,
+including instructions, specialization, responsibilities, provider/model/reasoning,
+fallbacks and conservative rates. Template, instance and membership edits do not
+rewrite authorized tasks. Explicit resume with agent settings records the change.
+Global enable and membership checks still stop new requests for disabled agents.
 
-One worker selects the next queued task and marks it `running`. Each model turn:
+The scheduler selects queued tasks whose dependencies completed. Configurable
+`max_concurrency` defaults to one and accepts 1?16. Each task has a separate
+workspace; requests may execute concurrently when explicitly configured.
+Each model turn:
 
 1. Resolves previously persisted tool calls that lack a result.
 2. Pauses if delegated tasks remain outstanding.
@@ -66,17 +73,19 @@ One worker selects the next queued task and marks it `running`. Each model turn:
 
 Other durable task states are:
 
-- `waiting_approval`: a tool needs network or host execution authorization.
+- `waiting_approval`: a tool needs network, host execution or individual delegation authorization.
 - `waiting_children`: the parent waits for its delegated tasks.
 - `blocked_credentials`: no billable request was made and credentials are missing.
-- `blocked_budget`: the next configured reservation would exceed the budget.
+- `blocked_budget`: the next reservation would exceed a global, project or agent budget.
+- `blocked_agent`: the assigned agent or project membership is unavailable.
+- `blocked_dependencies`: a prerequisite failed, was cancelled or is missing.
 - `paused_limit`: the configured model-turn limit was reached.
 - `interrupted`: execution stopped with a result requiring review before resumption.
 - `failed`: an execution/provider error stopped the task.
 - `cancelled`: the CEO stopped future planned work.
 
 Explicit resume is supported for `interrupted`, `blocked_credentials`,
-`blocked_budget`, `paused_limit`, and `failed`. It requeues the existing task and
+`blocked_budget`, `blocked_agent`, `blocked_dependencies`, `paused_limit`, and `failed`. It requeues the existing task and
 retains its history. Completed and cancelled tasks cannot be resumed. Cancellation
 also cancels nonterminal children and denies pending approvals. It cannot undo
 an external request or process that already started.
@@ -86,12 +95,24 @@ include a different provider/model and records the old/new route in the audit lo
 The command center offers a separate “Resume with agent settings” action for this
 purpose; updating a role configuration alone does not reroute old tasks.
 
-A top-level objective can delegate at most eight specialist tasks. Children have
-their own task records, role configurations, histories, and workspaces; they cannot
-delegate further. Work executes serially in the current worker. The parent resumes
-when every child is terminal and receives an explicitly untrusted summary of their
-results/errors. A child needing credentials, budget, approval, or other intervention
-keeps the parent waiting. `task_inspect` is limited to the current venture.
+Independent mode cannot delegate. Collaborative mode can propose work for a
+specific enabled project agent. Every invocation needs a CEO decision before the
+child is created; global network/terminal switches do not grant delegation.
+Approval captures the target configuration and expires if it changes. The default
+depth is one and total descendants per root eight; settings allow depth 0?8 and
+1?100 descendants. Children do not inherit Astra authorization. Each child retains
+its own history, configuration snapshot and workspace. Parents receive attributed,
+untrusted child summaries after completion. There is no required COO.
+
+Dependencies and review references must name existing tasks in the same project;
+review requires another agent ID and waits for the reviewed task to complete.
+Artifacts are explicitly imported with source task/agent attribution and SHA-256.
+Collaborative tasks claim relative file paths or directory prefixes in their
+project; overlapping claims from nonterminal collaborative tasks are rejected.
+Workspace writes and imports claim their paths automatically. Independent tasks
+have separate workspaces and do not conflict merely by using the same filename.
+Claims coordinate cooperative tools, not arbitrary host subprocess edits; approved
+host execution remains outside an OS sandbox.
 
 ## Model providers
 
@@ -108,7 +129,7 @@ can set that process override for the current session through its password form.
 The value clears from the input immediately, is not written to browser storage or
 SQLite, and is lost when the server exits. Clearing removes only the process
 override; an inherited standard provider key can remain active. An explicit checkbox
-can configure every agent's provider/default model, preserving rates/fallbacks.
+can configure the seven legacy default agents' provider/model, preserving rates/fallbacks.
 Neither operation runs model work or automatically resumes existing objectives.
 The UI reports only key presence. A configured key is not proof of connectivity,
 quota, model availability, or account health. `.env` is not automatically loaded.
@@ -131,15 +152,17 @@ that cover all configured routes and separately configure provider account limit
 
 Before a model request, the engine estimates an input ceiling from serialized
 message/tool UTF-8 bytes plus 4,096 bytes, adds the configured maximum output tokens,
-and applies the role's input/output rates. It reserves that amount for every possible
+and applies the task snapshot's input/output guard rates. It reserves that amount for every possible
 primary/fallback candidate. Requests block when spent plus reserved plus the new
-reservation exceeds the configured budget.
+reservation exceeds any configured global, project or optional agent budget.
+All scoped reservations and settlements use the shared store lock and batched
+SQLite writes. Changing configuration cannot reset spent or reserved ledgers.
 
 Successful calls settle reported input/output tokens at configured rates. Missing
 usage settles at the per-call ceiling. Earlier potentially billable fallback failures
 are charged their per-call ceilings. Failed request sequences charge the ceiling
 for the number of dispatched attempts; missing-key-only failures cost zero. Spent
-and reserved values are persisted globally, with estimated task costs and request/
+and reserved values are persisted globally and per project/agent, with estimated task costs and request/
 response audit events. Provider tokenization, hidden usage, changed prices, and
 account billing can differ from this estimate.
 
@@ -225,11 +248,17 @@ The implemented routes are:
 - `POST /api/approvals/<id>`: `approved` or `denied` decision.
 - `POST /api/ventures`, `/api/memories`, `/api/opportunities`: persistent context.
 - `POST /api/settings`: estimated budget, research/host execution permissions,
-  maximum steps, and maximum output tokens.
+  maximum steps/output tokens, request concurrency and delegation depth/descendant limits.
 - `POST /api/credentials`: process-only provider credential override (empty key
-  clears it) and optional explicit configuration of all agents' default routes.
+  clears it) and optional explicit configuration of the seven legacy default routes.
   Responses/audit contain presence and provider only, never the key.
-- `POST /api/agents/<role>`: provider, model, estimated rates, and fallback routes.
+- `POST /api/role-templates` and `/api/role-templates/<id>`: create/edit reusable defaults.
+- `POST /api/agents`, `/api/agents/<id>`, `/api/agents/<id>/duplicate`: stable instances.
+- `POST /api/projects/<id>`: optional project budget.
+- `POST /api/projects/<id>/team` and `/api/projects/<id>/team/<agent_id>`:
+  assignment, enable/disable, responsibilities, route overrides and soft removal.
+- Task submission accepts `agent_id`, `work_mode`, `depends_on`, `review_of` and
+  `file_claims`; role names remain a compatibility route for legacy defaults.
 
 Mutations accept JSON objects and require `X-Genesis-CSRF`. Requests have a 128 KiB
 body limit. Settings validate finite numeric bounds and actual boolean types;

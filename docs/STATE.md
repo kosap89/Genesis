@@ -1,9 +1,116 @@
 # Genesis persistent project state
 
-Updated 2026-11-09, Europe/Helsinki. Offline model/accounting development follows verified commit `3d7418c`.
+Updated 2026-11-09, Europe/Helsinki. Dynamic-team development continues verified commit `6681fa0`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: modern model controls and separate accounting, offline verified
+## Current checkpoint: dynamic project teams, offline verified
+
+Verified 2026-11-09, Europe/Helsinki. Extended the existing system and preserved
+real data. Development remained subscription authenticated: `codex login status`
+reported **Logged in using ChatGPT**. No live provider calls, paid task creation
+or paid task resume occurred. Provider doubles were used only in isolated tests.
+The earlier $5 authorization was not reused for this development work.
+
+### Implemented behavior
+
+- Seven built-in role templates and custom templates support unlimited persistent
+  UUID instances, including multiple agents with the same role. Each instance has
+  its own name, specialization, instructions, provider/model/reasoning, optional
+  budget, project memberships, task count and activity. Creating/duplicating an
+  instance has no model side effects. Templates seed future instances; editing a
+  template never silently rewrites existing instances.
+- Project Agent Team supports creation, duplication, assignment, enable/disable,
+  responsibilities, project route overrides, optional agent/project budgets and
+  soft removal/reassignment without deleting historical work. Settings use stable
+  agent IDs; task attribution retains names/IDs and previous assignees.
+- New tasks freeze their complete agent configuration, including instructions,
+  specialization, responsibilities, routes, fallback reasoning and guard rates.
+  Explicit resume with agent settings is audited. Disabling/removing membership
+  stops subsequent requests/tool claims; already claimed requests can finish.
+- Independent work needs no coordinator and cannot delegate. Collaborative work
+  exposes eligible project agents and proposes a specific instance. Every child
+  invocation requires individual CEO approval. Changed target configuration
+  invalidates approval. Children do not inherit Astra authorization. Configurable
+  limits default to depth one and eight total descendants per root.
+- Same-project dependencies coordinate work; ancestor dependencies that would
+  deadlock delegation are rejected. Independent review excludes current and prior
+  contributing agent IDs and checks again on execution/resume. Prompt context
+  includes attributed prerequisites, actual results and artifact handoff IDs.
+  Explicit imports preserve source attribution and actual byte hashes.
+- Collaborative file/directory claims detect case-insensitive overlapping paths
+  across nonterminal collaborative tasks. Writes, reports, imports and candidate
+  snapshot/diff operations check their corresponding paths. Independent task
+  workspaces remain separate. These claims do not isolate arbitrary host code or
+  merge independently produced application components automatically.
+- Request concurrency defaults to one, configurable from 1 to 16. Global, project
+  and optional agent caps all gate atomic reservations under the shared store lock.
+  Settlement, cancellation and conservative restart recovery preserve all scoped
+  ledgers. Metadata edits cannot reset spent/reserved. Existing conservative guard
+  rules and separate published-price reporting remain intact.
+
+### Verification and defects repaired
+
+- `python -m unittest discover -s tests -v`: **155 tests in 92.078s, OK,
+  one Windows symlink privilege skip**. Added 32 tests across team metadata,
+  real loopback API and runtime orchestration. Coverage includes repeated roles,
+  custom templates, concurrent creation, persistence, isolation, pinned snapshots,
+  specific-instance approvals, scoped budgets, parallel scheduling, cancellation,
+  review identity, dependencies, actual file claims and restart accounting.
+- `node --check web/app.js` and `node --check tests/browser-e2e.cjs`: **PASS**.
+- `npm.cmd run test:e2e`: **PASS** after final UI changes. Production-mode isolated
+  server had credentials removed; separate execution fixture explicitly uses
+  provider doubles. Verified template editing, duplicate identities, project
+  overrides/isolation, remove/reassign/history, disabled membership eligibility,
+  concurrency controls, configuration restart persistence, mobile layout and
+  unsaved form/project-switch behavior alongside the existing workflows.
+- Review and failed runs exposed actual defects: empty model names silently
+  defaulted; specialization/responsibilities were omitted from prompts; reassigned
+  reviewers could review their own work; membership disable missed tool claims;
+  delegation could depend on ancestors; report/snapshot writes missed file claims;
+  polling could overwrite unsaved configuration and retain stale agent choices.
+  These were repaired and covered before the final passing runs.
+- A pre-migration SQLite backup is local under ignored `data/`. Restarted only
+  after checking all five tasks terminal, zero reservations, no pending approvals
+  and no session credentials. Compared before/after original agent configuration
+  fields and task IDs/status/objectives/routes/costs/results: **exactly preserved**.
+  Seven templates were added; all five tasks gained legacy ID/config metadata.
+  No model-response events were added. No demonstration tasks/agents were added
+  to the real data directory.
+- Service now listens only at **127.0.0.1:8787**, PID **14080**, health `ok`, worker
+  alive; CEO Command Center opened in browser. Existing counts: seven legacy
+  instances, seven templates, five tasks, one venture, zero explicit memberships.
+  Stored budget **$5**, conservative spent **$3.91808**, reserved **$0**;
+  concurrency **1**, delegation depth **1**, total descendants **8**.
+  All providers currently unconfigured. Runtime evidence/logs/database remain
+  ignored and are excluded from Git; no credentials were written to source/docs.
+
+### Limits and exact next task
+
+This verifies infrastructure using local tests, not live multi-agent effectiveness
+or founding acceptance. Historical live acceptance remains **NOT PASSED**. Legacy
+role IDs remain available across projects for compatibility; new UUID instances
+require active membership (or no memberships for standalone work). Old records
+never retained full configuration snapshots: migration can preserve stored task
+routes and current agent metadata, not reconstruct lost historical instructions or
+fallbacks. New tasks have complete snapshots. Removing an instance's membership
+preserves its global identity/history; there is no destructive agent deletion API.
+
+The service remains single-user/loopback. File claims coordinate supported tools,
+not OS processes. Approved host execution is still **not an OS sandbox**. Price
+estimates remain conservative ledger estimates, not official provider invoices.
+The historical $0.2484168 uncached published-price estimate and unknown cache/
+billing reconciliation remain unchanged; development added **zero API consumption**.
+Modern model availability/live compatibility remains unverified.
+
+**Next task:** use Project -> Agent Team for the next actual project. Before any
+new live acceptance, strengthen the existing evidence/completion contracts, then
+obtain fresh explicit CEO permission for the exact live scope/budget and configure
+credentials through the local password form (process memory only). Execute and
+independently review the three founding objectives from ACCEPTANCE.md; record
+real artifacts, failures and provider consumption without inferring success from
+runtime `completed` or test doubles. No paid acceptance was attempted here.
+
+## Previous checkpoint: modern model controls and separate accounting, offline verified
 
 Verified 2026-11-09, Europe/Helsinki. Continued the existing architecture and data.
 **Development used subscription-authenticated Codex only.** `codex login status`

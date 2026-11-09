@@ -25,7 +25,13 @@ provider independence, controlled tools, and reviewable execution.
 6. **Verified offline model/accounting controls:** modern role-based OpenAI catalog,
    persistent reasoning, explicit Astra authorization, separate published-price
    reporting and unchanged conservative budget protection. No new live API calls.
-7. **Next hardening:** OS-level process isolation, richer research sources,
+7. **Verified offline dynamic teams:** reusable/custom role templates, unlimited
+   UUID instances, project memberships/overrides, independent/collaborative modes,
+   individually approved delegation, dependencies, independent review, explicit
+   artifact handoffs and collaborative file claims. Atomic scoped budgets and
+   configurable concurrency defaulting to one. 155 tests (one Windows skip),
+   browser E2E and real-data migration preservation verified; zero new API usage.
+8. **Next hardening:** OS-level process isolation, richer research sources,
    independent acceptance evaluators, external action connectors with approvals.
 
 ## Session protocol

@@ -262,7 +262,13 @@ class EngineTests(unittest.TestCase):
             response('QA reviewed actual scope and documented limitations.'),
             response('Integrated the delegated QA findings.'))
         engine = self.engine(router)
-        parent = engine.create_task('Plan and independently review')
+        parent = engine.create_task('Plan and independently review', work_mode='collaborative')
+        engine.run(parent['id'])
+        self.assertEqual(self.task(engine, parent['id'])['status'], 'waiting_approval')
+        approval = engine.store.all('approvals')[0]
+        self.assertEqual(approval['action'], 'delegation')
+        self.assertEqual(len(engine.store.all('tasks')), 1)
+        engine.decide(approval['id'], 'approved')
         engine.run(parent['id'])
         self.assertEqual(self.task(engine, parent['id'])['status'], 'waiting_children')
         children = [t for t in engine.state()['tasks'] if t.get('parent_id') == parent['id']]
@@ -278,7 +284,9 @@ class EngineTests(unittest.TestCase):
     def test_parent_cancellation_cancels_child(self):
         router = ScriptedRouter(response(calls=[call('delegate_task', {'objective': 'Inspect', 'role': 'qa'})]))
         engine = self.engine(router)
-        parent = engine.create_task('Delegate then cancel')
+        parent = engine.create_task('Delegate then cancel', work_mode='collaborative')
+        engine.run(parent['id'])
+        engine.decide(engine.store.all('approvals')[0]['id'], 'approved')
         engine.run(parent['id'])
         engine.cancel(parent['id'])
         self.assertTrue(all(t['status'] == 'cancelled' for t in engine.state()['tasks']))
