@@ -1,6 +1,9 @@
 # Founding acceptance runs
 
-Status: **not yet executed with live AI**. Fixtures validate infrastructure only.
+Status: **executed with real OpenAI on 2026-11-09; founding acceptance NOT PASSED**.
+See STATE.md for genuine task IDs, token usage, failed independent reviews and
+operator-assisted repairs. Fixtures validate infrastructure only. Runtime
+`completed` does not establish that an acceptance objective passed.
 
 ## 1. Company strategy
 
@@ -44,7 +47,8 @@ with a hardcoded successful result.
 
 ## Live acceptance runbook prepared 2026-11-09
 
-Preparation only: none of the following objectives has been submitted or executed.
+Original preparation record below. These scenarios have since been exercised;
+see the current STATE.md checkpoint for exact submitted variants and outcomes.
 Run sequentially in one new venture named `Founding live acceptance`. Do not enqueue
 work until a session credential and explicit CEO spending authorization exist.
 

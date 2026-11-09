@@ -303,6 +303,43 @@ class ToolboxTests(unittest.TestCase):
         self.assertFalse((candidate / 'module' / '.genesis-baseline').exists())
         self.assertEqual(self.tools.execute('self_improvement_diff', {})['patch'], '')
 
+    def test_workspace_write_preserves_exact_utf8_bytes_and_reports_size(self):
+        fixtures = ('a\nb\n', 'a\r\nb\r\n', '\u00e4\n\u6f22\U0001f680\r\n')
+        for index, content in enumerate(fixtures):
+            with self.subTest(content=content):
+                relative = f'roundtrip-{index}.txt'
+                result = self.tools.execute('workspace_write', {'path': relative, 'content': content})
+                expected = content.encode('utf-8')
+                actual = (self.tools.context.root / relative).read_bytes()
+                self.assertEqual(actual, expected)
+                self.assertEqual(result['bytes'], len(actual))
+                self.assertEqual(self.tools.execute('workspace_read', {'path': relative})['content'], content)
+
+    def test_artifact_report_preserves_supplied_newlines_and_size(self):
+        content = '# Report\n\u00e4\u6f22\U0001f680\r\n'
+        result = self.tools.execute('artifact_report', {'name': 'exact.md', 'content': content})
+        actual = (self.tools.context.root / result['artifact']).read_bytes()
+        self.assertEqual(actual, content.encode('utf-8'))
+        self.assertEqual(result['bytes'], len(actual))
+
+    def test_workspace_write_exact_lf_byte_limit(self):
+        content = '\n' * 100000
+        result = self.tools.execute('workspace_write', {'path': 'limit.txt', 'content': content})
+        actual = (self.tools.context.root / 'limit.txt').read_bytes()
+        self.assertEqual(actual, b'\n' * 100000)
+        self.assertEqual(result['bytes'], len(actual))
+        self.assertEqual(len(actual), 100000)
+
+    def test_workspace_write_over_byte_limit_rejects_before_creating_file(self):
+        for index, content in enumerate(('\n' * 100001, '\u00e4' * 50001)):
+            with self.subTest(index=index):
+                relative = f'uncreated-{index}/too-large.txt'
+                with self.assertRaisesRegex(ValueError, '100 KB'):
+                    self.tools.execute('workspace_write', {'path': relative, 'content': content})
+                self.assertFalse((self.tools.context.root / relative).exists())
+                self.assertFalse((self.tools.context.root / relative).parent.exists())
+
+
 
 if __name__ == '__main__':
     unittest.main()

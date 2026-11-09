@@ -278,13 +278,13 @@ class Toolbox:
                     'next_offset': end if end < len(text) else None,
                     'total_characters': len(text), 'truncated': end < len(text)}
         if name == 'workspace_write':
-            content = arguments['content']
-            if len(content.encode('utf-8')) > MAX_TEXT:
+            data = arguments['content'].encode('utf-8')
+            if len(data) > MAX_TEXT:
                 raise ValueError('File exceeds 100 KB limit')
             path = _safe_path(self.context.root, arguments['path'])
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(content, encoding='utf-8')
-            return {'path': arguments['path'], 'bytes': len(content.encode('utf-8'))}
+            path.write_bytes(data)
+            return {'path': arguments['path'], 'bytes': len(data)}
         if name == 'workspace_list':
             path = _safe_path(self.context.root, arguments.get('path', '.'))
             children = sorted((entry for entry in path.iterdir() if not entry.name.lower().startswith('.genesis-')), key=lambda entry: entry.name)[:1000]

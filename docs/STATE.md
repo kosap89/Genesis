@@ -1,9 +1,130 @@
 # Genesis persistent project state
 
-Updated 2026-11-09, Europe/Helsinki. Current preparation follows source commit `14857d6`.
+Updated 2026-11-09, Europe/Helsinki. Live acceptance follows preparation commit `d765cb5`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: live acceptance prepared, awaiting CEO configuration
+## Current checkpoint: real live trials executed; founding acceptance NOT PASSED
+
+Verified 2026-11-09, Europe/Helsinki. CEO configured OpenAI through the local UI
+and explicitly authorized **$5 total**. Real OpenAI Responses requests were made;
+no provider doubles or scripted responses were used for the live trials. Routine
+independent source/testing work used a parallel specialist with isolated file
+ownership. This entry supersedes older statements that no paid calls occurred.
+
+### Genuine consumption and execution boundary
+
+- Venture: `bac7d94914dc4cb0813f37eab55f4bc3` (Founding live acceptance).
+- **40 requests / 40 parsed responses; 350486 input tokens, 13774 output tokens.**
+  Four tasks used `gpt-4.1-mini`; one explicit task override used `gpt-4.1`.
+  Authentication, real model responses and native tool calls were observed.
+- **$3.91808 configured estimated charges**, **$0 reserved**, **$5 company budget**;
+  **$1.08192 remains** under the existing authorization and conservative accounting.
+  All agents retained $10 input / $30 output per million token estimates and no
+  fallback routes. These are not actual invoice charges. Provider billing/credits
+  were not independently inspected; invoice reconciliation remains unavailable.
+- Automatic approval review rejected lowering persisted rate estimates because it
+  could weaken the budget guard. No rate/budget weakening was performed. A second
+  rejection blocked bundle execution until complete executable contents had been
+  inspected; inspection was completed and explicit module execution then succeeded.
+- Broad network and terminal permissions remained false. Public requests and host
+  tests received individual reviewed invocation approvals. Host execution retains
+  current-user OS privileges and is not an OS sandbox.
+- Evidence is ignored under `test-results/live-acceptance/`: sanitized task JSON,
+  `usage-summary.json`, artifact manifests with SHA-256 hashes, source baseline,
+  independent probes, candidate reviews and actual before/after test logs. Runtime
+  tasks/artifacts persist in `data/`. No keys or CSRF tokens were recorded in docs.
+
+### Founding results and actual limitations
+
+1. **Strategy: FAIL independent acceptance**, despite runtime status `completed`.
+   Task `27a1358c33f74b88ae376d041a93e9b8`, mini, 4 responses,
+   170177 input / 3036 output tokens, estimated $1.79285. It fetched 12 real public
+   URLs, encountering 403/429/404 responses, redirects and 1 MB response limits.
+   It saved three memories, **zero opportunity records**, and a report. The cited
+   IBM watsonx and TechCrunch AI pages independently reopened with HTTP 200, but
+   did not substantiate several demand, pricing and competitor assertions. The
+   report therefore fails the source/evidence gate. Selected content-creator
+   concept is provisional, not a validated business opportunity. Report artifact
+   `1dd8e81991824432940ea9d6b623dbc7`, SHA-256
+   `d694015818441bbbd16ba87e0d1a17b054572e9e0348807b91aa18cc6ec9521e`.
+   A corrective venture memory flags the unsupported claims for later agents.
+
+2. **Software: genuine runnable output; autonomous acceptance incomplete.**
+   Task `1bde5d85c416411589faf089f6eb99d8`, mini, 8 responses,
+   42366 input / 5627 output tokens, estimated $0.59247. Produced a standard-library
+   Python content-plan CLI, source/tests/README artifacts and actual test history.
+   It recovered from file-versus-directory test discovery and a Windows `python3`
+   Store-alias failure; its nine tests then passed. Independent bundle download,
+   SHA-256 manifest, separate-directory nine-test run and CLI probes were real.
+   Probes found `true` wrongly accepted as one post, and arrays/null raising
+   tracebacks instead of clear validation errors. Windows cache binaries created
+   by the Store alias also entered the task bundle; these were not executed.
+   The CLI explicitly produces deterministic planning aids, **not AI-generated
+   content**. No AI functionality inside that app is claimed or simulated.
+   QA task `75254baa61f84a61b01292a1cd3519a1`, mini, 12 responses,
+   42648 input / 445 output tokens, estimated $0.43983, imported/read actual files
+   but stopped at a plan asking permission; it made no repair or test execution.
+   **Operator-assisted isolated repair** in `software-repaired/` added six meaningful
+   regression methods: baseline 15 tests failed (6 failures, 7 errors); after root
+   object/exact-integer validation fixes all 15 passed (0.912s), plus a real
+   three-post CLI smoke. Original artifact hashes stayed unchanged. This verified
+   repair is not an autonomous Genesis QA pass or a validated commercial product.
+
+3. **Self-improvement: FAIL autonomous acceptance; protection boundary held.**
+   Mini task `6803b4a1b7624523a50aea66e6263bdc`, 11 responses,
+   48034 input / 3015 output tokens, estimated $0.57079. Its candidate replaced
+   most of toolbox.py, removed Toolbox and TLS behavior, and added a test with an
+   unterminated string literal. Independently inspected, cancelled before execution,
+   and preserved as rejected evidence; never promoted.
+   Explicit GPT-4.1 retry `453e7ab2739b48b9b0670eacbd312681`, 5 responses,
+   47261 input / 1651 output tokens, estimated $0.52214. Actual candidate tests ran:
+   **100 tests, 4 errors, 1 skip, exit 1, 39.916s**. Its new tests referenced an
+   invented workspace_bytes API and passed bytes to a string API; these failures
+   do not establish a regression in the intended workspace_write behavior. It
+   stopped at a plan rather than delivering a fix or unified patch. Runtime
+   `completed` is conversational termination, not evidence of acceptance.
+   All **41 tracked live-file hashes matched** the baseline after both trials.
+   No generated candidate was applied to live source.
+
+### Actual engineering repair and verified local system
+
+Independently reproduced the real Windows workspace_write defect: LF translation
+changed saved bytes and reported lengths, doubled CR in existing CRLF, and allowed
+100000 LF characters to create a 200000-byte file. An **operator-assisted minimal
+fix**, distinct from the rejected AI candidates, now encodes once, checks encoded
+size, writes exact bytes and reports that length. It preserves every unrelated
+source branch and adds four existing-API regression methods for LF/CRLF/Unicode,
+artifact reports and byte limits. Focused baseline: 27 tests, five failures and one
+skip; repaired focused suite: 27 tests OK, one skip. Actual evidence and applicable
+patch retained in ignored `operator-toolbox-fix/`.
+
+Integrated verification after applying only the reviewed operator patch:
+- `python -m unittest discover -s tests -v`: **99 tests in 39.926s, OK,
+  one Windows symlink privilege skip**.
+- `node --check web/app.js`: **PASS**.
+- `npm.cmd run test:e2e`: **PASS**. Fixture phases remain explicitly test-only.
+
+Restarted the verified idle production service to load the repair, preserving
+`C:\Genesis\data`. New PID **36136**, **127.0.0.1:8787 only**, health **ok**, worker
+alive. Actual production Chrome check: **Connected to local server**, seven agent
+forms, no page errors. Five trial tasks persisted, no pending approvals or active
+work, spend/reservations unchanged. Session key intentionally disappeared on restart;
+all three providers now report unconfigured. Browser screenshot was refreshed at
+ignored `test-results/live-acceptance-readiness.png`.
+
+**Exact next task:** CEO re-enters the OpenAI key in Agents & controls (required
+because the tested fix was loaded by restart; never request the key in chat).
+Existing $5 total authorization persists; do not reset spend or increase the budget.
+Before another paid retry, improve task completion/evidence contracts so a plan or
+unsupported report cannot count as acceptance, require actual opportunity_save
+records and claim-specific sources, and retain independent regression/patch review.
+A bounded retry may use only the remaining $1.08192 conservative allowance. If a
+reservation blocks it, request further spending authorization or explicit review
+of current rates; do not silently lower estimates. Full founding live acceptance
+remains **NOT PASSED**. OpenAI integration is live-verified; Anthropic/Gemini and
+provider invoice reconciliation remain unverified.
+
+## Preparation checkpoint (superseded): awaiting CEO configuration
 
 Verified 2026-11-09, Europe/Helsinki, from source commit `14857d6`.
 This entry supersedes the older launch/access assertions below. Current default
