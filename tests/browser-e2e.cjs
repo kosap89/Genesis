@@ -70,6 +70,11 @@ async function main(){
   await page.locator('#billing-status').filter({hasText:'Historical stored provider snapshot'}).waitFor();
   assert.equal(await page.locator('#finance-official-label').textContent(),'Official OpenAI costs | Reported UTC month 2020-02','Previous-month cached report must never be labeled current month to date');
   assert((await page.locator('#billing-window').textContent()).includes('2020-02-01'));
+  billingFixture.credential_configured=true;billingFixture.historical_snapshot=false;billingFixture.stale=false;billingFixture.error=null;
+  billingFixture.report.costs={currency:null,total:0,known_total:0,complete:true,daily:{},by_project:{},by_api_key:{}};
+  await page.reload();await page.locator('#finance-official').filter({hasText:'No cost amounts reported yet'}).waitFor();
+  assert((await page.locator('#billing-window').textContent()).includes('does not establish a zero final bill or a prepaid balance'));
+  assert((await page.locator('#billing-usage').textContent()).includes('3 requests'),'Real usage may coexist with an empty delayed cost report');
   await page.unroute('**/api/state');
   await page.locator('[data-view=overview]').click();
   await page.locator('#new-venture').click();
@@ -228,6 +233,9 @@ async function main(){
   assert(!JSON.stringify(s).includes(credential),'Session credential must never appear in state or audit');
   assert(!(await page.locator('body').innerText()).includes(credential),'Credential must not be rendered');
   assert.equal(await page.evaluate(()=>JSON.stringify([Object.entries(localStorage),Object.entries(sessionStorage)]).includes('browser-test-only-not-a-real-api-key')),false);
+  // The API can commit before the save handler finishes its refresh/finally.
+  // Finish saving before clearing, so that handler cannot erase the next input.
+  await page.waitForFunction(()=>!document.querySelector('#credentials-form [type=submit]').disabled);
   await page.locator('#credentials-clear').click();
   s=await waitState(18871,x=>x.providers.every(p=>p.provider!=='gemini'||!p.configured));
   // The clear handler also refreshes state and clears the input in finally.

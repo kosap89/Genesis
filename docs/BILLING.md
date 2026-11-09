@@ -2,8 +2,12 @@
 
 Verified against official documentation on 2026-11-09. Development used
 subscription-authenticated Codex, deterministic HTTP fixtures and local tests only.
-No OpenAI request, paid model inference or Genesis agent execution was made to
-verify this integration. Live reporting with a real Admin key remains unverified.
+Initial implementation verification made no OpenAI request, paid model inference
+or live Genesis agent execution. Subsequently, CEO-authorized real reporting
+succeeded on 2026-11-09: completion usage returned 40 historical requests and the
+Costs endpoint returned no monetary rows. Admin authentication/report retrieval
+are verified; a nonempty live cost amount and prepaid balance are not. See
+STATE.md for the exact window and evidence. No new model inference was performed.
 
 ## Dashboard figures
 
@@ -24,6 +28,9 @@ amounts produce an incomplete report and known subtotal, never invented zeros.
 Different currencies are never summed. The Genesis-attributed official billed
 amount remains unavailable pending independent reconciliation; organization totals
 do not populate it. Reporting figures never change budget enforcement.
+When OpenAI returns no cost amounts or currency, the dashboard says so explicitly;
+it does not display a fabricated USD total or claim a zero final bill, even if
+usage has already appeared.
 
 ## Official sources and prepaid balance
 

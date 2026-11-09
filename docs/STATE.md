@@ -1,9 +1,59 @@
 # Genesis persistent project state
 
-Updated 2026-11-09, Europe/Helsinki. Official billing integration follows verified commit `44efa20`.
+Updated 2026-11-09, Europe/Helsinki. Live official reporting follows verified integration `b45a809` and repeat verification `0a49725`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: official organization billing integration verified offline
+## Current checkpoint: real OpenAI organization reporting connected
+
+The CEO supplied the separate Admin credential through the local setup flow and
+authorized updating Genesis from official billing data. Credential presence was
+verified without reading the key. A supported manual reporting refresh succeeded
+at **2026-11-09 03:45:08 UTC**, with no provider error. Official query window:
+**2026-11-01 00:00:00 UTC through 2026-11-09 03:45:06 UTC**.
+
+The official completion Usage report returned **40 requests, 350486 input tokens
+and 13774 output tokens**, matching the pre-existing Genesis model usage totals.
+This verifies actual Admin authentication and completion usage retrieval; it does
+not establish complete coverage of every API product or automatic attribution of
+all organization activity to Genesis.
+
+The Costs request also succeeded but returned **no monetary result rows**, no
+currency and no daily/project/key cost amounts. The parser's empty aggregate is
+zero, but this is not a verified zero final bill. The dashboard now displays
+**No cost amounts reported yet**, explains reporting delays and avoids inventing
+a USD currency for an empty report. Historical Genesis estimates/conservative
+charges remain separate. No prepaid balance endpoint or balance became available.
+
+Before/after local API comparisons confirm settings, agents, tasks, ventures,
+approvals and accounting unchanged. Global/project budgets remain the values
+below. Admin credential stays configured in the running process; no restart was
+performed. Periodic reporting remains off. No model request or agent execution
+was initiated. The authorized reporting synchronization used the official Costs
+and completion Usage reads; HTTP pagination requests are not individually audited
+by this implementation, so no exact external request count is claimed.
+Ignored private evidence: `data/billing-integration/live/summary.json` plus
+before/after state snapshots. No organizational raw report or credential is
+committed to Git. Only aggregate verification findings are recorded here.
+
+Verification for the live-data display adjustment: **38 billing tests passed in
+4.697s**, JavaScript/browser-test syntax and full browser E2E passed. An explicit
+browser fixture now covers successful usage with an empty cost report. The first
+E2E attempt timed out in an existing ordinary-key test: it could enter the next
+key before the previous save handler completed its refresh/finally. The test now
+waits for save completion before clearing/re-entry; the complete rerun passed.
+A separate headless browser against the real running CEO dashboard verified the
+configured Admin status, 40 official requests, empty cost message and no JavaScript
+errors, restricting all browser traffic to local GET requests. The production
+server was not restarted and the session credential remains available.
+
+**Exact next task:** use the financial dashboard's manual refresh when updated
+provider charges are needed. Costs may lag usage; do not reconcile Genesis-only
+invoices, estimate prepaid credit balance, reset spending or raise budgets from
+this empty cost report. Keep model credentials and any future agent-execution
+authorization separate. A server restart requires re-entry of the session Admin
+key through the hidden local helper.
+
+## Previous checkpoint: official organization billing integration verified offline
 
 Implemented the documented OpenAI Organization Costs API in a separate HTTP-server
 service, with current named UTC month totals, daily costs and provider project/API
