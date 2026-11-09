@@ -3,7 +3,49 @@
 Updated 2026-11-09, Europe/Helsinki. Live official reporting follows verified integration `b45a809` and repeat verification `0a49725`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: future local safety rates calibrated per configured model
+## Current checkpoint: exact-name document recovery implemented; live retry awaits session key
+
+Investigated the actual operations-agent messages from the failed live test: it
+read the correct document but twice changed characters in the opaque UUID when
+calling update. Project isolation correctly rejected the writes. The old plain
+not-found error offered little recovery help, and repeated inference then hit the
+conservative preflight cap. This was a model argument-copying/recovery failure,
+not a missing write permission or an absent shared document.
+
+Implemented exact `document_name` selection for agent document reads/updates,
+alongside existing IDs. Names resolve case-insensitively within the assigned
+venture only. Both selectors, if given, must agree. Missing/invalid lookups tell
+the model to call `venture_document_list` and retry with an exact selector.
+There is no fuzzy match, automatic ID repair, cross-project redirect or write
+on an invalid selector. Existing membership, protected-document and optimistic
+revision checks remain in the actual write path. Model tool schemas prefer names.
+
+Verification: **228 Python tests passed in 97.213s**, one existing Windows symlink
+privilege skip; includes **8 new deterministic selector/security regressions**.
+`node --check web/app.js` and full browser E2E passed. Independent scoped review
+found no blocking issues. No paid request was made during engineering/testing.
+
+Restarted the real loopback service with the verified code as PID **33076**;
+health/worker pass. Before/after settings, agents, ventures, tasks, memberships,
+approvals and accounting matched. Session-only model/Admin keys were removed by
+restart as expected; requested only the normal model key for live retry. No key
+was exported or persisted. Backup/evidence are ignored at `data/document-recovery/`.
+
+Prepared a fresh empty **COOP_RETRY.md** document
+**10dda3fc43bb4c47bff21486c0b48bc4** in the same isolated test venture. Previous
+failure document/revisions/tasks remain unchanged. Five test-only memberships now
+instruct exact-name use. Retry draft preserves actual sequential delegation to
+strategy/growth/qa/operations and the same five-word criterion. No new root has
+been submitted. The existing **$0.50 total project cap** remains, including old
+spent **$0.31087**, so the retry cannot silently authorize another $0.50. Current
+remaining test headroom is **$0.18913**, with calibrated rates for new tasks.
+
+**Exact next task:** once the CEO re-enters the normal session model key, submit
+the saved retry once. Inspect each real delegation and obtain its individual
+approval. Independently verify all five revision authors/words and real usage.
+Do not start the card-game mission or claim live acceptance from offline tests.
+
+## Previous checkpoint: future local safety rates calibrated per configured model
 
 CEO asked why the local ledger greatly exceeded the price estimate and requested
 updating it. The cause was the inherited **$10/$30 per million input/output**

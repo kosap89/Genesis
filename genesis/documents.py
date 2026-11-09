@@ -127,3 +127,27 @@ class VentureDocuments:
         return sorted([r for r in self.store.all('venture_document_revisions')
                        if r['venture_id'] == venture_id and r['document_id'] == doc_id],
                       key=lambda r: r['version'])
+
+    def resolve(self, venture_id, document_id=None, document_name=None):
+        """Resolve an exact local selector; never guess or repair identifiers."""
+        self._venture(venture_id)
+        guidance = 'Use venture_document_list, then retry with the exact document_name or document_id. No change was made.'
+        if document_id is None and document_name is None:
+            raise ValueError('A document_name or document_id is required. ' + guidance)
+        if document_id is not None and (not isinstance(document_id, str) or not document_id or len(document_id) > 200):
+            raise ValueError('Invalid document_id. ' + guidance)
+        if document_name is not None and (not isinstance(document_name, str) or not document_name or len(document_name) > 200):
+            raise ValueError('Invalid document_name. ' + guidance)
+        document = None
+        if document_id is not None:
+            document = self.store.get('venture_documents', document_id)
+            if not document or document['venture_id'] != venture_id:
+                raise ValueError('Document not found in this venture. ' + guidance)
+        if document_name is not None:
+            matches = [doc for doc in self.list(venture_id) if doc['name'].casefold() == document_name.casefold()]
+            if len(matches) != 1:
+                raise ValueError('Document name not found uniquely in this venture. ' + guidance)
+            if document is not None and document['id'] != matches[0]['id']:
+                raise ValueError('Document selectors do not match. ' + guidance)
+            document = matches[0]
+        return document

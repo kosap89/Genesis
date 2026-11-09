@@ -432,9 +432,9 @@ class Engine:
         if task.get('venture_id'):
             tools.extend([
                 schema('venture_document_list', 'List current durable documents in this project.', {}),
-                schema('venture_document_read', 'Read an actual current project document, including its version and source metadata.', {'document_id': {'type':'string'}, 'offset': {'type':'integer'}, 'limit': {'type':'integer'}}, ('document_id',)),
+                schema('venture_document_read', 'Read a current project document and revision. Prefer exact document_name (for example COOP_TEST.md) to copying an opaque ID. Supply document_name or document_id; if both, they must identify the same document. If not found, call venture_document_list before retrying.', {'document_id': {'type':'string'}, 'document_name': {'type':'string'}, 'offset': {'type':'integer'}, 'limit': {'type':'integer'}}),
                 schema('venture_document_propose', 'Create a durable proposal document; this never records an approved decision.', {'name': {'type':'string'}, 'content': {'type':'string'}}, ('name', 'content')),
-                schema('venture_document_update', 'Update a writable project document against its expected revision. Reference and decision documents are protected.', {'document_id': {'type':'string'}, 'content': {'type':'string'}, 'expected_revision': {'type':'integer'}}, ('document_id', 'content', 'expected_revision')),
+                schema('venture_document_update', 'Update a writable project document against its expected revision. Prefer exact document_name to copying IDs; supply document_name or document_id (both must match). If not found, call venture_document_list before retrying. Never guess an ID. Reference and decision documents remain protected.', {'document_id': {'type':'string'}, 'document_name': {'type':'string'}, 'content': {'type':'string'}, 'expected_revision': {'type':'integer'}}, ('content', 'expected_revision')),
             ])
         if task.get('work_mode') == 'collaborative' and task.get('delegation_depth', 0) < self.execution_settings(task.get('venture_id')).get('max_delegation_depth', 1):
             tools.append(schema('delegate_task', 'Propose a bounded task for a specific project agent; CEO approval is required before any child is queued.',
@@ -456,7 +456,7 @@ class Engine:
                 if name == 'venture_document_list':
                     return {'documents': [{key:value for key,value in doc.items() if key != 'content'} for doc in self.documents.list(venture_id)]}
                 if name == 'venture_document_read':
-                    document = self.documents.get(venture_id, args['document_id'])
+                    document = self.documents.resolve(venture_id, args.get('document_id'), args.get('document_name'))
                     offset, limit = args.get('offset', 0), args.get('limit', 20000)
                     if type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= 20000:
                         raise ValueError('Document read needs offset >= 0 and limit from 1 to 20000.')
@@ -466,7 +466,8 @@ class Engine:
                 if name == 'venture_document_propose':
                     return self.documents.create(venture_id, dict(name=args['name'], content=args['content'], kind='proposal'), actor=actor)
                 if name == 'venture_document_update':
-                    return self.documents.update(venture_id, args['document_id'], dict(content=args['content'], expected_revision=args['expected_revision']), actor=actor)
+                    document = self.documents.resolve(venture_id, args.get('document_id'), args.get('document_name'))
+                    return self.documents.update(venture_id, document['id'], dict(content=args['content'], expected_revision=args['expected_revision']), actor=actor)
             raise KeyError(name)
         if name == 'artifact_list':
             tasks = {t['id']:t for t in self.store.all('tasks') if t.get('venture_id') == task.get('venture_id')}

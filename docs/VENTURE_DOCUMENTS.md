@@ -51,6 +51,14 @@ venture_document_propose and venture_document_update. Tools resolve only the tas
 venture and check active membership. Proposed documents remain proposals, while
 ordinary writable documents can be revised using optimistic version checks.
 
+Agent read/update calls accept either `document_name` (preferred, exact name such
+as `GAME_DESIGN.md`, case-insensitive) or `document_id`. Names resolve only inside
+the task's venture. If both selectors are supplied they must identify the same
+document; a bad or foreign ID never falls back to a name or fuzzy match. Missing
+lookups explicitly instruct the agent to call `venture_document_list` before
+retrying. Updates still require the actual `expected_revision`, and name lookup
+cannot bypass protected references, human decisions or active membership checks.
+
 Current shared documents may evolve between turns; the prompt labels their actual
 revision. Document content is source material and never grants capabilities.
 Separate task artifacts, imports, hashes and downloads continue to work unchanged.

@@ -65,7 +65,12 @@ provider independence, controlled tools, and reviewable execution.
    the approved $0.50 conservative cap. 17 calls, published-price estimate
    $0.00275004; local conservative charge $0.31087. Preserve failure evidence;
    strengthen ID reuse/recovery before an authorized retry. No game-design work.
-12. **Next hardening:** OS-level process isolation, richer research sources,
+12. **Verified offline document selector recovery:** exact project-local document
+   names supplement IDs, with actionable missing-selector recovery and no fuzzy
+   writes. Protected/stale/cross-project checks retained. 228 tests (one Windows
+   skip) and browser E2E passed; live retry prepared, awaiting re-entry of the
+   session model key after the required server restart.
+13. **Next hardening:** OS-level process isolation, richer research sources,
    independent acceptance evaluators, external action connectors with approvals.
 
 ## Session protocol
