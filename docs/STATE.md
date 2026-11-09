@@ -1,9 +1,59 @@
 # Genesis persistent project state
 
-Updated 2026-11-09, Europe/Helsinki. Live official reporting follows verified integration `b45a809` and repeat verification `0a49725`.
+Updated 2026-11-10, Europe/Helsinki. Preserve the verified implementation and recorded live evidence below.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: CEO brief v0.4 integrated; next target is Game Design v1.0
+## Current checkpoint: bounded continuation dependency repaired; existing mission resumed
+
+CEO reported Designer continuation **0ef1bd26140145ec936438ef485c21ff** blocked
+with `A prerequisite failed, was cancelled or is missing`. Inspected actual task
+references, messages, events and saved document revisions. The continuation had
+incorrectly listed its failed predecessor **e7777cd07919471dbc1982762691b3dd**
+as a required-success `depends_on` prerequisite, alongside completed Researcher
+**3cb0de43e9404bbb9d8e7b2784c0abc0**. It was at step zero with no model calls.
+The dependency guard correctly refused the impossible prerequisite; the delegated
+plan had confused a partial-work history reference with a completion requirement.
+
+The failed predecessor actually saved useful work: **GAME_DESIGN.md revision 5**
+(core/evolution/tree, 14884 characters), **IDEAS.md revision 3** and
+**OPEN_QUESTIONS.md revision 5**. New comparative research exists in
+**REVIEWS.md revision 4**. None of this should be replaced by a full restart or
+mistaken for final independent acceptance.
+
+Verified the exact edge correction first on an isolated DB copy, including that
+genuine failed prerequisites still block. With live project work otherwise idle,
+made one audited atomic data repair: removed only the failed predecessor from
+this continuation's `depends_on`, retained the completed research dependency,
+and recorded the failed source as `continuation_source_task_id`. Added explicit
+operator context for continuing actual saved sections. The predecessor remains
+failed; its status/results/history were not rewritten. The dependency guard,
+models, budgets, autonomy and execution limits were not changed.
+
+Added recovery-dependency guidance to the operator MISSION reference and project
+director instructions: `depends_on` means successful completion, not a citation
+or a link to the failure being recovered. Preserve bounded partial progress,
+inspect actual saved revisions and do not replay ambiguous writes. Original
+CONCEPT.md, BRIEF_V0_4.md and DECISIONS.md are unchanged. Old document revisions
+remain immutable; compared all **35 existing revision records** successfully.
+Backup/audit evidence is ignored under `data/dependency-investigation/`.
+Regression verification: **20 team runtime tests passed in 18.611s**, including
+dependency failure, independent-review, approval, scope and budget behavior.
+These verification tests use explicit provider doubles, not paid requests.
+
+Resumed the **same existing continuation**, under original root
+**cbed76f517fa4c5fb9073758fc8913b1**, through the supported resume API. No new root
+or duplicate continuation was created. Observed it **running at step 2**, with
+three model dispatches since resume and no dependency error. These are real
+user-mission calls, not development fixtures; provider reliability and final
+game-design acceptance remain unproven by the dependency correction itself.
+
+**Exact next task:** monitor this bounded continuation and the existing root's
+review/fix/recheck/consolidation stages. Keep the saved work and original failed
+history, reuse completed research and do not restart the full assignment. Any
+further timeout is a separate provider/generation issue, not a reason to mark
+failed prerequisites successful or remove legitimate dependency safeguards.
+
+## Previous checkpoint: CEO brief v0.4 integrated; next target is Game Design v1.0
 
 Read the CEO's complete new Game Design Brief v0.4 and integrated the assignment
 through supported revisioned document/project/team APIs. Scope is now a complete

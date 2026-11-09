@@ -95,7 +95,12 @@ provider independence, controlled tools, and reviewable execution.
    project roles/draft/work documents; original protected concept/decisions and
    prior research/revision history retained. 12 document/HTTP checks and real
    prepared-mission browser check pass. No new inference or design root launched.
-17. **Next hardening:** OS-level process isolation, richer research sources,
+17. **Bounded continuation dependency corrected:** a recovery child erroneously
+   required its timed-out predecessor to succeed. Preserved saved partial design,
+   failed history and completed research; audited only the incorrect dependency
+   edge and resumed the same existing continuation. Existing guards still block
+   genuine failed prerequisites. No full restart or duplicate mission root.
+18. **Next hardening:** OS-level process isolation, richer research sources,
    independent acceptance evaluators, external action connectors with approvals.
 
 ## Session protocol
