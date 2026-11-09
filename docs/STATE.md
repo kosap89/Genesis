@@ -3,7 +3,46 @@
 Updated 2026-11-10, Europe/Helsinki. Preserve the verified implementation and recorded live evidence below.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: bounded continuation dependency repaired; existing mission resumed
+## Current checkpoint: independent review dependency bug fixed; restart awaiting session keys
+
+QA task **2548319576f9449aaf1521c1512379a7** was blocked at step zero.
+The actual director delegation required only completed continuation
+**0ef1bd26140145ec936438ef485c21ff**, but engine task creation silently merged
+`review_of` into `depends_on`, adding failed original author
+**e7777cd07919471dbc1982762691b3dd** as an impossible success prerequisite.
+This was an engine defect, distinct from the earlier explicit continuation edge.
+
+Separated review sources from successful prerequisites. Reviews wait for terminal
+sources, including failed/cancelled partial authors; they retain source status,
+errors, artifact handoffs and all contributing-author independence checks.
+Explicit failed prerequisites still block, including when also review sources.
+Project validation and transitive ancestor-cycle checks cover both reference types.
+Tool descriptions document this distinction. No model, budget, autonomy or
+permission settings changed; no failed task was marked successful.
+
+Backed up the live SQLite database under ignored
+`data/review-dependency-investigation/before.sqlite3`. Atomically repaired only
+this QA task's injected edge against original delegation audit event
+**a60654e58403429d9ada589240e50e1c**, retaining both original review authors.
+Recorded `review_dependency_separated` audit evidence. All documents/history
+were preserved. The continuation completed real GAME_DESIGN.md r7, IDEAS.md r4
+and OPEN_QUESTIONS.md r6; these remain proposals requiring independent review.
+
+Verification: **259 unit/integration tests passed in 117.212s**, one Windows
+symlink privilege skip, including eight new offline review regressions.
+`node --check web/app.js` passed. Browser E2E passed on rerun; its first attempt
+timed out waiting for billing refresh settings to reset, unrelated to review
+execution. Tests use explicit provider doubles and made no paid model requests.
+
+Stopped the idle old server only after verifying no running/queued tasks, and
+opened the existing local hidden-input session launcher for updated source.
+**Exact next task:** await the CEO's local session-key entry, verify loopback
+health, resume the same QA task via supported API, and observe actual progress.
+Do not create a new root or claim live QA completion before evidence. The existing
+root remains cbed76f517fa4c5fb9073758fc8913b1. No mission model calls were made
+in this repair session before credential entry.
+
+## Previous checkpoint: bounded continuation dependency repaired; existing mission resumed
 
 CEO reported Designer continuation **0ef1bd26140145ec936438ef485c21ff** blocked
 with `A prerequisite failed, was cancelled or is missing`. Inspected actual task

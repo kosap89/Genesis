@@ -66,6 +66,13 @@ Independent review references actual author task IDs and requires a different
 agent from every contributing author. Review of the root by its own descendant
 would create a dependency cycle and is rejected.
 
+`depends_on` requires successful completion. `review_of` identifies contributing
+authors and waits until those tasks are terminal; failed or cancelled authors may
+have saved partial work that needs independent review. Such a review does not
+mark its sources successful or replay them. Listing a task in both fields still
+requires its success. Source status, errors and artifact handoffs remain visible
+to the reviewer, and project, author-independence and cycle checks still apply.
+
 Give parallel agents separate document ownership. Use explicit current revisions,
 read full sources through paginated document tools, and serialize consolidation
 of shared documents. Use real task IDs, revisioned output, independent findings

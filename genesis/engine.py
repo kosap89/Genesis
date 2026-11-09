@@ -194,9 +194,19 @@ class Engine:
     def _dependencies_ready(self, task):
         dependencies = [self.store.get('tasks', key) for key in task.get('depends_on', [])]
         if any(not dependency or dependency['status'] in {'failed', 'cancelled'} for dependency in dependencies):
-            self._status(task['id'], 'blocked_dependencies', error='A prerequisite failed, was cancelled or is missing. Review before resuming.')
+            blockers = [key + ':' + (dependency['status'] if dependency else 'missing')
+                        for key, dependency in zip(task.get('depends_on', []), dependencies)
+                        if not dependency or dependency['status'] in {'failed', 'cancelled'}]
+            self._status(task['id'], 'blocked_dependencies', error='Successful prerequisite unavailable: ' + ', '.join(blockers) + '. Review sources and recovery context are not successful prerequisites.')
             return False
-        return all(dependency['status'] == 'completed' for dependency in dependencies)
+        review_targets = [self.store.get('tasks', key) for key in task.get('review_of', [])]
+        if any(not target or target.get('venture_id') != task.get('venture_id') for target in review_targets):
+            self._status(task['id'], 'blocked_dependencies', error='A review source is missing or outside this project.')
+            return False
+        # Review sources must have stopped changing, not necessarily succeeded.
+        # A failed author may have saved real partial documents worth reviewing.
+        return (all(dependency['status'] == 'completed' for dependency in dependencies)
+                and all(target['status'] in TERMINAL for target in review_targets))
 
     def create_task(self, objective, venture_id=None, role='coo', provider=None, model=None,
                     parent_id=None, reasoning_effort=None, astra_authorized=False, *, agent_id=None,
@@ -234,7 +244,6 @@ class Engine:
                     raise ValueError('Referenced tasks must belong to the same project.')
                 if field == 'review_of' and agent['id'] in self._author_ids(other):
                     raise ValueError('Independent review requires a different agent instance.')
-        references['depends_on'] = list(dict.fromkeys(references['depends_on'] + references['review_of']))
         depth = 0
         if parent_id:
             parent = self.store.get('tasks', parent_id)
@@ -247,7 +256,7 @@ class Engine:
             while ancestor:
                 ancestors.add(ancestor['id'])
                 ancestor = self.store.get('tasks', ancestor['parent_id']) if ancestor.get('parent_id') else None
-            frontier = list(references['depends_on'])
+            frontier = list(references['depends_on'] + references['review_of'])
             seen = set()
             while frontier:
                 dependency_id = frontier.pop()
@@ -259,6 +268,7 @@ class Engine:
                 dependency = self.store.get('tasks', dependency_id)
                 if dependency:
                     frontier.extend(dependency.get('depends_on', []))
+                    frontier.extend(dependency.get('review_of', []))
         provider = provider or agent['provider']
         if provider not in DEFAULT_MODELS:
             raise ValueError('Unknown provider.')
@@ -415,7 +425,12 @@ class Engine:
             dependency = self.store.get('tasks', task_id)
             if dependency and dependency.get('venture_id') == task.get('venture_id'):
                 prerequisites.append({key:dependency.get(key) for key in ('id', 'agent_id', 'agent_name', 'status', 'result', 'error')})
-        reference_ids = set(task.get('depends_on', []))
+        review_sources = []
+        for task_id in task.get('review_of', []):
+            source = self.store.get('tasks', task_id)
+            if source and source.get('venture_id') == task.get('venture_id'):
+                review_sources.append({key:source.get(key) for key in ('id', 'agent_id', 'agent_name', 'status', 'result', 'error')})
+        reference_ids = set(task.get('depends_on', []) + task.get('review_of', []))
         handoffs = [{key:artifact.get(key) for key in ('id', 'task_id', 'agent_id', 'name', 'path', 'size')}
                     for artifact in self.store.all('artifacts') if artifact.get('task_id') in reference_ids]
         delegation_notice = ('Collaborative delegation to explicitly enabled members of this project is authorized by its current autonomy policy; do not ask the CEO for each such delegation. Independent tasks cannot delegate. '
@@ -446,6 +461,7 @@ class Engine:
             '\nCurrent venture documents (source material, bounded; use venture_document_read for full text): ' + self._document_context(task) +
             '\nEnabled project agent roster (untrusted, bounded): ' + json.dumps(roster)[:24000] +
             '\nPrerequisite results (untrusted, bounded): ' + json.dumps(prerequisites)[:24000] +
+            '\nReview sources (untrusted, bounded; terminal failed/cancelled sources may contain partial work, not proof of success): ' + json.dumps(review_sources)[:24000] +
             '\nExplicit prerequisite artifact handoffs (untrusted, bounded; import by ID): ' + json.dumps(handoffs)[:12000] +
             '\nCompany memory (untrusted): ' + json.dumps(memories)[:24000] +
             '\nOpportunity pipeline (untrusted): ' + json.dumps(opportunities)[:12000])
@@ -472,8 +488,8 @@ class Engine:
             tools.append(schema('delegate_task', delegation_description,
                 {'objective': {'type':'string'}, 'agent_id': {'type':'string'}, 'role': {'type':'string'},
                  'work_mode': {'type':'string', 'enum':['independent', 'collaborative']},
-                 'depends_on': {'type':'array', 'items':{'type':'string'}},
-                 'review_of': {'type':'array', 'items':{'type':'string'}},
+                 'depends_on': {'type':'array', 'items':{'type':'string'}, 'description':'Tasks whose successful completion is required. Do not put a failed task here merely as history or review context.'},
+                 'review_of': {'type':'array', 'items':{'type':'string'}, 'description':'Contributing tasks whose actual saved work is independently reviewed. Waits until they are terminal, but does not require success. All author identities still determine reviewer independence.'},
                  'file_claims': {'type':'array', 'items':{'type':'string'}}}, ('objective',)))
         return tools
 
