@@ -58,7 +58,14 @@ provider independence, controlled tools, and reviewable execution.
    polling remains off. The CEO subsequently authorized a manual $0.15 local
    spending baseline, preserving $4.50 remaining via a $4.65 global ceiling;
    audited correction and continued local reservation/settlement were verified.
-11. **Next hardening:** OS-level process isolation, richer research sources,
+11. **Bounded live collaboration smoke test executed; not passed:** five actual
+   Luna agent instances, four individually approved delegations. Four authored
+   words were saved correctly; the fifth agent mistyped the document ID twice,
+   then preflight budget enforcement blocked further inference. Stopped within
+   the approved $0.50 conservative cap. 17 calls, published-price estimate
+   $0.00275004; local conservative charge $0.31087. Preserve failure evidence;
+   strengthen ID reuse/recovery before an authorized retry. No game-design work.
+12. **Next hardening:** OS-level process isolation, richer research sources,
    independent acceptance evaluators, external action connectors with approvals.
 
 ## Session protocol

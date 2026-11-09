@@ -3,7 +3,65 @@
 Updated 2026-11-09, Europe/Helsinki. Live official reporting follows verified integration `b45a809` and repeat verification `0a49725`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: one-word collaboration test prepared; awaiting spending cap
+## Current checkpoint: live collaboration smoke test executed; NOT PASSED
+
+CEO approved **$0.50 additional conservative test budget**, replacing the proposed
+$1 cap, then explicitly approved each of the four concrete delegations. Submitted
+one real collaborative root **d00bb91a34ed419abb3af96d46147ffc** in isolated venture
+**f9eafcd8f499484cbe931fa39e485fb4**. All five existing agent instances used
+test-project-only `gpt-6-luna`, low reasoning, 512 output tokens, depth 1, four
+descendants, concurrency 1. No model routes in the card-game project were changed.
+
+Genuine document revisions of **COOP_TEST.md**
+**6c2ffba8bdb54d7a9493c68b7cba8e17** show:
+
+- Revision 1: empty CEO-created test document.
+- Revision 2: agent:coo wrote `Me`.
+- Revision 3: agent:strategy appended `teemme` (task 8d6db6819115453dad56a384807f743b).
+- Revision 4: agent:growth appended `yhdessä` (task 170cd230a59f4f45bcbf9a7042201660).
+- Revision 5: agent:qa appended `hyvää` (task 334086b6bd194824aca1dcb93917fb33).
+
+Operations child **d5199fd4f3c441f4aec1b793a92ad8f1** read the correct document,
+but twice submitted a different, mistyped document ID for its update. The actual
+tool correctly rejected both writes as not found in the venture. It did not add
+the final word. Its next model request needed a **$0.2104** conservative reservation
+while only **$0.18913** remained in the test cap. Budget enforcement blocked it.
+The root was waiting for that blocked child. Stopped the root and child through
+supported cancellation; all test tasks are now terminal and reserved amounts zero.
+No cap increase, manual completion, identity correction of agent tool calls or
+fabricated success was used. Actual text remains **Me teemme yhdessä hyvää**.
+
+The framework genuinely performed agent-specific delegation, explicit approvals,
+sequential shared-document reads/writes, author-attributed revisions and budget
+blocking. The five-agent acceptance criterion **failed**: four authors wrote,
+the fifth failed ID copying/recovery. This does not establish reliable autonomous
+game design or success with the real project's different models/instructions.
+
+Consumption: **17 real requests / 17 responses**, **27943 input tokens**, **1048
+output tokens**, **6314 cached input tokens**. Published-price estimate using the
+existing registry: **$0.00275004** (about 0.275 US cents), not an invoice or a freshly
+reconciled official cost. Conservative local charge **$0.31087**, below the $0.50
+cap; these are different accounting bases. Global local spent is now **$0.46087**
+including the manual $0.15 baseline, leaving **$4.18913** of the global safety cap.
+No unrelated model inference was run. Test evidence and full audit are ignored at
+`data/collaboration-smoke/result.json`.
+
+An operator preparation issue was also found: Windows stdin had corrupted three
+Finnish words in the initial user-supplied objective. While the first delegation
+was waiting, corrected only the root's initial user instruction/objective using
+Unicode escapes and recorded `test_instruction_encoding_corrected`. Agent outputs
+and document content were never repaired by the operator. Subsequent actual
+delegations carried the correct Finnish words. This was assisted preparation,
+not an unassisted end-to-end success.
+
+**Exact next task:** report this bounded live failure honestly. Before a separately
+authorized retry or larger game mission, improve exact document-ID reuse and
+failure recovery, and plan for the conservative preflight headroom. Do not replay
+or resume these cancelled tasks automatically. The design venture's protected
+documents, memberships, model settings, mission draft and project budget were
+independently compared with the pre-test database snapshot and preserved.
+
+## Previous checkpoint: one-word collaboration test prepared; awaiting spending cap
 
 CEO supplied the ordinary session model key. Supported non-generating OpenAI
 metadata check confirms the test model `gpt-6-luna` is visible; inference remains
