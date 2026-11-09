@@ -3,7 +3,38 @@
 Updated 2026-11-09, Europe/Helsinki. Live official reporting follows verified integration `b45a809` and repeat verification `0a49725`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: tiny live collaboration test requested; model key missing
+## Current checkpoint: one-word collaboration test prepared; awaiting spending cap
+
+CEO supplied the ordinary session model key. Supported non-generating OpenAI
+metadata check confirms the test model `gpt-6-luna` is visible; inference remains
+unverified. Prepared separate venture **f9eafcd8f499484cbe931fa39e485fb4**, draft led
+by coo, and empty writable **COOP_TEST.md** document
+**6c2ffba8bdb54d7a9493c68b7cba8e17**. Existing five agent instances have short,
+test-project-only Luna/low overrides. Engineering/finance are disabled there.
+The real card-game venture models/instructions/documents remain unchanged.
+
+Draft: coo writes Me, then genuinely delegates sequential single-word appends to
+strategy (teemme), growth (yhdessä), qa (hyvää), operations (työtä), each reading
+the latest revision. Expected final text: Me teemme yhdessä hyvää työtä.
+Limits: 512 output tokens, 16 steps/task, one concurrent request, depth 1 and
+four descendants. Individual delegation approvals remain mandatory.
+
+Initial local preview: about $0.000630 at published prices per lead request,
+versus $0.16492 conservative preflight reservation. Total live expense is unknown;
+few-cent estimate excludes changing context/descendants. Proposed **$1 local
+conservative cap** drawn from the existing $4.50 remaining authorization is awaiting
+explicit CEO confirmation. Test venture budget remains **$0** and **no task has
+been submitted**. No paid model request occurred. Prepared data is ignored at
+`data/collaboration-smoke/ready.json`.
+
+**Exact next task:** after explicit cap authorization, set this test venture cap
+to $1, submit the saved collaborative objective once, and inspect each actual
+delegation before requesting its individual approval. Never treat general test
+authorization as approval for unknown delegation invocations. Monitor real usage,
+revisions/authors and limits, cancel genuine runaway behavior, report incomplete
+results honestly and preserve the design venture.
+
+## Previous checkpoint: tiny live collaboration test requested; model key missing
 
 The CEO requested a genuinely minimal paid-agent cooperation smoke test, with
 each of the five participants adding one word to an isolated test document.
