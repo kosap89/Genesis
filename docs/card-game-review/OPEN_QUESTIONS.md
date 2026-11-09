@@ -1,0 +1,44 @@
+# Game Design v1.0 — residual risks and execution history
+Author: strategy / Lead Game Designer. Provisional design, not approved. GAME_DESIGN.md is being saved incrementally; this entry does not claim the catalog/examples or independent review are finished before their actual saves.
+
+## Current nonblocking empirical questions
+Rules are to converge in GAME_DESIGN.md rather than await CEO choices. After its final save, remaining questions are evidence questions:
+1. Is first-player setup/initiative compensation sufficient? Run paired seats; do not infer from a handful of wins.
+2. How often is Supply used, and does 14/40 resources plus two guaranteed starters cause too little variance or too much flooding at cap eight?
+3. Are Hope's 3 tactical-spend threshold and Death's two real losses to Stage II competitive with Rage/Luck? Count stage turns, missed triggers and lethal-before-evolution.
+4. Can defensive Rage/RS/Repair stall too long; does Pursuit meaningfully punish safe reserves? Record round-cap draws.
+5. Do four node slots permit adaptation before lock-in? Do tax cards or economy options force an obvious research race?
+6. Is two-copy acquisition with one immediate and one shuffled copy worth the lost attack tempo? Can Disrupt's temporary +2 node cost be waited out without becoming irrelevant?
+7. Does M justify developing two classes, or only help players already ahead? Track opportunities while behind and actual healing, not just purchases.
+8. Can two people distinguish stage/progress/damage and manage public replacement text without correction? Count state errors and handling time.
+9. Are the two starter action packages too alike? Hold mechanics stable for initial comparison before adding catalog breadth.
+10. Are target duration (25–40 minutes) and 8–12 turns/player realistic? These are hypotheses, not measurements.
+
+## Acceptance work not yet performed by this independent author
+Independent critique of saved final rules, material fixes against that critique, independent recheck and documentation consolidation require actual enabled project tasks outside this independent task. No reviewer or research result is invented. No physical prototype has been built/played, no code/simulation executed, no measured balance or novelty assurance exists. The author will reread REVIEWS before handoff and distinguish new research from prior material. These are evidence/acceptance limits, not essential-rule TBDs.
+
+## Historical execution record (from r4; preserved, not current design status)
+Earlier v0.3 attempt was BLOCKED/INCOMPLETE. Research task `6006d53d10d243c5ae9ff9e47b05fbaa` completed and saved findings in REVIEWS.md r2. Designer tasks `82d3810aac0d48c284aa81ee471f941c` and recovery `0b457e3e9e934971ac703421d3d9ebd8` failed with `openai: Provider connection failed or timed out; no automatic retry was made`. No design was saved then; GAME_DESIGN was preparation r2 and IDEAS r1. Root reported no credential, permission or budget rejection; underlying cause unknown. No model switch, provider change or source edit was made. Dependent critique/fix/recheck/consolidation were not run because no ruleset existed.
+Prior research limitations: Pokémon rules access blocked; publisher guides high-level; no verified direct single-active/reserve comparator; no empirical testing. The v0.3 handoff instructed resumption under then-current MISSION r2/CONCEPT r2. That source priority is superseded by complete BRIEF_V0_4.md r1 and MISSION.md r3; historical CONCEPT and DECISIONS remain protected. Prior preparation's unspecified combat/resources/classes/physical rules are historical gaps, not newly adopted open rules.
+
+## Current execution notes
+Initial parallel reads with limits 30000/24000 were rejected (tool maximum 20000); corrected explicit reads succeeded. No ambiguous write was replayed. Bounded core save GAME_DESIGN r4 and evolution/tree save r5 succeeded before catalog/example completion. Prior revisions preserve the old planning content.
+
+## Bounded continuation — status after GAME_DESIGN r7 (supersedes conflicting older notes)
+Read full BRIEF_V0_4.md r1 and MISSION.md r4, actual GAME_DESIGN r5 and complete REVIEWS r4. task_inspect confirmed author task `e7777cd07919471dbc1982762691b3dd` FAILED at step 6 with `openai: Provider connection failed or timed out; no automatic retry was made`. It remains failed historical context, not a successful prerequisite and not a task to wait for. Completed researcher `3cb0de43e9404bbb9d8e7b2784c0abc0` is the research prerequisite. No dependency change or child task was fabricated by this author.
+
+Saved concrete continuation:
+- GAME_DESIGN r6: full Resource text; four fighter identities with all 12 stage lines; five starting Action identities; Pursuit/Disrupt; Repair+/Cycle+ replacement texts; two exact legal 40-card mixed-class starters and finite personal pools.
+- GAME_DESIGN r7: quantified full physical kit and state tracking; planned six-game paired-seat procedure with logging/stop conditions; actual researcher synthesis integration and explicit divergence. Sections 1–7 from r5 preserved. The section 8 Action heading typo was corrected from six to five.
+- IDEAS updated with current acquisition reconciliation, actual research integration and all-copy-reference tradeoffs; historical text retained. No REVIEWS or protected source changes.
+
+### Remaining rules-design risks / precise review requests
+1. **Acquisition lifecycle: high priority.** Earlier question 6's 'one shuffled copy' is NOT current. Actual core: one hand, one discard, no reshuffle/return. The second copy cannot be played, so ownership grows but draw-pile strategy does not expand through acquisition. It can only be removed for Cycle+ healing. Independent review should assess whether this adequately meets the brief; a one-hand/one-shuffled-copy amendment is a candidate requiring explicit core revision and numerical traces, not silently adopted here. Current destinations are unambiguous; design effectiveness is unresolved.
+2. **Catalog scope.** One fighter name/class at a six-copy cap cannot support a legal 12-fighter single-class deck. The two supplied mixed-class starters are legal and playable without unnamed cards. Single-class catalog expansion is outside this bounded continuation. Do not call the starter kit universal construction support.
+3. **Playtest balance hypotheses.** Hope's final-stage attack discount, Luck's cheap Stage I pressure, Rage's damage-conditioned attack and loss-fed Death progression are unmeasured. Repair+ mobility and zero-cost Cycle+ may be much stronger than their base versions. Record actual frequency, not assumed parity. The six-game procedure is planned, not performed.
+4. **Adaptation limit.** Four permanent node slots and the inert second acquisition copy may make changing direction too narrow. Disrupt is only a one-turn tax; a leader can wait or pay it. M requires prior two-class stage investment and may be win-more despite resource competition. These are hypotheses; no comeback has been verified.
+
+### Explicit unfinished acceptance work
+Complete worked turns are left to the next bounded task, per the user request's permitted deferral. Supply full initial/end zones and payments for acquisition/use, upgrade use, a behind-player response and mixed-class M. No boundary fixture plan is represented as a completed numerical walkthrough. Independent critique, material-fix response and independent recheck require actual enabled reviewer tasks; none was received or performed here. Documentation consolidation and any final executive approval remain outside this independent continuation. No code, host execution, physical test, simulation or measured balance result is claimed.
+
+This continuation's first reads requested limits above 20000 and returned ValueError; corrected bounded reads succeeded. GAME_DESIGN updates were revision-guarded incremental saves, not a full restart. Tool response truncation for r7 was handled by reading saved document text, not replaying the write. All proposal status and protected/history records are preserved.

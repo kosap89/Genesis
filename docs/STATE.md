@@ -3,7 +3,27 @@
 Updated 2026-11-10, Europe/Helsinki. Preserve the verified implementation and recorded live evidence below.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: independent review dependency bug fixed; same QA resumed
+## Current checkpoint: CEO-requested external review snapshot exported
+
+QA **2548319576f9449aaf1521c1512379a7** completed at step 10 and saved
+REVIEWS.md r5. It identified stranded reward copies, missing worked turns,
+timing/construction gaps and empirical balance risks. Designer correction task
+**e5dde19c0049468ebeaab8f843e9dc4d** is running under the same original root;
+the mission is not yet complete or independently rechecked after corrections.
+
+At CEO request, exported the eight saved venture documents verbatim to
+`docs/card-game-review/` for GitHub-based external assessment. README records
+snapshot timing, revisions, SHA-256 hashes and actual task states. Verified all
+exported document bytes against a single SQLite read snapshot and scanned for
+credential patterns. Runtime database, keys, logs and tool artifacts remain
+excluded. This is a documentation export only; no additional model requests
+were dispatched by the export. Existing authorized mission continues separately.
+
+**Exact next task:** assess the correction task, independent recheck and final
+consolidation; refresh the external snapshot when the CEO requests a newer version.
+No physical playtest or final acceptance is claimed.
+
+## Previous checkpoint: independent review dependency bug fixed; same QA resumed
 
 QA task **2548319576f9449aaf1521c1512379a7** was blocked at step zero.
 The actual director delegation required only completed continuation
