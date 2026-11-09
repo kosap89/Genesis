@@ -3,7 +3,58 @@
 Updated 2026-11-09, Europe/Helsinki. Live official reporting follows verified integration `b45a809` and repeat verification `0a49725`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: Brave Search connected and verified without model inference
+## Current checkpoint: title-only mission readiness stop diagnosed; full assignment made accessible
+
+CEO manually submitted card-game task **b5d39c06c441485b803db92e8193fabb**. Actual
+objective contained only **CEO MISSION — DEVELOP CARD GAME v0.3**, not the complete
+assignment. The agent saved `artifacts/v0.3_mission_readiness` and completed its
+response without design work or delegation. This was not an HTTP/provider crash
+and does not mean game-design acceptance passed.
+
+Two preparation defects compounded the short objective: the old venture policy
+required credential/model readiness verification before submission, but agents
+have no credential-inspection tool; root instructions referenced a prepared
+seven-child mission that existed only in the CEO-side draft, not in agent-readable
+documents/workspace. The agent correctly reported these unsupported prerequisites
+rather than inventing readiness. Preparation should have supplied this context.
+
+Corrected through supported project/document/membership APIs, without inference:
+
+- Verified configured ordinary credential and all three exact model IDs through
+  the non-generating metadata endpoint. Metadata visibility is not a claim that
+  generation was live-tested for every specialist model.
+- Saved the existing full seven-child assignment plus dated operator readiness as
+  protected **MISSION.md**, document **b207fdb838494702a43a70a786b893b8**, revision 1.
+  It is a task reference, not approval of resulting design proposals.
+- Updated project policy and five project-only role instructions so operator-only
+  credential gates are recorded as satisfied, agents read MISSION.md and still
+  obey actual runtime errors, budgets and individual delegation/network approvals.
+  Removed stale assumed provider-credit figures. No credential value is exposed.
+- Restored the full **7958-character** prepared objective, collaborative/coo.
+  All six pre-existing source documents and revisions, including protected
+  CONCEPT.md and DECISIONS.md, were compared and unchanged.
+
+Verified on an isolated real DB copy that the agent document tool reads the full
+MISSION.md by name and system context exposes the reference. A real browser check
+confirmed the prepared-mission deep link loads all 7958 characters, collaborative
+mode and coo lead. Browser task-submission HTTP was blocked during verification;
+only local reads/estimates were allowed. No new mission or model request was
+submitted, no server restart, model change or budget increase was performed.
+Evidence is ignored under `data/mission-investigation/`.
+
+Original readiness-only task consumption: **4 requests / 4 responses**, **22042
+input / 772 output tokens**, local conservative charge **$0.1522375**, registry
+price estimate **$0.0217384** (not an invoice, excludes separate cache-write fees).
+Global local remaining allowance at correction time is **$4.0215165625**. These
+charges remain in history; the investigation itself added zero model calls.
+
+**Exact next task:** CEO opens the prepared-mission link for venture
+07587388a699471aa8fdb86b958cfe3a with `mission=1`, reviews the complete objective
+and presses Create objective when ready. Do not resubmit only the title or count
+the readiness report as completed design. Do not automatically launch a paid
+replacement task from a request to inspect the report. Individual approvals remain.
+
+## Previous checkpoint: Brave Search connected and verified without model inference
 
 CEO configured a separate Brave Search API credential for general web discovery.
 The old background service PID 33076 was still running, so setting the variable

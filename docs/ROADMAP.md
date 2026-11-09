@@ -77,7 +77,12 @@ provider independence, controlled tools, and reviewable execution.
    genuine HTTP 200 search with three official rulebook results and healthy service
    launched with the same environment. One Brave request, zero model calls; normal
    network approvals retained. Main game-design mission has not been submitted.
-14. **Next hardening:** OS-level process isolation, richer research sources,
+14. **Mission readiness handoff corrected:** manually submitted title-only mission
+   stopped at an honest readiness report. Existing full assignment is now readable
+   as protected MISSION.md; operator readiness recorded, impossible agent-side
+   credential checks removed from project policy. Verified full prepared-mission
+   deep-link loading and source preservation without a replacement model run.
+15. **Next hardening:** OS-level process isolation, richer research sources,
    independent acceptance evaluators, external action connectors with approvals.
 
 ## Session protocol
