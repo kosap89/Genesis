@@ -329,7 +329,7 @@ class Handler(BaseHTTPRequestHandler):
                 updates = {}
                 if 'budget_usd' in body:
                     updates['budget_usd'] = number(body['budget_usd'], 0, 1000000)
-                for field in ['allow_network','allow_terminal']:
+                for field in ['allow_network','allow_terminal','budget_enforcement_enabled']:
                     if field in body:
                         if not isinstance(body[field], bool):
                             raise ValueError(field + ' must be a boolean.')
@@ -351,23 +351,25 @@ class Handler(BaseHTTPRequestHandler):
             value = None
             status = 200
             action = None
-            if path == '/api/role-templates':
-                value, status, action = teams.create_template(body), 201, 'role_template_created'
-            elif len(parts) == 3 and parts[:2] == ['api', 'role-templates']:
-                value, action = teams.update_template(parts[2], body), 'role_template_updated'
-            elif path == '/api/agents':
-                value, status, action = teams.create_agent(body), 201, 'agent_created'
-            elif len(parts) == 3 and parts[:2] == ['api', 'agents']:
-                value, action = teams.update_agent(parts[2], body), 'agent_configured'
-            elif len(parts) == 4 and parts[:2] == ['api', 'agents'] and parts[3] == 'duplicate':
-                value, status, action = teams.duplicate_agent(parts[2], body), 201, 'agent_duplicated'
-            elif len(parts) == 3 and parts[:2] == ['api', 'projects']:
-                value, action = teams.update_project(parts[2], body), 'project_configured'
-            elif len(parts) == 4 and parts[:2] == ['api', 'projects'] and parts[3] == 'team':
-                member_body = {k: v for k, v in body.items() if k != 'agent_id'}
-                value, action = teams.assign(parts[2], body.get('agent_id'), member_body), 'team_member_assigned'
-            elif len(parts) == 5 and parts[:2] == ['api', 'projects'] and parts[3] == 'team':
-                value, action = teams.update_membership(parts[2], parts[4], body), 'team_member_updated'
+            # Serialize live policy/team revocation with invocation claims.
+            with engine.guard:
+                if path == '/api/role-templates':
+                    value, status, action = teams.create_template(body), 201, 'role_template_created'
+                elif len(parts) == 3 and parts[:2] == ['api', 'role-templates']:
+                    value, action = teams.update_template(parts[2], body), 'role_template_updated'
+                elif path == '/api/agents':
+                    value, status, action = teams.create_agent(body), 201, 'agent_created'
+                elif len(parts) == 3 and parts[:2] == ['api', 'agents']:
+                    value, action = teams.update_agent(parts[2], body), 'agent_configured'
+                elif len(parts) == 4 and parts[:2] == ['api', 'agents'] and parts[3] == 'duplicate':
+                    value, status, action = teams.duplicate_agent(parts[2], body), 201, 'agent_duplicated'
+                elif len(parts) == 3 and parts[:2] == ['api', 'projects']:
+                    value, action = teams.update_project(parts[2], body), 'project_configured'
+                elif len(parts) == 4 and parts[:2] == ['api', 'projects'] and parts[3] == 'team':
+                    member_body = {k: v for k, v in body.items() if k != 'agent_id'}
+                    value, action = teams.assign(parts[2], body.get('agent_id'), member_body), 'team_member_assigned'
+                elif len(parts) == 5 and parts[:2] == ['api', 'projects'] and parts[3] == 'team':
+                    value, action = teams.update_membership(parts[2], parts[4], body), 'team_member_updated'
             if action:
                 engine.store.event(action, record_id=value['id'])
                 return self._json(status, value)

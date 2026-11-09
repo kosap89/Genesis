@@ -1,6 +1,7 @@
 """Persistent agent instances, reusable role templates and project membership.
 
-Configuration never grants execution authorization or rewrites historical ledgers.
+Explicit CEO project autonomy grants bounded team/research authorization only;
+configuration never increases budgets or rewrites historical ledgers.
 """
 from copy import deepcopy
 import math
@@ -241,8 +242,14 @@ class TeamManager:
 
     def update_project(self, venture_id, body):
         with self.store.lock:
-            body = _fields(body, {'budget_usd', 'operating_policy', 'execution_limits', 'mission_draft'})
+            body = _fields(body, {'budget_usd', 'operating_policy', 'execution_limits', 'mission_draft', 'autonomy'})
             current = self._get('ventures', venture_id)
+            if 'autonomy' in body:
+                autonomy = _fields(body['autonomy'], {'delegation', 'research'})
+                if any(type(value) is not bool for value in autonomy.values()):
+                    raise ValueError('Project autonomy values must be boolean.')
+                body['autonomy'] = {**{'delegation': False, 'research': False},
+                                    **current.get('autonomy', {}), **autonomy}
             if 'execution_limits' in body:
                 limits = _fields(body['execution_limits'], set(EXECUTION_LIMITS))
                 for field, value in limits.items():

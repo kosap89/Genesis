@@ -82,7 +82,14 @@ provider independence, controlled tools, and reviewable execution.
    as protected MISSION.md; operator readiness recorded, impossible agent-side
    credential checks removed from project policy. Verified full prepared-mission
    deep-link loading and source preservation without a replacement model run.
-15. **Next hardening:** OS-level process isolation, richer research sources,
+15. **Verified CEO-configured autonomous operation:** project-only team/research
+   grants with per-invocation audit, live revocation and preserved host/protected
+   document boundaries. Global local dollar enforcement can be disabled while
+   accounting remains; CEO explicitly chose tracking-only mode and provider limits.
+   251 tests (one Windows skip), browser E2E and live UI/configuration checks pass.
+   Existing budget-blocked research task resumed without duplicate mission root.
+   Provider timeout defaults to bounded 180s, with no automatic replay.
+16. **Next hardening:** OS-level process isolation, richer research sources,
    independent acceptance evaluators, external action connectors with approvals.
 
 ## Session protocol

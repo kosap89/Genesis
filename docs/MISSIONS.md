@@ -37,16 +37,27 @@ consume tokens. Other projects without overrides continue to inherit global
 defaults; raising global capacity must be an intentional operator decision.
 
 Budgets and permissions are separate fields. Project limits/drafts cannot reset
-spent or reserved balances, supply credentials, enable host/network access, remove
-individual delegation approvals or start work. Global, project and optional agent
-budget guards still apply to every model reservation and settlement.
+spent/reserved balances, supply credentials, enable host execution or start work.
+Explicit CEO project autonomy and local budget enforcement are separate controls,
+described below. Accounting continues even when local budget admission is disabled.
 
 ## Collaboration and acceptance
 
 A collaborative root can propose delegation to specific eligible project agents.
-Each proposed invocation still needs individual CEO approval. Its child is queued
-only after approval. A general mission or spending authorization does not approve
-unknown future tool invocations.
+By default, each proposed invocation needs individual CEO approval. A CEO can
+instead grant that project `autonomy: {delegation: true, research: true}` through
+the project API/team UI. Delegation then runs without per-call prompts only for
+explicitly active/enabled members of that project; public research can run without
+per-call prompts only for the two research tools. Authorizations are audited as
+project-policy decisions, never fabricated human approvals. Other projects remain
+manual unless separately configured. Explicit denials still win; host execution
+and other capabilities are not granted by these flags.
+
+The live policy is checked at the invocation claim under the engine guard. Turning
+it off affects future claims; in-flight work may finish. Earlier pending requests
+superseded by policy are expired with provenance when executed, not left pending.
+Ambiguous interrupted invocations are still not replayed automatically. Existing
+waiting tasks require explicit resume; changing policy alone does not submit work.
 
 The root waits while any existing child is nonterminal. To start independent work
 in parallel, propose those delegations together in one model response. Dependencies
@@ -63,6 +74,16 @@ is not acceptance. No missing model calls, references, tests or approvals may be
 invented.
 
 ## Spending authorization
+
+Local budget enforcement defaults on. The CEO can set global
+`budget_enforcement_enabled: false` through `/api/settings` or the controls UI.
+This disables admission checks for all local global/project/agent dollar caps;
+reservations, estimates, historical charges and settlement remain reporting data.
+UI marks this tracking-only mode. It grants no network/host permissions, raises
+no provider limits and does not remove step/concurrency/delegation controls.
+Provider spend/quota failures remain real errors, not permission to retry forever.
+
+When using local budget caps:
 
 Before submitting a draft, report a maximum additional mission spending cap and
 wait for explicit CEO authorization. With no reservations, a company-wide

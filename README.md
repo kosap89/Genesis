@@ -109,7 +109,10 @@ declared passed using test doubles.
 - Web research fetches real public HTTPS pages. Default search uses Wikipedia
   discovery; a `BRAVE_SEARCH_API_KEY` enables general web search. Source coverage
   is limited without that optional key; market claims must be checked accordingly.
-- Budget enforcement uses **configured rate estimates**, not live provider invoices.
+- Local budget enforcement defaults on and uses **configured rate estimates**,
+  not live provider invoices. The CEO can disable it for tracking-only operation;
+  global/project/agent estimates then do not block calls. Accounting continues,
+  while provider-side limits and all other execution/permission controls remain.
   Defaults ($10/$30 per million input/output tokens) are conservative placeholders,
   not verified prices. Known model prices can raise these guards, never lower them.
   A separate published-price registry (including cached input) estimates usage

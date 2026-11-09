@@ -3,7 +3,85 @@
 Updated 2026-11-09, Europe/Helsinki. Live official reporting follows verified integration `b45a809` and repeat verification `0a49725`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: title-only mission readiness stop diagnosed; full assignment made accessible
+## Current checkpoint: scoped project autonomy and tracking-only local accounting deployed
+
+CEO explicitly requested autonomous team work without repeated delegation/research
+prompts, then explicitly disabled the application's local dollar-cap enforcement
+in favor of their OpenAI-side enforced limit. Implemented and deployed:
+
+- Card Game venture **07587388a699471aa8fdb86b958cfe3a** has structured
+  `autonomy={delegation:true,research:true}`. Other projects retain their existing
+  permissions. Exact enabled team membership, tool scope and live policy are
+  checked at invocation claim; each policy-authorized invocation is audited.
+- Global **budget_enforcement_enabled=false**. All global/project/agent local
+  dollar caps are reporting-only. Numeric limits and spent/reserved history were
+  not reset. UI explicitly shows Tracking only; price estimates are not invoices.
+- Protected human documents, host execution rules, explicit denied calls,
+  crash no-replay, step/depth/concurrency/descendant limits remain effective.
+  Agents cannot grant themselves permissions. Pending manual prompts superseded
+  by a valid project grant are expired with provenance, never fake human approvals.
+- Project instructions, mission reference and prepared draft now describe these
+  structured settings, superseding stale per-call prompt/local-cap wording. Six
+  game source documents were preserved during configuration alignment.
+- Provider default timeout raised **60 to 180 seconds**, with explicit custom
+  overrides preserved and no automatic retry. Existing Designer timeout occurred
+  after about 60.185 seconds; this change allows a longer bounded response wait,
+  not proof that every future timeout is resolved.
+
+Verification: final full suite **251 tests passed in 113.938s**, one existing
+Windows symlink skip. Includes 17 new autonomy/budget tests and 4 new timeout
+tests; separately 27 provider regressions passed in 3.298s. Full browser E2E and
+both JavaScript syntax checks passed. Browser tests cover policy isolation,
+tracking-only persistence, preserved ledgers and toggling back on. Fixed a real
+stale settings-form issue that could overwrite a newer numeric budget while
+saving a checkbox. Independent review found no blocking issues. All engineering
+verification used local doubles; no development inference was made.
+
+Deployment preserved tasks/ventures/agents/memberships/approvals across restart.
+Session keys were re-entered through a local hidden-input window; no keys were
+exported/persisted. Production is healthy on loopback, PID **24960**. The user
+must keep its service window open. Evidence/backups are ignored under
+`data/project-autonomy/`.
+
+The first combined configuration attempt was rejected before execution by
+automatic approval review as broad financial-safety weakening. Requested the
+precise scope again and received explicit CEO approval; the subsequent direct
+supported settings/project API calls passed review and applied exactly that scope.
+No workaround bypassed the rejection. Before/after assertions preserved all
+numeric caps/spent/reserved values, global network/terminal flags, other-project
+configuration, model routes and task history.
+
+The CEO had already started real root **c979e9ee7bac49438ac69c407ffc8340**. Before
+deployment it waited on a budget-blocked research child
+**6006d53d10d243c5ae9ff9e47b05fbaa**; Designer child
+**82d3810aac0d48c284aa81ee471f941c** had failed a provider timeout. Resumed only
+the existing budget-blocked researcher with its current same-agent configuration,
+preserving step/cost/history and the original root. No duplicate mission root or
+blind retry of the ambiguous timed-out call was created. The actual user mission
+can now make real calls under the user's provider controls; it is not claimed
+complete by this configuration change.
+
+Observed continuation evidence: Researcher **6006d53d10d243c5ae9ff9e47b05fbaa**
+completed at step 10. The existing root then autonomously delegated a new Designer
+task **0b457e3e9e934971ac703421d3d9ebd8**, observed running at step 3. Its
+`delegate_task` invocation has `tool_policy_authorized` audit provenance and no
+human approval prompt. The original timed-out task remains failed in history.
+No pending project approvals were present at observation. This is genuine real
+mission continuation, not a test fixture or claim that the full design is finished.
+
+OpenAI's official [spend-limit documentation](https://developers.openai.com/api/docs/guides/spend-limits)
+states hard limits reject affected requests but propagation is not instantaneous,
+so a small overshoot is possible. The CEO reports this control configured; we did
+not independently read or alter account limits. Brave search charges are separate
+and not covered by OpenAI's cap. Source controls make no guaranteed invoice claim.
+
+**Exact next task:** monitor the existing design mission and its genuine provider,
+execution-limit and deliverable outcomes. Keep scoped project autonomy active and
+local dollar admission disabled as explicitly requested. Do not ask again for
+each permitted team delegation/public research call, manufacture completion or
+raise/change provider limits. Preserve failures/history and actual evidence.
+
+## Previous checkpoint: title-only mission readiness stop diagnosed; full assignment made accessible
 
 CEO manually submitted card-game task **b5d39c06c441485b803db92e8193fabb**. Actual
 objective contained only **CEO MISSION — DEVELOP CARD GAME v0.3**, not the complete

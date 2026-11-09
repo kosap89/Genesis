@@ -347,6 +347,21 @@ history and downloads. See VENTURE_DOCUMENTS.md for APIs, storage and limits.
 
 ## Prepared missions and scoped execution controls
 
+Explicit project autonomy is stored as strict booleans `autonomy.delegation` and
+`autonomy.research`, off by default. At invocation claim, the engine rechecks live
+scope under its guard. Delegation requires explicitly enabled caller/target team
+memberships; research grants only the public search/fetch tools. HTTP policy/team
+mutations use the same guard. `tool_policy_authorized` records the actual grant;
+no human approval is invented. Denied calls and ambiguous crash outcomes remain
+blocked; superseded pending prompts are expired with provenance. Host execution
+is a separate capability. Source text cannot change structured authorization.
+
+Global `budget_enforcement_enabled` defaults true and accepts only a boolean.
+When false, local cap admission checks are skipped for all accounting scopes,
+while reservations, settlement and history continue. UI reports tracking-only
+mode. Provider limits are external; this does not configure or bypass them.
+Step/depth/concurrency/descendant limits and permission boundaries still apply.
+
 Venture mission_draft records store a lead agent, mode and objective without
 creating tasks or model calls. execution_limits provide project step/output/
 delegation overrides and a concurrency cap bounded by global capacity. Admission

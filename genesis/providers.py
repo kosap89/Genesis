@@ -310,7 +310,7 @@ class GeminiAdapter:
 
 
 class ProviderRouter:
-    def __init__(self, transport=None, timeout=60, max_response_bytes=4 * 1024 * 1024):
+    def __init__(self, transport=None, timeout=180, max_response_bytes=4 * 1024 * 1024):
         self.transport = transport or _post
         self.timeout = timeout
         self.max_response_bytes = max_response_bytes
