@@ -29,6 +29,16 @@ $4.50 remaining authorization. Historical task costs and price estimates remain
 available. This was an explicit operator correction, not automatic synchronization
 or a change to reservation/settlement enforcement.
 
+After the live smoke test, the CEO requested closer model-specific safety rates.
+Existing agent and active-project configurations were calibrated using documented
+Standard long-context/cache-write maxima plus 25%, with no assumed cache-hit
+discount. Luna is now $0.3125 input/$0.9375 output per million, replacing $10/$30
+for newly created test tasks. Historical pinned tasks and spent balances remain
+unchanged. This is a configuration calibration, not an automatic price-sync feature;
+new/custom models still require review. See STATE.md for all configured rates and
+offline budget-guard verification. The independent published-price estimate may
+omit cache-write charges and is not a provider invoice.
+
 The financial section separates Genesis conservative spent/reserved/remaining
 budget, published-price estimated API cost, official OpenAI organization costs,
 and remaining internal venture budgets. Organization costs have daily, OpenAI

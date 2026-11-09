@@ -3,7 +3,60 @@
 Updated 2026-11-09, Europe/Helsinki. Live official reporting follows verified integration `b45a809` and repeat verification `0a49725`.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: live collaboration smoke test executed; NOT PASSED
+## Current checkpoint: future local safety rates calibrated per configured model
+
+CEO asked why the local ledger greatly exceeded the price estimate and requested
+updating it. The cause was the inherited **$10/$30 per million input/output**
+guard compared with Luna standard **$0.10/$0.50**, with additional cache discounts
+only in the reporting estimate. Reviewed official model pricing on 2026-11-09.
+References: [Luna](https://developers.openai.com/api/docs/models/gpt-6-luna),
+[Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol),
+[Terra](https://developers.openai.com/api/docs/models/gpt-6.1-terra),
+[4.1 mini](https://developers.openai.com/api/docs/models/gpt-4.1-mini).
+
+Applied supported configuration API updates to **7 existing agents and 10 enabled
+project memberships**, changing only input/output safety rates. New rates use the
+worst documented Standard long-context/cache-write price plus 25%, without assumed
+cache-read discounts. USD per million input/output:
+
+- gpt-6-luna: **0.3125 / 0.9375**.
+- gpt-6.1-sol: **6.25 / 18.75**.
+- gpt-6.1-terra: **3.125 / 9.375**.
+- gpt-4.1-mini: **0.50 / 2.00**.
+
+These settings apply to newly created tasks; historical pinned task configurations
+are unchanged. The same 27943 input/1048 output tokens from the smoke test would
+produce a **$0.0097146875** local charge under the new Luna rates instead of
+$0.31087. This is a counterfactual calculation, not a refund, invoice or new run.
+The reporting estimate $0.00275004 discounts recorded cached input; its historical
+calculation does not separately price cache-write tokens. It remains an estimate.
+
+Runtime before/after checks confirm all spent/reserved balances, budget caps,
+models, reasoning, fallbacks, instructions, tasks, approvals, provider credentials
+and venture documents unchanged. Existing atomic global/project/agent guards,
+preflight byte/output ceilings, fallback reservations, unknown-usage failure
+charges and restart recovery remain implemented exactly as before. No cancelled
+test was resumed, no server restart or live API/model request occurred. Global
+local spent remains **$0.46087**, cap **$4.65**.
+
+Verification: **8 accounting tests passed in 4.642s**, using explicit provider
+doubles. On an isolated copy of the real DB, verified the new effective Luna
+rates, rejection above a small global budget, successful reservation/settlement
+below it and zero residual reservation. No worker/model execution. Ignored
+before/after/configuration evidence: `data/budget-rate-calibration/`.
+
+This is an explicit calibration of existing configurations, not automatic pricing
+updates. New agent defaults and unknown/custom models retain their conservative
+defaults; future model/fallback changes need a rate review. Fast/Ultrafast,
+regional or other billing modes were not enabled. Remaining estimates can still
+exceed actual billing; no provider-side guaranteed cap is claimed.
+
+**Exact next task:** use these model-specific rates for future authorized work.
+Keep historical spending intact unless the CEO explicitly requests another audited
+reconciliation. The failed collaboration smoke test remains failed; ID reuse and
+recovery still need improvement before a separately authorized retry.
+
+## Previous checkpoint: live collaboration smoke test executed; NOT PASSED
 
 CEO approved **$0.50 additional conservative test budget**, replacing the proposed
 $1 cap, then explicitly approved each of the four concrete delegations. Submitted
