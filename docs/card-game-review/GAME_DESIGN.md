@@ -1,217 +1,284 @@
-# Game Design v1.0 — first playable mechanics proposal
-Author: strategy / Lead Game Designer. Status: PROPOSAL, not human-approved. Sources: complete BRIEF_V0_4.md r1, MISSION.md r4; research in REVIEWS.md r3–r4, independent QA appendix in REVIEWS.md r5. This bounded revision addresses QA-01/03/04/05 before adding worked turns separately. Earlier revisions preserve previous text and execution history. No physical playtest, simulation or software execution is claimed. Independent QA reviewed r7; recheck of these changes is pending.
+# Game Design v1.0 — complete first-playable mechanics proposal
 
-## 1. Intent and provisional scale
-Two players prepare reserves, commit one active fighter, evolve through class achievements, and spend the same reusable resources on combat or private progression through a common Tech Tree. Public development permits adaptation; four permanent node slots and resource opportunity costs prevent collecting everything. Target, not measured: 25–40 minutes, roughly 8–12 turns per player.
-Use 40-card decks, 14 dedicated Resource cards, one active and three reserve slots, three fighter stages. The smaller deck/reserve reduce first-prototype handling, replacing illustrative 60-card/3–5-reserve values. Victory is five opposing fighter losses, not power or tree completion.
+Status: PROPOSAL, not human-approved. Strategy authored the mechanics; growth supplied attributed comparative research; qa independently critiqued and rechecked the saved rules/examples. COO consolidated this edition from GAME_DESIGN r8 and GAME_DESIGN_EXAMPLES r4 after operations delivered reports but did not update documents. Prior revisions preserve all earlier wording and failures. Sources: full protected BRIEF_V0_4.md r1 and MISSION.md r4; research and review evidence in REVIEWS.md r3–r7. No protected source or DECISIONS.md is changed.
+
+## Executive summary
+Two players manage a 40-card deck, dedicated reusable resource cards, one active fighter and three reserves. Fighters evolve through four distinct class achievements. A common 17-node Tech Tree has separate public progression and full personal reward pools for each player. Its four-node limit and resource costs force commitments; players can pivot using remaining slots. Rewards include persistent abilities, genuinely new cards and upgrades to every copy of existing actions. Win by five opposing fighter losses, eliminating all opposing fighters, or the opponent failing a mandatory draw; a round-15 limit prevents indefinite matches.
+
+The supplied package specifies two exact legal mixed-class starters, all card/stage texts, acquisition/upgrade lifecycles, physical tracking, worked examples and a planned first playtest. QA rechecked r8 plus examples r4 in REVIEWS r7: no material mechanics blockers remained from QA-01–05. This consolidated edition still needs a final transcription/integration check. Balance, handling and match duration are unverified. No prototype has been manufactured, no match played, no software executed and no human approval granted.
+
+## 1. Intent, scale and core loop
+Prepare reserves, commit an active, spend resources on tactics or development, attack, survive opposing decisions, and evolve individual fighters. The illustrative 60-card deck is reduced to 40, with 14 Resource (35%), 12 Fighter and 14 Action, to reduce first-build handling. Three reserve slots and printed three-stage panels limit components. Target duration 25–40 minutes and 8–12 turns/player are hypotheses, not measurements.
 
 ## 2. Construction, zones and setup
-Starting deck: exactly 40 cards = 14 Resource + 12 Fighter + 14 Action. Maximum four copies/action name, TWELVE/fighter name; Resource exempt. The first catalog has one Fighter name/class, so the former six-copy cap is raised to twelve to make single-class construction genuinely possible without inventing cards. Choose one or two classes, with at least four fighters of each declared class and none of other classes. Declaration is public and fixed. Exact starters remain six fighters/class; their lists do not change. The supplied two-starter kit is not a universal construction kit; optional physical expansion is specified in section 10. Stages are printed on fighter cards, not extra draw cards. Development pool cards start outside construction.
-Private: hand and face-down draw deck. Public: discard, removed zone, resource zone, active, three reserves, personal tree and face-up personal development pool. Nobody inspects/reorders a deck without instruction. Discards, exhausted/ready resources, damage/stage/progress, declared classes, nodes, pool counts and scores are public. Cards never change owner. Removed cards cannot return this match. No hand limit.
-Randomly choose first player. Each searches their own deck for two Resource and two Fighters, reveals and places two ready Resources, one Stage I active and one Stage I reserve (zero damage/progress), shuffles remaining 36 and draws five. Simultaneously each may once set aside any number of those five face down, draw as many, then shuffle set-aside cards into deck. After setup: 31 deck + five hand + two resources + two fighters = 40. Scores zero; no nodes. First player skips their first Draw and cannot attack on their first turn. Second player draws and can attack normally.
+Starting deck: exactly 40 = 14 Resource + 12 Fighter + 14 starting Action. Maximum four copies per Action name, twelve per Fighter name; Resources exempt. Choose one or two declared classes, at least four Fighters of each declared class, none of undeclared classes. Declaration is public and fixed. The four-name catalog has one Fighter name per class; the twelve-copy limit makes single-class construction possible. Exact starters remain six/six. Finite kit stock limits which simultaneous custom lists can be assembled. Development cards/references start outside construction.
 
-## 3. Resources
-Exhaust one ready Resource per unit of cost; pay exactly, no floating currency/refund. Refresh all only at your own Start. Left-ready resources can pay Reactions on opponent's turn. Resources enter ready; zone cap eight.
-Once per own Main either play one Resource from hand free OR Supply: discard one non-Resource from hand, search deck for one Resource, reveal and place ready, shuffle. Supply consumes the same resource allowance, is illegal at eight or with no Resource in deck, and never searches discard. It trades hand quality for reliable early resources while retaining dedicated cards. No arbitrary resource spending or generic conversion of other cards into resources.
+Private zones: hand and face-down draw deck. Public: discard, removed zone, resource zone, active, three reserves, personal tree, personal face-up development pool. All damage/stage/progress, readiness, scores, classes, nodes and pool counts are public. Nobody inspects or reorders a deck without instruction. Cards never change owner. Removed cards cannot return this match. No hand limit.
 
-## 4. Turn and timing
-Count each player's own turns separately; round = first player's turn then second player's.
-1. Start: advance own-turn counter; apply the reset/expiry table below, then refresh own resources.
-2. Draw one, except first player's first turn. Failed mandatory Draw-step draw loses immediately. Effect draws take available cards without defeat. Never automatically reshuffle discard.
-3. Main, any order, one action resolved completely before next: resource allowance; deploy Fighter from hand to empty reserve for 1; play Main Action paying cost; voluntary switch for 1 once this Main (swap active/reserve); evolve once; unlock one node. No arbitrary discard, sacrifice or transfer. Newly deployed/promoted fighters may act. Reserve cannot attack.
-4. Combat: pass or attack once with active, paying its stage attack cost, targeting opposing active. Defender may play/pay at most one Reaction or pass; attacker cannot respond. No stack/other reaction windows. Resolve Reaction then attack and checks. No Main after Combat.
-5. End: resolve End effects and terminal checks, including round 15 if applicable. Clear only attack-duration additions/reductions. Do not erase the state listed as persistent below; pass. Unspent resources remain ready.
+Randomly determine first player. Each searches their own deck for two Resource and two Fighters, reveals and places two ready Resources, one Stage I active and one Stage I reserve, all fighter damage/progress zero. Shuffle the remaining 36, draw five. Simultaneously each may once set aside any number of those five face down, draw that many, then shuffle set-aside cards into their deck. End setup: deck31 + hand5 + resources2 + fighters2 =40; scores zero, no nodes. First player skips their first Draw and cannot attack on their first turn; second player draws and may attack normally.
 
-### Exact reset and expiry table (QA-03)
-State | Reset/expiry
-Both players' Death one-award allowance and X1 first-loss use | Reset at EVERY player's Start, for both players; DX uses that same Death allowance.
-Resource allowance, voluntary switch, evolution, node unlock, Hope opportunity, E1, RS, DX and DE own-turn uses | Reset for the ACTIVE player only at their own Start. Unowned abilities remain unavailable. DX also remains illegal after a Death award in that turn, even if its own DX box is unused.
-Hope qualifying tactical-spend tally | Set to zero for the active player at their own Start only. The first qualifying checkpoint consumes Hope opportunity even if declined or no eligible Hope exists; no stored award.
-Resource readiness | Refresh only the active player's Resources at their own Start. Opponent's Resources do not refresh.
-Disrupt / any 'until your next Start' effect | Expire at the CASTER/owner's next Start, not the affected opponent's Start. An earlier affected unlock consumes Disrupt instead.
-Rage/Luck per-turn progress cap | A new per-turn allowance at each Start; this catalog's one attack/turn means no separate use token is needed.
-Attack-only modifiers (A1, RA, HA, LA, injured attack addition, Guard) | Recompute for each announced attack; Guard ends with that attack. No addition/reduction carries to another attack or turn. End removes any remaining attack-duration reminder only.
-Damage, stage, evolution progress, nodes/upgrades, score, declarations, owned cards and all zone contents | NEVER reset at Start/End. Change only by an explicit rule/effect or match reset. Leaving play resets that fighter's markers as specified in section 6.
-No other End-of-turn blanket counter reset exists. 'Once per turn' means once during EACH player's turn; 'once per own turn' is on your turn only. Own-turn counter advances, rather than resets, at Start.
+## 3. Resource economy
+Exhaust one ready Resource for each unit of cost. Pay exactly, no floating currency, refund or arbitrary spending. Resources refresh only at their owner's Start. Unspent ready resources can fund a defender Reaction on the opponent's turn. Resources enter ready; zone cap eight.
 
-Main Actions never play on opponent's turn. Announce targets/choices before paying; no legal target means cannot play. After legal payment, resolve instructions in order as much as possible; unavailable effect draws or discards do not halt later instructions or checkpoints and never invent a card. If an effect says draw two and one is available, draw that one, then do its remaining instructions; discard one if possible, otherwise none. Only inability to take the mandatory Draw-step draw causes draw defeat. Costs are not undone. Used Actions go to discard after their instructions unless stated otherwise; the resolving Action is not in hand/discard during its instructions. Discard means from hand unless an effect names another zone. A spent-resource total counts actual resources exhausted to pay legal costs, never hypothetical/discounted costs.
-For X1, draw a card if available, then discard a card if possible, then proceed to promotion/defeat checks even if both draw and discard were impossible. A legal Convert still completes its heal/draw after the sacrifice, before its checkpoint; none of that prevents defeat for point five. No optional effect creates a reaction window or permits an action between instructions.
+Once per own Main either play one Resource from hand free OR Supply: discard one non-Resource from hand, search your draw deck for a Resource, reveal/place it ready and shuffle. Supply uses that same allowance, is illegal at cap eight or with no Resource in deck, and never searches discard. This trades a useful hand card for reliable resources while retaining actual resource cards in the deck. No generic conversion into resource tokens exists.
 
-## 5. Combat, losses, victory
-Only active is an attack target. Damage = counters actually placed after additions then reductions, minimum zero. No retaliation, spillover, accuracy roll, weakness or direct player damage. Damage persists through switching/evolution; healing removes up to stated damage. Health is a maximum, not a separate current-health counter. Damage at least maximum health destroys.
-During an action/attack, apply instructions in order; immediately remove all doomed fighters simultaneously after each damage/sacrifice instruction. Discard those fighters and remove their markers. Award opponent one defeat point per friendly fighter lost, INCLUDING sacrifice. Finish remaining instructions of the resolving action. At its checkpoint process surviving eligible progress triggers; if several owners choose, turn player chooses first. Then resolve X1 if eligible, then a player lacking active immediately promotes a reserve free, then check defeat. No intervening actions/reactions. Lethally hit fighters cannot gain progress/evolve to survive; a promoted fighter takes no leftover attack. A resolving sacrifice finishes remaining instructions before victory check, but never saves a player who has no fighters at that check.
-Lose if opponent has five points OR you have no fighters in play; fighters in hand do not delay defeat. If both lose at the same check, draw. Missed mandatory Draw-step draw loses immediately. End of round 15: higher defeat score wins; tie draws. No other tiebreak. Concession permitted.
+## 4. Ordered turn, timing and reset table
+Count own turns separately. A round is first player's turn then second player's.
+1. Start: advance own-turn counter, apply reset/expiry table, then refresh own Resources.
+2. Draw one. Exception: first player's first turn skips it. Failure of this mandatory Draw-step draw loses immediately. Effect draws take available cards without defeat. Never automatically reshuffle discard.
+3. Main, in any order, each action fully resolved before another: use resource allowance; deploy a Fighter from hand into empty reserve for1; play/pay a Main Action; voluntary switch for1 once this Main (swap active and reserve); evolve once; unlock one node. No arbitrary sacrifice/discard/transfer. Newly deployed or promoted Fighters may act. Reserve cannot attack.
+4. Combat: pass OR attack once with active, pay its current attack cost, target opposing active. Defender may play/pay at most one Reaction or pass; attacker cannot respond. Resolve Reaction, attack, then checkpoint. No stack or other Reaction windows; no Main after Combat.
+5. End: resolve End effects and terminal checks, including round15 when applicable; clear only attack-duration additions/reductions and pass. Unspent resources stay ready.
 
-## 6. Evolution: four operational identities
-All fighters enter Stage I with zero progress. Each has stage marker, damage counter and one progress counter (0–3). Threshold I→II = 2 progress; II→III = 3. Progress caps at current threshold; excess lost; Stage III never gains progress. In own Main, once total per own turn, pay 1 to evolve one eligible friendly active OR reserve by one stage. Remove ALL its progress; retain damage, class and card identity. No evolution on opponent's turn or mid-attack. Increased maximum health does not remove damage. Leaving play resets stage/damage/progress; a later deployment is new Stage I. No separate evolution cards or currency.
-RAGE: when this fighter survives an opposing attack that placed at least one damage on it, gain one progress, maximum once per turn per fighter. Neither friendly damage nor sacrifice qualifies; lethal does not qualify. Since only active is attacked, Rage must risk the active slot.
-HOPE: once per own turn, after you have paid a cumulative total of at least 3 resources for deployment, switching, Main Actions and/or your attack that turn, choose ONE Hope in play to gain one progress. Node/evolution costs and opponent-turn Reactions do NOT count. This automatically becomes available immediately after the qualifying action; no stored trigger if no eligible Hope exists then. You may decline; the first qualifying opportunity consumes the turn's Hope opportunity either way. Multiple Hope do not each grow, and no spending/refund loop exists.
-LUCK: this fighter gains one progress if its own attack placed at least one damage on opposing active, whether or not target survived; maximum once per turn. Zero damage does not qualify; no random roll. Reserve Luck cannot earn attack progress.
-DEATH: whenever one or more OTHER friendly fighters are destroyed or sacrificed in one event, choose one surviving Death in play to gain one progress. Maximum one such award across all your Death per turn (either player's turn); enemy losses do not count. Simultaneous losses award only one; no token fighters exist. A reserve Death can prepare through real losses, but every friendly sacrifice still advances opponent's victory.
-At a multi-trigger checkpoint: remove lethal first; apply Rage, Hope, Luck, then Death awards where applicable, choosing recipients at that time. Progress never automatically evolves a fighter. Branch effects explicitly noted below can provide an alternative Death award but share its one-award-per-turn cap. No self-damage cards are in this version.
-**Death III route disclosure (QA-05):** without DX, a single surviving Death needs five different friendly-loss awards (2 then 3). The fifth friendly loss gives the opponent victory before a later Main evolution, so base loss-only Death III is unattainable in this catalog. This is intentional for the first proposal, not equivalent pacing between classes. Reach II through two losses, then use X1→DX to convert finite discarded Fighters into additional progress without new losses. Two DX awards on separate own turns plus a third friendly loss on another turn permit III at opposing score 3. The later worked fixture will spell out that route. No thresholds or loss points are changed; Stage II remains useful without DX. Whether this mandatory branch investment is fun/fair remains empirical.
+| State | Reset or expiry |
+|---|---|
+| Both players' Death award allowance and X1 first-loss use | Reset for BOTH players at EVERY Start. DX shares the Death allowance. |
+| Resource allowance, voluntary switch, evolution, node unlock, Hope opportunity, E1, RS, DX, DE own-turn uses | Reset for active player only at their own Start. Unowned abilities unavailable. DX still illegal after a loss already used the Death award this turn. |
+| Hope tactical-spend tally | Zero for active player at own Start. First qualifying checkpoint consumes opportunity even if declined/no eligible Hope; no stored award. |
+| Readiness | Refresh only active player's Resources at their Start. |
+| Disrupt / until your next Start | Expire at CASTER/owner's next Start, not affected opponent's. Earlier affected unlock consumes Disrupt instead. |
+| Rage/Luck per-turn caps | New allowance each Start; one attack/turn means no extra use token in this catalog. |
+| A1/RA/HA/LA/injured attack addition/Guard | Recompute per announced attack. Guard ends with that attack; nothing carries to another attack. |
+| Damage, stage, progress, nodes/upgrades, scores, classes and zone contents | Never reset at Start/End. Change only by explicit rule/effect or match reset; fighter leaving play resets its markers. |
 
-## 7. Shared Tech Tree, private progression
-'Shared' means identical available map, NOT joint ownership, race or depleting market. Each player has separate markers and full pool. Unlocks never grant the other player benefits. No node is exclusive between players. All four paths retained: Aggression (A), Survival (S), Economy (E), Sacrifice (X); each has a root plus a second tier, and classes branch across multiple paths.
-Root/Tier 1: own turn ≥2, cost 2. Tier 2/class: own turn ≥4, cost 3. Mixed M: own turn ≥5, cost 3. All are Main actions; at most ONE unlock per own turn, maximum FOUR unlocked nodes total, each ID once. Pay ordinary resources; no development points, kill rewards or resource rebates. Prerequisites must already be unlocked, and cannot be bought in same turn as child. All node effects are optional unless static; remain for match and do not stack with themselves. No refunds, destruction, retirement or respec. Redirection buys another root/child in a remaining slot; visible commitment and sunk cost are intentional. At four nodes only card/fighter decisions can redirect. No node increases the eight-resource cap or refreshes resources.
+No other blanket End reset. Once per turn means once during EACH player's turn; once per own turn means on yours only. Counters of own turns advance, not reset.
 
-### Common nodes (complete effects)
-ID | prerequisites | reward text
-A1 | none | Persistent: when your active attacks, you may pay 1 additional resource to add 1 attack damage. Counts as an attack payment for Hope.
-S1 | none | Persistent/static: all your fighters have +1 maximum health at every stage. Does not heal damage.
-E1 | none | Persistent: once per own Main, discard one card to draw one. No resource cost; discard is mandatory if used.
-X1 | none | Persistent: first time each turn one or more friendly fighters are lost, you may draw one then discard one. One use even for simultaneous losses; draw/discard does not prevent defeat. Resolve after progress triggers, before promotion/check. Resolve available draw/discard per section 4 even with empty zones.
-A2 | A1 | New cards: acquire two Pursuit.
-S2 | S1 | Upgrade: all your Repair cards become Repair+.
-E2 | E1 | New cards: acquire two Disrupt.
-X2 | X1 | Upgrade: all your Cycle cards become Cycle+.
+Main Actions cannot be played on opposing turns. Announce targets/choices before paying; no legal target means cannot play. After legal payment resolve instructions in order as much as possible; unavailable draws/discards do not halt later instructions or checkpoints or invent a card. Draw two with one available means draw one then continue; discard one if possible, otherwise none. Only mandatory Draw-step failure causes draw defeat. Costs are not undone. Resolving Action is face up outside hand/discard, and enters discard after instructions unless stated otherwise. Discard means from hand unless another zone is named. Actual exhausted resources count as spending, not discounted/hypothetical costs.
 
-### Class branches (each Tier 2, same cost/gate)
-Unlock also requires class declared AND at least one friendly Stage II or III fighter of that class currently in play. Once unlocked, no continuous fighter/stage requirement; effects naturally only help named class. Maximum two class/mixed nodes combined, within four total. Same-class branches are alternatives in practice due to node cap, not hard exclusions; you may own both if their roots fit.
-RA | A1; Rage | When your damaged active Rage attacks, add 1 damage (in addition to A1 if paid).
-RS | S1; Rage | Once per own Main, heal 1 damage from one friendly Rage.
-HA | A1; Hope | When your active Hope attacks, you may pay 1 extra resource to add 2 damage; may combine with A1 (total +3 for +2 cost).
-HE | E1; Hope | Your evolution of a Hope costs 0 rather than 1. Still consumes the once-per-own-turn evolution allowance; discounted cost does not count toward Hope progress anyway.
-LA | A1; Luck | Your active Luck's attack adds 1 damage if its target had zero damage when attack was announced.
-LS | S1; Luck | Immediately after your voluntary switch moves your active Luck to reserve, you may heal 2 damage from that Luck. Only voluntary switch action, not promotion or card-driven switches.
-DX | X1; Death | Once per own Main, remove one Fighter card from your discard to award one progress to a friendly Death. This uses the SAME Death one-award-per-turn allowance as a loss; illegal if that allowance already used or no eligible recipient. Removing a card is not a new fighter loss.
-DE | E1; Death | Once per own Main, remove one Fighter card from your discard to draw one. Removal is a cost, not a loss, and cannot trigger Death or X1.
-M | any two different roots; both declared classes with at least one Stage II+ fighter EACH in play; own turn ≥5 | Persistent: immediately after your evolution action, heal 2 damage from one other friendly fighter whose class differs from evolved fighter. Only one use per evolution; no free evolution/progress or class conversion. Single-class decks cannot buy M. Counts as one class/mixed node, not two.
+X1 draws if possible, then discards if possible, then promotion/defeat proceeds even with empty zones. Convert finishes healing/drawing after sacrifice before its checkpoint. No optional effect allows an action or Reaction between instructions.
 
-### Reward lifecycle and acquisition (QA-01 corrected)
-New-card unlock is mandatory: reveal its two personal pool cards; put ONE in hand and shuffle the OTHER into your remaining draw deck immediately. If the draw deck is empty, that copy creates a one-card face-down draw pile. NEVER include existing discard or removed cards in this shuffle. Acquisition itself changes hand +1, draw deck +1, discard +0. The shuffle randomizes the whole remaining draw pile; known acquisition does not expose other hand contents or authorize deck inspection. Use matching opaque sleeves.
-Each purchase adds exactly two cards to your circulating set: 40→42→44 if both A2/E2 acquired, before removals. 'Deck size' here means initial construction/circulating ownership, not draw-pile count. In-match construction ratios may change; all other draw/hand rules unchanged. New names each have two copies maximum; no duplicates from opponent pool or repeating a node. New cards have no other acquisition route. Once used/discarded, they have no return effect in v1.0; there is still NO automatic discard reshuffle. A one-card acquired pile can satisfy a later mandatory draw, but does not avert a subsequent empty-pile mandatory draw by itself.
-Upgrades change ALL copies with the named base identity in hand, draw deck, discard and play for the rest of the match, including copies drawn later. Do not search/mark hidden cards: use a public node reminder/reference defining replacement text. Base name/copy identity remains Repair or Cycle. No extra card is inserted, removed or shuffled. Opponent sees upgrade before choices. Repair+ fully replaces Repair text; Cycle+ fully replaces Cycle text. No second upgrade for same identity exists; other continuous effects apply normally after replacement. Upgrade is player-owned and persists when individual cards leave/return to zones. Removed cards stay removed. There are no permanent attachments or individually upgraded fighter copies in this version.
+## 5. Combat, destruction and end conditions
+Only active can be an attack target. Damage counters placed = attack damage after additions then reductions, minimum0. No retaliation, spillover, accuracy roll, weakness or direct player damage. Damage persists through turns/switching/evolution. Healing removes up to the stated damage; health is a maximum, not a second current-health counter. Damage at least maximum health destroys.
 
-## 8. Complete first-build card catalog
-All numbers below are proposed starting values, not measured balance. A card's class is its printed class; there are no dual-class fighters. The evolution triggers in section 6 apply to every fighter of the matching class. Fighter deployment costs 1 at every name; only Stage I can be deployed. Printed later stages are selected by the stage clip, never added as separate cards. Only the current stage's text applies; abilities are not inherited cumulatively.
+Apply instructions in order. Immediately after each damage/sacrifice instruction, remove all doomed Fighters simultaneously, discard them and remove their markers. Award opponent one defeat point per friendly Fighter lost INCLUDING sacrifice. Finish the resolving action's remaining instructions. At its checkpoint process surviving eligible progress triggers; when both owners choose, turn player chooses first. Then X1, then free promotion of a reserve if active missing, then defeat check. No intervening actions or Reactions. Lethally hit Fighters cannot gain progress or evolve to survive. Promoted Fighters take no leftover damage. A resolving sacrifice's remaining instructions never prevent defeat if no Fighters remain at that check.
 
-### Resource (one card identity)
-**Resource — Resource card.** During your Main, use your once-per-own-turn resource allowance to place this card from hand into your resource zone ready, if you have fewer than eight Resources there. Exhaust this card to pay 1 toward a legal cost. Refresh it at your own Start. It has no class, fighter health or attack, and no other ability. Supply can find this card as specified in section 3.
+Lose if opponent has five points OR you have no Fighters in play. Fighters in hand do not delay defeat. Both losing at same check gives a draw. Mandatory Draw-step failure loses immediately. At end of round15, higher defeat score wins; tie draws. No other tiebreak. Concession permitted.
 
-### Fighters (four identities; all three complete stage lines on each card)
-Name | stage | maximum health | attack cost | attack text | other ability
-**Rage Fighter** (class Rage) | I | 7 | 2 | Deal 2 damage to opposing active. | None.
-Rage Fighter | II | 9 | 2 | Deal 3 damage to opposing active; add 1 damage if this fighter has at least 3 damage when the attack is announced. | None.
-Rage Fighter | III | 11 | 2 | Deal 4 damage to opposing active; add 1 damage if this fighter has at least 3 damage when the attack is announced. | None.
-**Hope Fighter** (class Hope) | I | 6 | 2 | Deal 2 damage to opposing active. | None.
-Hope Fighter | II | 8 | 2 | Deal 3 damage to opposing active. | None.
-Hope Fighter | III | 10 | 1 | Deal 4 damage to opposing active. | None.
-**Luck Fighter** (class Luck) | I | 5 | 1 | Deal 2 damage to opposing active. | None.
-Luck Fighter | II | 7 | 2 | Deal 3 damage to opposing active. | None.
-Luck Fighter | III | 9 | 2 | Deal 5 damage to opposing active. | None.
-**Death Fighter** (class Death) | I | 6 | 2 | Deal 2 damage to opposing active. | None.
-Death Fighter | II | 8 | 2 | Deal 3 damage to opposing active. | None.
-Death Fighter | III | 10 | 2 | Deal 4 damage to opposing active. | None.
-Rage's conditional attack addition combines with RA and a paid A1. Hope's final attack discount is a changed attack cost, not a resource refund. Luck's low Stage I attack cost permits early progress but its lower health risks lethal before evolution. Death's distinction is loss-fed reserve progression and its branches, not an additional loss-trigger ability on each stage. These choices deliberately limit first-build text and are not claims of equal evolution speed.
+## 6. Evolution and class identities
+Enter Stage I, progress0. Each Fighter has stage, damage and progress (0–3). Threshold I→II:2; II→III:3. Progress caps at current threshold, excess lost; Stage III never gains progress. In own Main, once total per own turn, pay1 to evolve one eligible friendly active OR reserve one stage. Remove ALL progress, retain damage/class/card identity. No mid-attack/opponent-turn evolution. Increased maximum health does not remove damage. Leaving play resets all fighter markers; later deployment starts I. No evolution-card deck or spendable progress currency.
 
-### Starting Actions (five identities)
-**Repair — Main Action; cost 1.** Choose one friendly fighter with at least 1 damage. Heal 3 damage from it.
-**Cycle — Main Action; cost 1.** Draw two cards, then discard one card. These are effect draws, not mandatory turn draws: take only cards available. If you have no cards to discard, discard none. The resolving Cycle is not in your hand or discard during its instructions.
-**Guard — Reaction; cost 1.** Play only as defender in the Reaction window of an attack against your active. Reduce that attack's damage by 2. Minimum final damage is zero. This does not prevent non-attack damage and does not move your active. It uses the sole defender Reaction for that attack.
-**Reposition — Main Action; cost 0.** Choose one friendly reserve fighter. Exchange it with your active. Retain both fighters' stage, progress and damage. This is a card-driven switch, costs no additional resource and neither uses nor satisfies the once-per-Main voluntary switch action. It does not trigger LS. You need both an active and a reserve to play it.
-**Convert — Main Action; cost 1.** Choose one of your reserve fighters. Sacrifice it; then heal 3 damage from your active and draw one card. The sacrifice is an instruction, not a resource payment. Opponent gains one defeat point; eligible Death and X1 triggers occur at the action checkpoint, after remaining instructions. Healing is permitted even if active has zero damage. A fifth opposing point still defeats you at that check. Draw only a card available, with no immediate defeat if deck is empty. No reserve means this cannot be played.
+- **Rage:** this Fighter gains1 progress when it survives an opposing attack placing at least1 damage on it, at most once/turn/Fighter. Friendly damage, sacrifice, lethal hits and non-attack damage do not qualify. Only active can be attacked, so Rage risks the active slot.
+- **Hope:** once per own turn, after cumulative payment of at least3 resources for deployment, switching, Main Actions and/or attack, choose ONE eligible Hope in play for1 progress. Node/evolution costs and opposing-turn Reactions excluded. First qualifying checkpoint consumes opportunity even if declined or no eligible recipient; no stored trigger. Multiple Hope do not all grow; actual spending only.
+- **Luck:** this Fighter gains1 progress if its own attack placed at least1 damage on opposing active, whether target survived or not; max once/turn. Zero damage does not qualify. No roll; reserve cannot earn attack progress.
+- **Death:** when one or more OTHER friendly Fighters are destroyed/sacrificed in an event, choose one surviving eligible Death in play for1 progress. Max ONE award across all your Death per turn, either player's turn. Enemy losses do not qualify; simultaneous losses award only one. Reserve Death can progress through real losses, each still giving opposing points. No token Fighters.
 
-### Genuinely new Actions (only in development pools)
-**Pursuit — Main Action; cost 2.** Choose one opposing reserve fighter. Deal 2 damage to it. Resolve destruction and loss triggers normally. This is not an attack, cannot target the active, and grants no Rage or Luck progress. If opponent has no reserve, this card cannot be played. It pressures fighters rotated out while injured, rather than automatically defeating fresh reserves.
-**Disrupt — Main Action; cost 1.** Until your next Start, the opponent's next node unlock costs 2 additional resources. That unlock consumes this effect. Multiple Disrupt effects against the same player do not stack. Put an owner-labeled Disrupt reminder beside that player's tree; remove it on the affected unlock or at your next Start, whichever happens first. This changes only the resource cost: timing gates, prerequisites and node caps still apply. It does not remove, suppress or change already unlocked nodes, cards or health. You may play it even if the opponent currently has no unlocked nodes. They may choose not to unlock before expiry.
-For both new cards, one copy acquired to hand can be played in the same Main if its cost can be paid. The second is shuffled into the remaining draw deck immediately (or creates a one-card pile if empty); acquisition does not touch discard. Neither card has a return-from-discard ability. Each name is acquired only once, as two copies from its own personal node pool.
+At multi-trigger checkpoint remove lethal first, then apply Rage, Hope, Luck, Death awards where applicable. Progress never auto-evolves. DX can supply an alternative Death award but shares its cap. No self-damage cards exist here.
 
-### Existing-card upgrade references (not playable cards)
-**Repair+ — replacement text when you own S2; Main Action; cost 1.** Choose one friendly fighter with at least 1 damage. Heal 4 damage from it. If it is in reserve, you may then exchange it with your active. This exchange costs no additional resource, does not use your voluntary switch allowance and does not trigger LS. If you heal your active, there is no exchange option. Base identity remains Repair.
-**Cycle+ — replacement text when you own X2; Main Action; cost 0.** Draw two cards, then discard one card (take only available draws; discard none if hand is empty). You may then remove one card from your discard. If you do, choose one friendly fighter and heal 1 damage from it. The resolving Cycle+ is not yet in your discard and cannot remove itself. Removal is not a fighter loss, even when removing a Fighter card; it grants no defeat point, Death progress or X1 trigger. Base identity remains Cycle.
-Place these references face up beside the corresponding unlocked node. No reference enters hand, deck or discard, and no reference is a playable Action. All copies use replacement text, including a Repair or Cycle acquired into hand before the node was unlocked. Upgrades are not additional action identities for construction or copy limits.
+**Death III disclosure:** baseline loss-only III requires five different loss awards (2 then3). Fifth friendly loss ends the match before a later Main evolution; loss-only III is unattainable in this catalog. Reach II through two losses, then X1→DX converts finite discarded Fighters into progress without more loss points. Two DX awards on different own turns plus a third loss on another turn permit III at opposing score3 (§13.4). Thresholds unchanged; II is usable without DX. This required branch investment is provisional, not equal class pacing or proven fun.
 
-## 9. Two exact legal starters and personal pools
-These are proposed mechanical starter identifiers, not game/deck branding. Both are mixed-class decks. Resource cards use identical text; repeated fighters include the same complete stage panel. All five starting Action texts above cover every card in either starter.
+## 7. Common Tech Tree with separate public progress
+Shared means identical accessible map, NOT joint progress, ownership, market or race. Each player owns separate markers and full personal pool. Opponent unlocks grant you nothing and do not consume your options. Four retained paths: Aggression A, Survival S, Economy E, Sacrifice X. Each class has options on multiple paths.
 
-**Starter A — declared Rage/Hope, 40 starting cards**
-- 14 Resource
-- 6 Rage Fighter
-- 6 Hope Fighter
-- 4 Repair
-- 4 Cycle
-- 3 Guard
-- 3 Reposition
-Total: 14 Resource + 12 Fighter + 14 Action = 40. No Convert. No starting development cards. Suggested teaching setup, not a requirement: Rage active, Hope reserve.
+Roots/Tier1: own turn≥2, cost2. Common Tier2/class: own turn≥4, cost3. Mixed M: own turn≥5, cost3. All Main actions, at most ONE unlock/own turn, maximum FOUR nodes total, each ID once. Pay ordinary resources, no development points or kill rebates. Prerequisites must preexist and cannot be bought same turn as child. Effects optional unless static, persistent for match, no self-stacking. No refunds, node removal, retirement or respec. Pivot by buying another root/child in a remaining slot; sunk costs and scarce slots are the opportunity cost. At four nodes only card/fighter choices redirect. No node increases resource cap or refreshes resources.
 
-**Starter B — declared Luck/Death, 40 starting cards**
-- 14 Resource
-- 6 Luck Fighter
-- 6 Death Fighter
-- 3 Repair
-- 3 Cycle
-- 4 Guard
-- 2 Reposition
-- 2 Convert
-Total: 14 Resource + 12 Fighter + 14 Action = 40. Suggested teaching setup: Luck active, Death reserve. Sacrifice is optional, not needed to win or to deploy Death.
+### Common nodes
+| ID | Prerequisite | Complete effect |
+|---|---|---|
+| A1 | none | When your active attacks, may pay1 extra resource for +1 attack damage. Counts as attack payment for Hope. |
+| S1 | none | All your Fighters have +1 maximum health at every stage. Does not heal. |
+| E1 | none | Once per own Main, discard one card to draw one. No resource cost; discard required to use. |
+| X1 | none | First time each turn one or more friendly Fighters are lost, may draw one then discard one. One use for simultaneous losses. After progress, before promotion/check; does not prevent defeat. Partial resolution per §4. |
+| A2 | A1 | Acquire two Pursuit. |
+| S2 | S1 | All your Repair copies become Repair+. |
+| E2 | E1 | Acquire two Disrupt. |
+| X2 | X1 | All your Cycle copies become Cycle+. |
 
-Legality arithmetic: each declared class supplies six fighters (minimum four, name maximum twelve); each Action name is at most four; no undeclared fighters appear. Starter A uses 4+4+3+3=14 Actions; Starter B uses 3+3+4+2+2=14. Together print 28 Resource, six of each of the four Fighters, seven Repair, seven Cycle, seven Guard, five Reposition, two Convert: 80 starting cards.
-**Each player's separate pool:** two Pursuit and two Disrupt (four cards), plus one Repair+ text reference and one Cycle+ text reference (two non-playable references). Thus the two-player box needs four Pursuit and four Disrupt, not a contested supply. All 17 node effects in section 7 are available on both boards regardless of starter; class prerequisites limit which can be bought. Never include pool cards or text references in initial 40-card construction.
-Maximum starting-plus-acquired ownership per player is 44 game cards, before removal; references do not count. Removing cards for DX, DE or Cycle+ lowers remaining circulating material but never reopens a node/pool reward. Reset after a match: return Pursuit/Disrupt to their owner's pool, restore removed starting cards, remove node/upgrade effects and reconstruct the exact 40-card starter. No permanent component alteration.
+### Class branches and mixed milestone
+Class-node purchase also requires class declared AND friendly Stage II/III Fighter of that class currently in play. Losing the qualifying Fighter later does not deactivate the node. Maximum TWO class/mixed nodes combined within four total. Both branches of a class may coexist if their roots fit; not hard-exclusive.
 
-### Acquisition correction and preserved history
-QA-01 supersedes r5–r7's one-hand/one-discard destination. That earlier rule stranded the second copy with no recycling route; its historical caveat is preserved in those revisions, not an alternative live rule. Current sections 7–9 consistently use one hand/one shuffled draw-deck copy. No discard reshuffle is introduced. This is a material correction to functional deck adaptation, not external validation or a playtest result.
+| ID | Prerequisites | Complete effect |
+|---|---|---|
+| RA | A1; Rage | Damaged active Rage attacks for +1 damage, in addition to A1 if paid. |
+| RS | S1; Rage | Once per own Main, heal1 from a friendly Rage. |
+| HA | A1; Hope | Active Hope may pay1 extra resource when attacking for +2 damage; combines with A1 (+3 for +2 total payment). |
+| HE | E1; Hope | Your Hope evolution costs0 instead of1; still uses once-per-own-turn evolution. |
+| LA | A1; Luck | Active Luck attack +1 damage if target had zero damage when attack announced. |
+| LS | S1; Luck | Immediately after voluntary switch moves active Luck to reserve, may heal2 from that Luck. Not promotion or card-driven switches. |
+| DX | X1; Death | Once per own Main, remove a Fighter from your discard to award1 progress to friendly Death. SAME one-award-per-turn allowance as loss; illegal if already used or no eligible recipient. Removal not a loss. |
+| DE | E1; Death | Once per own Main, remove a Fighter from your discard to draw one. Removal cost not a loss; no Death/X1 trigger. |
+| M | Any two different roots; both declared classes each with a friendly Stage II+ Fighter currently in play; own turn≥5 | Immediately after your evolution action, heal2 from one OTHER friendly Fighter whose class differs from evolved Fighter. One use per evolution; no free evolution/progress/class conversion. Single-class cannot buy M. Counts as one class/mixed node. |
 
-## 10. Exact two-player physical kit and tracking
-No software, application, separate evolution deck, attachments, stickers, card destruction or individual-copy upgrade markers are needed. This is a build specification, not a claim that components have been manufactured.
+Links: A1→A2/RA/HA/LA; S1→S2/RS/LS; E1→E2/HE/DE; X1→X2/DX; any two different roots→M with its additional gates. 17 nodes =4 roots+4 common children+8 class branches+M.
 
-### Cards and printed aids — exact unchanged starter kit
-- **80 starting game cards**, in the name quantities at the end of section 9.
-- **8 personal development game cards**: four Pursuit, four Disrupt; split into two identical four-card pools.
-- **4 non-playable upgrade reference cards**: two Repair+ and two Cycle+, one of each per player. Mark them REFERENCE / DO NOT SHUFFLE. Print full section 8 replacement text, not just a stat difference.
-- **88 opaque sleeves**, 44 matching sleeves for each owner, enclosing their 40 starting and four pool game cards. No special sleeves or backs distinguish acquired cards within an owner's deck. References remain unsleeved and never enter hidden zones. No replacement game cards or additional evolution cards: zero of each.
-- **2 identical player boards**, one per player, each with one active space, three reserve spaces, eight Resource spaces, hand/deck/discard/removed/pool labels, declaration boxes for four classes, the full 17-node map, and a turn-use strip. Print all costs, turn gates and full node text from section 7. Tree links: A1→A2/RA/HA/LA; S1→S2/RS/LS; E1→E2/HE/DE; X1→X2/DX; any two different roots→M. Class/stage conditions and the two-class-node cap remain printed beside the relevant nodes; arrows alone are not sufficient.
-- **2 rules reference sheets**, one per player, with ordered phases, reset table, defender-only Reaction window, checkpoint order, evolution triggers/thresholds, five-loss/no-fighter/draw/round-cap defeat, Supply and match-reset instructions. Use both sides if necessary; do not abbreviate away lethal timing or Hope exclusions.
-Thus print **92 card-sized pieces** (88 game cards + four references), two boards and two rules sheets. Boards/sheets are aids, not cards and not counted in deck construction.
+### New-card acquisition and lifecycle
+Mandatory when unlocked: reveal both personal pool cards, put ONE in hand, shuffle OTHER into remaining draw deck immediately. Empty deck becomes a one-card face-down pile. NEVER include existing discard/removed. Acquisition: hand+1/deck+1/discard+0. Shuffle whole remaining draw pile without inspection or revealing other hand contents. Matching opaque sleeves.
 
-### Optional construction expansion — separate, NOT in starter totals (QA-04)
-The twelve-copy Fighter-name cap makes a legal single-class list possible: 14 Resource + 12 of that class's Fighter + 14 legal starting Actions. A two-class list can allocate fighters 4/8 through 8/4, or 6/6. Exact starters still use 6/6.
-For a catalog-complete TWO-DECK construction option across declared classes, add **24 Fighter cards: six extra Rage, six extra Hope, six extra Luck, six extra Death**. Combined with the starter stock this supplies twelve/name. Add **24 matching opaque sleeves** for those cards, split/reassigned to each owner's chosen 40-card deck plus pool. Print no new card text, references, markers or boards. Expanded stock totals: 112 game cards, four references = 116 card-sized pieces, 112 sleeves. Unselected construction stock stays outside the match, distinct from the personal development pools, and cannot be acquired. This quantity supports any legal single-class deck and the two original starters, but NOT simultaneous identical mono-class decks (which would need 24 of that Fighter name); arbitrary duplicate-deck construction is not promised. Single-class setup declares one class, cannot buy M, and otherwise follows the same rules.
+Each acquired name max two copies; each node once, no opponent pool or other acquisition route. Owned circulating cards 40→42→44 before removals; construction ratios may change during match. Deck size here is circulating ownership, not draw-pile size. Used/discarded rewards have no return effect; NO discard reshuffle. New one-card pile can satisfy next mandatory draw but cannot avert later empty-draw defeat by itself. Repeating purchases/respec cannot farm rewards.
 
-### Required reusable tracking components, total for two players
-- **8 stage clips** indicating I/II/III, one for each possible in-play fighter. Clip the margin, not text.
-- **8 progress sliders/dials, range 0–3**; Stage I caps at 2, Stage II at 3, Stage III stays 0.
-- **8 damage dials, range 0–20**. These record damage, not remaining health. At most four fighters/player need dials. Current highest possible attack damage is **7**, confirmed by QA-07: Rage III 4 + injured 1 + RA 1 + A1 1; Hope III 4 + HA 2 + A1 1; Luck III 5 + fresh-target LA 1 + A1 1. Death III with A1 reaches 5. Class additions cannot combine on one fighter; Pursuit is a separate action. Highest surviving damage is 11 (Stage III Rage with S1 has health 12), so transient 11+7=18 fits. Zero the dial when fighter leaves play.
-- **8 node ownership markers**, four per player, labeled with owner and slot number. Place on unlocked IDs, never between nodes. An empty slot marker displays remaining development capacity; do not add a fifth.
-- **4 class declaration markers**, two per player, labeled with owner. Starters use both. Declaration never changes during a match.
-- **22 turn-use markers**, eleven per player, for labeled boxes: resource allowance, voluntary switch, evolution, node unlock, Hope opportunity, Death award, E1, X1, RS, DX, DE. DX's box is redundant with the shared Death cap but helps remind players of its Main-only use. Unowned-node boxes are unused, not additional abilities. Reset according to section 4: own-turn uses at owner's Start; BOTH players' Death/X1 uses at every Start. Rage/Luck need no extra use markers because this catalog permits only one opposing/own attack per turn respectively.
-- **2 tactical-spend dials, range 0–8**, one per player, to count only their own qualifying deployment/switch/Main Action/attack payments for Hope. Reset at own Start; exclude evolution, node costs and opponent-turn Reactions. Mark Hope opportunity at its first threshold checkpoint even if declined or no eligible recipient exists. Eight is enough because resources cannot be refreshed or multiplied during a turn and the zone cap is eight.
-- **2 score dials, range 0–8**, showing fighters the opponent has lost. Check victory at five, not at dial maximum; extra range accommodates any simultaneous-loss bookkeeping.
-- **2 own-turn dials, range 0–15**, initialized at 0, advanced at own Start. The second player's End with both dials at 15 is the round-15 check; no separate round counter is needed.
-- **2 Disrupt reminder markers**, each labeled with its caster/owner. Place beside affected tree; remove on consumption or at caster's next Start. No ongoing damage/reduction token is needed for Guard: keep the Reaction visible until the single attack resolves, then discard it.
-- **1 first-player marker**, assigned randomly during setup and never moved within that match.
-Total reusable tracking pieces: **67** = 8+8+8+8+4+22+2+2+2+2+1. No fighter tokens, reserve-expansion markers, separate development-point currency or individual resource-unit tokens are required. Exhaustion is tracked by rotating Resource cards; resources are the cards themselves. Supply never creates an extra token resource.
+### Existing-card upgrade lifecycle
+All copies of base identity in hand, draw deck, discard or play use replacement text for rest of match, including copies drawn later. Public node/reference; no hidden search, marking or sleeve swap. No cards inserted/removed/shuffled. Base name/copy identity unchanged. Repair+ replaces Repair entirely, Cycle+ replaces Cycle entirely. No second upgrade to same identity; other continuous effects apply after replacement. Player-owned upgrade persists through individual zone changes; removed cards stay removed. No permanent attachments/individually upgraded Fighters. Match reset restores base texts.
 
-### Handling protocol
-Keep each fighter's stage/progress/damage triple beside that card; move the triple with the fighter on any switch. Never put these components on a card going into hand, deck, discard or removed zone. Node markers and upgrade references remain beside the owner, not the fighter. All such states are public; do not place markers on hidden card copies. A resolving Action is temporarily face up beside its owner's discard, then joins discard after its instructions. Effect draws mean draws that do not cause Draw-step defeat; when an effect instructs drawing two, take two if available, not an elective smaller number. Do not reset persistent markers at End. The starter kit supports the two listed decks; optional construction stock remains separate as above.
+### Adaptive choices and safeguards
+Defensive Rage may buy S1/RS then pivot via A1/RA over separate turns (four slots, two class nodes), instead of being forced into offense. E1/E2 taxes a visible opposing development plan; A1/A2 punishes damaged reserves. Buying a counter delays healing, attacks or another upgrade. Fixed turn gates, one unlock/turn, resource competition, finite pools, no kill-funded research, point-giving sacrifices and capped triggers resist progression loops; they do NOT establish effective comeback. Leaders can also buy counters. Four full slots end tree redirection; M may be win-more. Test these risks rather than adding more systems speculatively.
 
-## 11. Practical first physical-playtest procedure — planned, not performed
-Purpose: determine whether the proposal can be executed without unresolved rulings, then collect directional pacing/handling observations. This is not a software task, a claimed test run, an independent critique or a balance certificate.
-1. **Prepare and inventory.** Two human pilots assemble the exact STARTER kit in section 10 and independently count both 40-card starters and both four-card pools. Set all boards to zero. Keep a paper log and an ordinary clock available for observation; they are evaluation aids, not required game components. Record the GAME_DESIGN revision used. Do not mix revisions during a game. Optional construction expansion is not required for these six starter games.
-2. **Teach and audit setup.** Read phases, reset table and checkpoint order aloud. Follow section 2, including selected opening fighters, simultaneous mulligan and first-player restriction. Confirm each player has two resources, two fighters, five hand and 31 draw cards after mulligan. Explain Supply's real card discard, eight-resource cap and no discard reshuffle. The suggested opening classes are optional teaching choices, not mandatory setup restrictions.
-3. **Boundary rehearsal before scored games.** Using cards openly as fixtures, have both pilots explain: Guard reducing a Luck hit to zero; lethal on progressing Rage; Convert giving opponent point five; empty-deck/empty-hand X1 partial resolution; Death/DX sharing one award and finite Death III route; Repair becoming Repair+ for a copy already in hand; Repair+'s switch not activating LS; Disrupt expiring at caster's Start without a purchase; evolution before versus after unlocking M; and second acquisition copy shuffled into draw deck, including an initially empty draw pile and untouched discard. These are requested future checks, not reported passing results. Restore complete decks and shuffle normally afterward; fixtures are not match outcomes.
-4. **Run three paired match sets (six games).** In each pair keep decks fixed and swap the starting player in game two. In pair two also swap which pilot controls A/B. Do not fix draw order. Pair one emphasizes core timing, pair two compares voluntary attack-versus-node choices, pair three permits unrestricted route choice and deliberate adaptation. These emphases do not change any legal rule. If six games are impractical, report the smaller actual sample rather than marking the plan completed.
-5. **Log each own turn.** Record first player, starter, score, resource-zone size/ready resources, Supply use and its discarded name, active/stage/damage/progress, qualifying Hope spend, evolution and reason, node ID/cost/turn, acquired card destinations and shuffle, Actions used, Reaction decision, and terminal hand/deck/discard counts. Record actual elapsed match time, pauses for rules/handling, missed triggers and whether corrections exposed private information. Never demand players reveal hidden hands during normal play merely for logging; record hand contents only after the game or with explicit open-fixture consent.
-6. **Capture adaptation and comeback choices.** Ask each pilot at a route change: what public opposing plan prompted it; which upgrade/attack was delayed; whether a free slot remained; whether Disrupt forced delay or was ignored; whether Pursuit threatened a rotated injured fighter; whether a behind player had a useful alternative to spending on development. For M record eligibility turn, purchase turn, healing actually used, score position and foregone fourth-node alternatives. Mark opportunities separately from purchases.
-7. **Stop disputed states honestly.** Pause, quote conflicting clauses, record state and disagreement. If a temporary joint ruling is needed to finish, label that game HOUSE RULING / NON-CANONICAL and write the ruling; do not retroactively claim printed rules resolved it. Do not change core rules mid-pair and combine those results with unmodified games. A component shortage, unrepresentable state, illegal necessary action or unresolved essential timing blocks a clean usability claim until repaired and replayed.
-8. **Review, do not over-infer.** Summarize actual observed errors, revision and sample size; count round-cap endings, stage timing by class, node-slot lock-ins, turns acquired/shuffled copies are drawn/used versus left inaccessible by game end, and whether economic draws accelerated deck-out. Six games can reveal handling problems, not establish class win rates or statistical fairness. Prioritize rule ambiguities and repeated no-choice turns before tuning health/damage. Propose a single explicit revision at a time and rerun paired seats. Independent QA has critiqued r7; recheck of actual later saves remains required. Pilots' agreement is not independent reviewer approval.
+## 8. Complete card catalog
+All values provisional. Class printed, no dual-class Fighters. Deploy any Fighter for1 into reserve at Stage I. Only current stage line applies, not inherited cumulative abilities. Print three stage lines on each Fighter; no separate evolution cards.
 
-## 12. Actual research integration, divergence and bounded status
-Read complete REVIEWS.md r4, including completed researcher task 3cb0de43e9404bbb9d8e7b2784c0abc0's targeted synthesis; this bounded fix also reads full independent QA appendix in r5 at offset 17462. Research findings remain attributed to growth; this author has not newly fetched these pages or independently verified their rules.
-- **Shared map/private progress:** the researcher's inspected [Tapestry diary](https://stonemaiergames.com/games/tapestry/design-diary-tapestry/) describes four shared linear tracks with individual tokens and no blocking. Our duplicate 17-node boards use shared-structure/private-ownership, but branching, class gates, four slots and fighter evolution are this project's untested proposal, not rules established by that source. Duplicate boards and full references avoid ownership ambiguity and pieces obscuring an opponent's map.
-- **Acquisition timing:** the inspected [Star Realms guide](https://www.starrealms.com/learn-to-play) places acquisitions in discard AND later reshuffles discard into a new deck. Our r5–r7 discarded second copy lacked that engine. Following QA-01, current acquisition instead gives one hand copy and shuffles one into the remaining draw deck, creating a one-card pile if empty. This is an explicit local amendment, NOT the external game's rule or permission to reshuffle existing discard. Fixed personal pools also deliberately diverge from its contested market.
-- **Upgrades and component identity:** growth prefers printed per-copy replacements as one reusable physical option, while acknowledging a type-wide modifier is simpler but different. We retain all-copy Repair/Cycle replacement references to avoid searching hidden zones, matching copies or altering sleeve thickness. The inspected [Clank! Legacy FAQ](https://www.direwolfdigital.com/clank-legacy-acquisitions-incorporated/faq/) establishes a temporary chosen-copy marker and permanent campaign alteration, not a reusable hidden-deck upgrade precedent. No source proves our approach works smoothly; the physical procedure checks it.
-- **Progression/snowball:** fixed turn gates, resource competition, no kill-funded nodes and four slots are proposed safeguards, not measured comeback mechanisms. A leader can buy a node while retaining a stronger fighter; Hope III frees resources, S1/RS/Repair+ may stall, Cycle+ loses Hope tactical spend, Luck may be denied by Guard, and M may reward existing stage advantage. Four full slots end tree redirection, and leaders can also buy Disrupt. These remain QA-06 empirical risks, not proven infinite loops or reasons to add systems before observations. Public counts, Guard, rotation, Pursuit, finite sacrifice and Disrupt create candidate responses, not guaranteed recovery.
-Earlier source cautions about lethal timing, safe reserve farming and spend/refund loops remain relevant. Their mitigations are in the core and catalog; no empirical effectiveness is claimed. Failed/limited access documented by growth (Dominion 403, oversized Mystic Vale PDFs, earlier blocked Pokémon page) remains in REVIEWS, not filled with guessed rules. No originality or legal assessment is claimed.
+**Resource — Resource card:** Once during own Main use resource allowance to play ready from hand if fewer than eight in zone. Exhaust to pay1 of a legal cost; refresh at own Start. No class, health, attack or other ability. Supply may find it.
 
-### Bounded QA disposition — fixes saved before examples
-Independent reviewer task 2548319576f9449aaf1521c1512379a7 saved REVIEWS r5 against actual GAME_DESIGN r7. This author's response is not an independent recheck and does not alter REVIEWS.
-- QA-01: second acquired copy now shuffles into draw deck; empty-pile rule and no discard reshuffle explicit. Destinations, catalog, caveat, research comparison and rehearsal/logging harmonized.
-- QA-02: complete worked turns still pending the separate incremental examples save; no boundary rehearsal is represented as completed play.
-- QA-03: one exact reset table; general partial resolution, X1 empty-zone resolution, Hope first-opportunity loss, Disrupt caster expiry and shared DX cap explicit.
-- QA-04: Fighter-name cap twelve; exact 6/6 starters unchanged. Separate optional 24-Fighter/24-sleeve construction expansion, not silently in the 88-game-card starter kit.
-- QA-05: baseline Death III impossible without DX disclosed; finite DX route retained for explicit worked demonstration. Thresholds unchanged.
-- QA-06: retained as empirical questions in procedure/status; no claim of balance, comeback rate or ergonomic validation.
-- QA-07: max attack7 correct and retained with class calculations; Convert needs a reserve and cannot sacrifice the last/only fighter.
-Catalog, exact starters, all texts, pools, kit and test procedure are concrete. Full turns are next, independent recheck and consolidation later. No physical game, simulation, code execution or human approval occurred. Failed author task e7777cd07919471dbc1982762691b3dd remains failed historical context; r5 text is continued, not awaited or relabeled successful. Historical caveats remain available in prior revisions rather than competing with current rules.
+### Fighters
+Every attack targets opposing active. Table damage is before modifiers/reductions. No other abilities besides printed Rage attack condition and global class evolution rules.
+
+| Name / class | Stage | Maximum health | Attack cost | Attack text |
+|---|---|---:|---:|---|
+| Rage Fighter / Rage | I |7|2|Deal2 damage.|
+| Rage Fighter / Rage | II |9|2|Deal3 damage; add1 if this Fighter has at least3 damage when attack announced.|
+| Rage Fighter / Rage | III |11|2|Deal4 damage; add1 if this Fighter has at least3 damage when attack announced.|
+| Hope Fighter / Hope | I |6|2|Deal2 damage.|
+| Hope Fighter / Hope | II |8|2|Deal3 damage.|
+| Hope Fighter / Hope | III |10|1|Deal4 damage.|
+| Luck Fighter / Luck | I |5|1|Deal2 damage.|
+| Luck Fighter / Luck | II |7|2|Deal3 damage.|
+| Luck Fighter / Luck | III |9|2|Deal5 damage.|
+| Death Fighter / Death | I |6|2|Deal2 damage.|
+| Death Fighter / Death | II |8|2|Deal3 damage.|
+| Death Fighter / Death | III |10|2|Deal4 damage.|
+
+Rage condition combines with RA/paid A1. Hope discount is cost change, not refund. Luck's cheap I attack risks lower health; Death's identity is loss-fed reserve progress/branches rather than an extra stage ability. No equal evolution-speed claim.
+
+### Five starting Action identities
+**Repair — Main Action, cost1.** Choose friendly Fighter with at least1 damage. Heal3 from it.
+
+**Cycle — Main Action, cost1.** Draw two, then discard one. Take only available effect draws; discard none if unable. Resolving Cycle is not in hand/discard during instructions.
+
+**Guard — Reaction, cost1.** Only as defender in attack Reaction window against your active. Reduce that attack damage by2, minimum0. Does not prevent non-attack damage or move active. Uses sole defender Reaction; keep face up until attack resolves, then discard.
+
+**Reposition — Main Action, cost0.** Choose friendly reserve and exchange with active. Keep both Fighters' stage/progress/damage. Card-driven switch, no additional resource, neither uses nor satisfies voluntary-switch action, no LS trigger. Need both active and reserve.
+
+**Convert — Main Action, cost1.** Choose friendly reserve, sacrifice it, then heal3 from active and draw one. Sacrifice an instruction, not resource payment. Opponent scores1; eligible Death/X1 at action checkpoint after remaining instructions. Heal allowed even with active damage0. Fifth point still defeats you at check. Draw available card only, no empty-effect-draw defeat. No reserve means illegal; cannot sacrifice last/only Fighter.
+
+### Development-only Actions
+**Pursuit — Main Action, cost2.** Choose opposing reserve Fighter and deal2 damage. Normal destruction/loss triggers. Not an attack, cannot target active, grants no Rage/Luck progress. Illegal without opposing reserve.
+
+**Disrupt — Main Action, cost1.** Until your next Start, opponent's next node unlock costs2 extra resources, consuming effect. Multiple Disrupt against same player do not stack. Put caster-labeled reminder beside affected tree; remove on affected unlock or caster's next Start, whichever first. Changes only cost, not gates/prerequisites/caps or existing nodes/cards/health. May play against player with no nodes; they may wait it out.
+
+Hand reward copy may be used same Main if affordable. Other copy shuffled into draw deck as §7. Neither has return-from-discard ability; two/name acquired once from personal pool.
+
+### Upgrade references — never playable cards
+**Repair+ — S2 replacement text; Main Action, cost1.** Choose friendly Fighter with at least1 damage; heal4. If it is in reserve, may then exchange with active. No extra cost, no voluntary-switch allowance use, no LS. Healing active gives no exchange option. Base identity Repair.
+
+**Cycle+ — X2 replacement text; Main Action, cost0.** Draw two then discard one (available draws only; discard none if unable). May then remove one card from your discard. If you do, choose friendly Fighter and heal1. Resolving Cycle+ not yet discard, cannot remove itself. Removal not a loss, even for Fighter: no point, Death or X1. Base identity Cycle.
+
+References beside node, not in hand/deck/discard; full text replaces all copies including already-held ones. Not extra construction/copy identities.
+
+## 9. Exact legal starters and personal pools
+| Card | Starter A (Rage/Hope) | Starter B (Luck/Death) |
+|---|---:|---:|
+| Resource |14|14|
+| Rage Fighter |6|0|
+| Hope Fighter |6|0|
+| Luck Fighter |0|6|
+| Death Fighter |0|6|
+| Repair |4|3|
+| Cycle |4|3|
+| Guard |3|4|
+| Reposition |3|2|
+| Convert |0|2|
+| TOTAL |40|40|
+
+Both 14 Resource+12 Fighter+14 Action, six each declared class≥4, Actions≤4/name, Fighters≤12/name. A Actions4+4+3+3=14; B3+3+4+2+2=14. Suggested teaching setup A Rage active/Hope reserve, B Luck active/Death reserve; optional, not mandatory.
+
+Combined starting stock: Resource28, six each of four Fighters (24), Repair7, Cycle7, Guard7, Reposition5, Convert2 =80.
+Each player's personal pool: Pursuit2, Disrupt2, plus one Repair+ and one Cycle+ non-playable reference. Box pool8 game cards, four references. Both boards have all17 nodes; class gates restrict purchases. None in starting40. Max44 circulating cards before removals; removing cards never reopens rewards. After match return rewards to pool, restore removed starters, clear nodes/upgrades/markers and rebuild exact40. No irreversible component alterations.
+
+The old r5–r7 second-copy-to-discard rule is superseded: it stranded a reward without return. Only hand+shuffled-deck is current; no discard recycling introduced. Prior revisions preserve the error/fix evidence.
+
+## 10. Exact physical kit and tracking
+This is a build specification, not manufactured material. No application, stickers, permanent card destruction, attachments, evolution deck or individual-copy upgrade markers.
+
+### Cards, sleeves, boards and references
+- 80 starter game cards in §9 quantities.
+- 8 development game cards: Pursuit4/Disrupt4 split into two identical pools.
+- 4 unsleeved non-playable upgrade references: Repair+2/Cycle+2, full replacement text, marked REFERENCE / DO NOT SHUFFLE.
+- 88 opaque sleeves:44 matching per owner (40 starter+4 pool). No distinguishable acquired-card backs/thickness. Zero replacement game cards; zero evolution game cards.
+- 2 identical player boards: active1, reserve3, Resource8, zones labeled, four declaration boxes, full17-node map with IDs/links/costs/gates/full effects and turn-use strip. Include class-stage rules and combined two-class-node cap; arrows alone insufficient.
+- 2 rules reference sheets: ordered phases, reset table, defender-only Reaction, checkpoint order, evolution/thresholds, Supply, defeat/round cap and match reset. Both sides permitted; do not omit lethal or Hope exclusions.
+Total92 card-sized pieces (88 game cards+4 references), two boards, two rules sheets.
+
+### Optional fighter-stock expansion, NOT in starter totals
+Add24 Fighters (six extra of each class) plus24 matching sleeves to supply twelve/name. Expanded112 game cards,116 card-sized pieces,112 sleeves. No new text/aids/markers. Supports a legal single-class choice with available Resource/Action stock, not arbitrary simultaneous deck pairs. Two identical mono-class decks need24 of that Fighter name, not supplied; Action stock also finite (e.g. seven Repair, not eight for two four-Repair lists). Unselected stock stays outside match and cannot be acquired. Single-class list:14 Resource+12 that Fighter+14 legal starting Actions; cannot buy M. Two-class fighter splits4/8 through8/4. Exact two starters require no expansion.
+
+### 67 reusable tracking pieces (two-player totals)
+| Component | Quantity | Range/use |
+|---|---:|---|
+| Stage clips |8|I/II/III, one/Fighter in play|
+| Progress sliders/dials |8|0–3; I cap2, II cap3, III0|
+| Damage dials |8|0–20, damage NOT remaining health|
+| Node markers |8|4/player, owner+slot labeled|
+| Declaration markers |4|2/player, fixed classes|
+| Turn-use markers |22|11/player boxes: resource, voluntary switch, evolution, unlock, Hope, Death, E1, X1, RS, DX, DE|
+| Tactical-spend dials |2|0–8, actual qualifying Hope spending|
+| Score dials |2|0–8, opposing Fighters lost; victory at5|
+| Own-turn dials |2|0–15, start0|
+| Disrupt reminders |2|Caster/owner labeled|
+| First-player marker |1|Fixed for match|
+
+Sum8+8+8+8+4+22+2+2+2+2+1=67. DX use box redundant with shared Death allowance but aids reminders. Reset per §4, not all at End. Rage/Luck need no extra use token with one attack/turn. No fighter/resource-unit/development-currency tokens. Resource exhaustion by rotation.
+
+Max attack7: Rage III4+injured1+RA1+A1=7; Hope III4+HA2+A1=7; Luck III5+LA1+A1=7; Death4+A1=5. Class additions cannot combine on one Fighter; Pursuit separate. Highest surviving damage11 on Rage III/S1 health12; transient11+7=18 fits dial20. Tactical spend≤8 because cap8 and no refresh/income multiplication. Score8 accommodates transient losses at score4; turn15 fits round cap.
+
+Keep each Fighter's three markers beside it and move with switches. Clear when leaving play; never attach to cards entering hidden zones/discard. Nodes/references beside owner, not Fighters. No hidden copy markers. Resolving Actions face up beside discard; Guard visible to attack completion. Progress/damage/stages public. Own-turn15 for both with second player's End triggers round15; no extra round counter.
+
+## 11. First physical-playtest procedure — planned, not performed
+1. Two pilots inventory exact starters/pools/components; record rulebook revision. Set state zero; no mixing revisions. Paper log/clock are observation aids, not required game components.
+2. Read phases/reset/checkpoints aloud, audit setup:2 resources/2 Fighters/hand5/deck31. Teach Supply, cap8, no discard reshuffle, optional teaching setup and first-player restriction.
+3. Rehearse open boundary fixtures: Guard→zero Luck damage; lethal Rage; Convert point5; empty X1; Death/DX sharing cap; finite DeathIII; already-held Repair upgrade; Repair+ not LS; caster-timed Disrupt expiry; M before/after evolution; second acquisition into empty draw pile with discard untouched. These are future checks, not passing results. Restore/shuffle before matches.
+4. Plan three paired sets (six games), swap first player per pair, swap deck pilots in pair2. Pair1 timing, pair2 tactics-vs-node costs, pair3 free adaptation; no rules change/fixed draws. Report actual smaller sample if incomplete.
+5. Each own turn log score/resource size+ready, Supply discarded identity, active/stage/damage/progress, Hope spend, evolution/trigger, node/cost/turn, acquisition destinations/shuffle, Actions/Reaction, terminal hand/deck/discard counts. Log time/pauses/errors/missed triggers and private information exposed by corrections. Do not reveal hands for logging during normal matches; use after-game/open-fixture consent.
+6. At pivots ask opposing public plan, foregone upgrade/attack, free slots, Disrupt paid/waited, Pursuit threat and behind-player alternative. For M log eligibility/purchase/healing/score/foregone node. Distinguish opportunity from purchase.
+7. Stop disputes, record exact state and conflicting clauses. A joint temporary ruling makes game HOUSE RULING / NON-CANONICAL; do not claim printed rules resolved it. Do not aggregate changed rules with unmodified paired games. Shortage, unrepresentable state or essential ambiguity requires repair/replay before clean usability claim.
+8. Summarize sample/revision, errors, round-cap endings, stage timing by class, lock-ins, shuffled-card draw/use turns and draw-out from economy. Six games reveal handling, not fair win rates. Prioritize ambiguities/repeated no-choice turns before tuning; change one explicit revision and rerun seats. Pilot agreement is not independent QA or CEO approval.
+
+## 12. Evidence, review/fix record and limitations
+Research facts belong to growth in REVIEWS r3–r4, not verified anew by this consolidation:
+- Tapestry publisher diary https://stonemaiergames.com/games/tapestry/design-diary-tapestry/ supports shared linear tracks/individual nonblocking progress. Our branching/class gates/four slots/evolution are local untested proposals, not that game's rules. Duplicate boards avoid ownership confusion/obscured text.
+- Star Realms guide https://www.starrealms.com/learn-to-play supports discard acquisition WITH later reshuffle. Our former discard second copy lacked that engine; QA-01 changed it explicitly to hand+shuffled-deck, not copying external rules or recycling discard. Personal fixed pools differ from contested market.
+- Clank! Legacy FAQ https://www.direwolfdigital.com/clank-legacy-acquisitions-incorporated/faq/ supports temporary copy marking/permanent campaign changes, not reusable hidden-deck upgrades. We chose all-copy references over researcher's suggested per-copy replacements to avoid hidden searches/marked sleeves. Handling effectiveness untested.
+- Research access failures remain documented: Dominion403, oversized Mystic Vale PDFs, earlier blocked Pokémon rules. No missing contents inferred, originality/legal assurance or comprehensive comparative survey claimed.
+
+QA task2548319576f9449aaf1521c1512379a7 reviewed actual r7 in REVIEWS r5. Designer's saved r8 corrected QA-01 acquisition, QA-03 reset/partial resolution, QA-04 name12/optional stock and QA-05 disclosed DX-required DeathIII. Examples taskfeee4204fafa40e4a78be42304b2c9ea supplied §13. QA recheckd1b3c635840e46d39ab71aa91ebf5c0b reviewed actual r8+examplesr4 in REVIEWS r7: QA-01–05 closed, QA-07 max7 checked non-defect. QA corrected its own initial seating inversion transparently: A goes first in linked13.2–13.3, separate13.4 has Luck/Death owner first. COO incorporates this and narrows stock wording here. Recheck is evidence, not approval or measured balance.
+
+QA-06 remains empirical: HopeIII efficiency/leader tempo, S1/RS/Repair+ stall, Luck denied by Guard, Cycle+ losing formerly paid Hope spend, M win-more, mandatory DX investment, tax usefulness and four-slot lock-in. No infinite refund/refresh/token-sacrifice/repeated acquisition loop found in desk audit; not an exhaustive proof. Leaders also access counters; no guaranteed comeback. 67 pieces, especially24 fighter-state pieces/22 use markers and dense references, may burden handling. Physical playtesting is the next primary step, not speculative systemic expansion.
+
+### Actual task manifest
+| Role/work | Task ID | Actual outcome |
+|---|---|---|
+| Growth research |3cb0de43e9404bbb9d8e7b2784c0abc0|Completed; REVIEWS r4|
+| Strategy initial rules |e7777cd07919471dbc1982762691b3dd|Failed provider connection/timeout after saved r4/r5|
+| Strategy catalog/kit continuation |0ef1bd26140145ec936438ef485c21ff|Completed r6/r7|
+| QA critique |2548319576f9449aaf1521c1512379a7|Completed; REVIEWS r5|
+| Strategy fixes |e5dde19c0049468ebeaab8f843e9dc4d|Failed provider connection/timeout after saved r8|
+| Strategy examples continuation |feee4204fafa40e4a78be42304b2c9ea|Completed; examples r4, IDEAS r5, OPEN r7|
+| QA recheck |d1b3c635840e46d39ab71aa91ebf5c0b|Completed; REVIEWS r7|
+| Operations consolidation |40db41bd54c44f03bb86edc454d1a27e|Task completed with reports, but explicitly did NOT consolidate shared documents|
+
+Failed tasks stay failed, not approvals or successful prerequisites. COO read actual surviving saves and performs integration here. Historical v0.3 failures remain in OPEN_QUESTIONS/revisions. No model/provider-limit changes, engineering/finance work, purchases, host execution or protected-document writes occurred. All numerical fixtures below are constructed desk examples, NOT physical playtests or simulations.
+
+## 13. Worked turns and finite evolution route
+Strategy-authored examples integrated from GAME_DESIGN_EXAMPLES r4, with QA seating clarification. Chosen draws, not guaranteed outcomes. Counts exclude unacquired pools/references; removed0 unless stated. I/II/III=stage, d=damage, p=progress; unstated d/p0. Names refer to catalog Fighters. Scores are points; all before round15.
+
+### 13.1 Behind-player upgrade and defensive pivot — complete turn
+Independent fixture A own turn6. A Starter A: resources7 exhausted; Fighters3 [active Rage II d6/p0; reserve Hope II d3/p0; reserve Rage I]; hand5 [Repair,Cycle,Guard,Reposition,Resource]; draw14; discard11 including three lost Fighters. Total7+3+5+14+11=40. Nodes S1; score A0:B3; S1 healths10/9/8. B: resources6 exhausted; Fighters3 [active Luck II d1/p1, reserve Death I, reserve Luck I]; hand4 [Resource,Convert,Reposition,Cycle]; draw16; discard11=40. B A1/LA telegraph offense, no Guard held; pools four each.
+Start A advances6, resets own uses/tactical spend and both Death/X1, refreshes7. Draw Resource→hand6/deck13.
+Main buy S2 for3 (preexisting S1, second node), ready7→4. All four Repair copies now Repair+, reference adds no card. Play held Repair for1, ready4→3: heal reserve Hope d3→0, exchange with Rage, move markers; no voluntary-switch/LS. Repair to discard: hand5 [Cycle,Guard,Reposition,Resource,Resource], discard12. Tactical spend1 (not node3). Resource allowance/evolution unused.
+Combat Hope II pays2, ready3→1; B passes Reaction. Damage3 makes Luck d1→4<7. Tactical spend3 awards Hope p0→1 at checkpoint, too late for Main evolution. Scores unchanged.
+End no defeat. A resources7 (1ready), Fighters3 [active Hope II d0/p1; reserve Rage II d6/p0; Rage I], named hand5, deck13, discard12;7+3+5+13+12=40, nodes S1/S2. B counts unchanged, Luck d4/p1. Score0:3. A preserves Guard resource/two slots, choosing survival rather than another route. Legal recovery attempt, not proven comeback.
+
+### 13.2 Acquisition, shuffle and immediate use — complete turn
+New linked fixture; A IS FIRST PLAYER for13.2–13.3. Round8 A8 then B8; round9 A9 then B9. Before B8: resources6 exhausted; Fighters3 [active Luck II d1/p2, reserve Death II d3/p0, reserve Luck I]; hand4 [Resource,Repair,Cycle,Reposition]; deck15; discard12 incl two lost Fighters=40. Nodes E1/X1; score A2:B0. A resources5 exhausted; Fighters3 [active Rage I d5/p1, reserve Hope II d1/p0, reserve Rage II]; hand4 [Resource,Resource,Rage Fighter,Hope Fighter]; deck16; discard12=40. A owns A1, Stage II Rage can qualify RA. Pools four each, no tax.
+Start B advances8/resets/refresh6. Draw Guard→hand5/deck14.
+Main E2 for3 (E1 preexists, third slot), ready6→3. Reveal Disrupt2, one hand/one shuffled into remaining deck: hand6/deck15/discard12, ownership42; pool Pursuit2. Discard untouched. Choose constructed shuffle outcome with second Disrupt top; NOT guaranteed draw or permission to stack real deck. Play hand Disrupt1, ready3→2, hand5 [Resource,Repair,Cycle,Reposition,Guard], discard13. A next unlock+2 until B's next Start. Tactical spend1; no Hope. No resource play/evolution/E1.
+Combat Luck II pays2, ready2→0. A passes. Damage3 makes Rage d5→8≥7: discard before progress, B score0→1. Luck p2→3; B Death gets none from enemy loss. A no Death/X1, freely promotes Hope II, no spillover, two Fighters remain.
+End B6resources+3Fighters+hand5+deck15+discard13=42, Luck p3; A5+2+4+16+13=40, active Hope II d1/p0, reserve Rage II. Score A2:B1, no defeat.
+
+### 13.3 Later shuffled-copy draw/use, mixed M and evolution — complete turn plus bridge
+Bridge A9: reset/refresh5, draw Resource→hand5/deck15. Main pass, no resource play/unlock. RA would cost3+tax2=5, leaving no attack2. Instead Hope attacks for2, ready3; B passes; Luck d1→4<7. Tactical spend2, no Hope award. End A resources5 (3ready), Fighters2, hand5 [Resource,Resource,Resource,Rage Fighter,Hope Fighter], deck15, discard13=40. B counts42, Luck d4/p3. Score2:1. Tax can be waited out, not guaranteed denial.
+Opening B9: resources6 exhausted; Fighters3 [active Luck II d4/p3, reserve Death II d3/p0, reserve Luck I]; hand5 [Resource,Repair,Cycle,Reposition,Guard]; deck15, discard13, E1/X1/E2, pool Pursuit2. A at bridge End.
+Start B advances9, resets/refresh6, expires own first Disrupt at B Start NOT A's. Draw second acquired Disrupt→hand6/deck14.
+Main play Resource→hand5/resources7 ready. Buy M3→ready4: E1/X1 two preexisting roots, declared Luck/Death both Stage II, turn≥5. Fourth node, first class/mixed. Evolve Luck1→ready3: II→III, p3→0, d4 retained, health9. Because M purchased BEFORE evolution, heal OTHER-class Death d3→1. No retroactive/self-heal. Play drawn Disrupt1→ready2, hand4 [Repair,Cycle,Reposition,Guard], discard14; tax renewed. Tactical spend1, excluding node/evolution.
+Combat Luck III pays2→ready0, damage5; A no Guard passes. Hope d1→6<8; no progress for defending Hope or III Luck, no Death award.
+End B resources7 exhausted+Fighters3+hand4+deck14+discard14=42. Active Luck III d4/p0; reserves Death II d1/p0, Luck I. A counts40, Hope d6; scores2:1, no defeat. Both Disrupt now discarded, no recycling. M used last slot/3 resources rather than other counter; evolving before M would lose heal.
+
+### 13.4 Finite DX→Death III boundary fixture
+Independent, not complete turn; Luck/Death owner FIRST here. Begin own7 with X1, at least3 Resources, surviving reserve Death I p2, two OTHER friendly Fighters lost on separate earlier turns (opponent score2), their cards in discard. Active Luck II d4, another reserve Luck I. Ensure mandatory draws through own10. No other losses until stated; intervening attacks may pass/X1 decline.
+Own7 Main evolve Death1→II p0. Own8 buy DX3 (X1/declared Death/II in play, second node); remove discarded Fighter#1→Death p1. Own9 remove Fighter#2→p2. Each DX uses that turn's shared Death allowance, no points/loss/X1, no reused fodder. Opponent9 Start resets allowance, attack3 kills active Luck II d4→7; opposing score2→3, surviving Death p2→3. Promote Luck I; Death alive. Own10 Main evolve reserve Death1→III p0, retain damage. Final route opponent score3, two Fighters removed, newly lost Luck in discard, III Death plus active Luck I. No fifth loss/free evolution. Without DX fifth required loss ends match before III.

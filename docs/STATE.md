@@ -3,7 +3,28 @@
 Updated 2026-11-10, Europe/Helsinki. Preserve the verified implementation and recorded live evidence below.
 Preserve existing implementation and data; do not scaffold a replacement.
 
-## Current checkpoint: CEO-requested external review snapshot exported
+## Current checkpoint: consolidated design r9 exported; final QA blocked by provider 429
+
+CEO requested a refreshed GitHub export and quick assessment. Exported all nine
+saved project documents verbatim, including GAME_DESIGN.md r9 and separate
+GAME_DESIGN_EXAMPLES.md r4; updated snapshot hashes and status in README.
+Verified exported UTF-8 bytes and credential-pattern scan. No code changes or
+additional provider/model calls were made by this export.
+
+Independent QA recheck in REVIEWS.md r7 closed material QA-01?05 on r8 plus
+examples r4. COO integrated these into r9. Final transcription QA task
+7b2b84bdcc974cbab447f0816d30e4b6 failed at step zero with HTTP 429; original
+root cbed76f517fa4c5fb9073758fc8913b1 also failed with 429 at step16.
+The adapter retained only generic HTTP status, so temporary rate limits versus
+credit/spend exhaustion cannot be determined from saved evidence. No retries
+were dispatched. Existing saved work is preserved; physical handling, balance,
+match duration and final integration acceptance remain unverified.
+
+**Exact next task:** establish the provider limit cause before any authorized
+resumption of the bounded final QA. Do not restart the full design mission.
+External assessment can use docs/card-game-review/ now.
+
+## Previous checkpoint: CEO-requested external review snapshot exported
 
 QA **2548319576f9449aaf1521c1512379a7** completed at step 10 and saved
 REVIEWS.md r5. It identified stranded reward copies, missing worked turns,
